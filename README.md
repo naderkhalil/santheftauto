@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration. The demo follows the real driving simulation and avoids obstacles. Landmark buttons jump between sections; drag the city to look around.
+Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration. The demo follows the real driving simulation, avoids obstacles and stops at the bay. Landmark buttons jump between sections; **Market St** previews the waterfront finish. Drag the city to look around.
 
 ## Controls
 
@@ -28,6 +28,8 @@ Hover deploys automatically at a launch above 54 mph. Collect gold sun rings for
 ## Course
 
 The 1.3 km Powell Skyway runs from Nob Hill through Union Square to Market. Its three aerial sections, tall narrow Victorian towers, rooftops, and landmark arrangement are deliberate fantasy. The route preserves SF character rather than literal cartography.
+
+At the finish, the camera smoothly reveals the Ferry Building on a pier over the animated bay, with the silver Bay Bridge behind it. Compact results keep the scenery visible. The waterfront architecture, bridge and water are procedural.
 
 ## Stack and assets
 

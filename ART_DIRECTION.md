@@ -1,6 +1,6 @@
 # Whimsical SF
 
-A San Francisco postcard that learned to fly. The city is recognizable in its bay windows, cable-car tracks, steep streets, Victorian trim, palms, pagoda rooftops, Union Square, Transamerica, Salesforce and the orange bridge. Its scale and geography are intentionally impossible.
+A San Francisco postcard that learned to fly. The city is recognizable in its bay windows, cable-car tracks, steep streets, Victorian trim, palms, pagoda rooftops, Union Square, Transamerica, Salesforce, the orange Golden Gate Bridge and the Ferry Building with the silver Bay Bridge behind it. Its scale and geography are intentionally impossible.
 
 ## The visual language
 
@@ -11,6 +11,8 @@ The hero is a coral coupe with an ivory roof. All four wheel assemblies unfold n
 ## The playable postcard
 
 The Powell Skyway is 1.3 km from Nob Hill through Union Square to Market Street. Three deliberately exaggerated hilltops release the car just before their crests at 138m, 523m and 998m. Flights return to the road at 365m, 740m and 1230m. Grounded stretches break up the action. Union Square stays level as a moment to breathe.
+
+Market Street opens onto a final waterfront postcard: the Ferry Building stands on a pier over animated turquoise water, with the silver Bay Bridge spanning the background. A smooth finish reveal and compact results preserve the view. The automatic tour stops at the bay; its Market St landmark button previews the same scene. All waterfront geometry is procedural.
 
 Speed of at least 24 m/s (~54 mph) triggers a launch. A/D steers both on the road and in flight. Boost adds lift and braking dives within the authored flight corridor. Landing restores twelve percent boost. Nine collectible sun rings replenish boost. Slower drivers can remain on the road.
 

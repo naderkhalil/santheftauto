@@ -28,7 +28,9 @@ export class CityTour {
   update(dt:number){
     if(this.paused)return;
     this.elapsed+=dt;
-    if(this.progress>TRACK_LENGTH-2||this.simulation.state.finished){this.jump(85);return;}
+    if(this.progress>TRACK_LENGTH-2||this.simulation.state.finished){
+      Object.assign(this.simulation.state,{progress:TRACK_LENGTH,y:sampleRoute(TRACK_LENGTH).y,speed:0,verticalVelocity:0,finished:true});this.paused=true;return;
+    }
     const candidates=this.obstacles.filter(o=>{
       if(o.progress+o.length/2+2.1<=this.progress||o.progress>=this.progress+75)return false;
       const zone=LAUNCH_ZONES.find(z=>o.progress>z.progress&&o.progress<z.end);

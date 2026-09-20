@@ -394,40 +394,8 @@ export function createStreetLife(scene: THREE.Scene): {
     for (let x = -61; x < 64; x += 9.4) box(mats.yellow, x, .058, 0, .11, .025, .075);
   }, .44, false);
 
-  // A modest building across Market closes the central sightline left open by
-  // the distant skyline. Its physical window bays match the foreground scale.
-  // The 28m frontage sits beyond Flood's rounded Market corner, at z1435.
-  at(1435, 0, () => {
-    box(mats.cream, 0, 13.45, 6.4, 28, 26.9, 12.8);
-    box(mats.darkWood, 0, .83, -.03, 28.2, 1.66, .22);
-    for (const y of [1.75, 6.35, 6.77, 23.8, 25.8, 26.7]) box(mats.white, 0, y, -.15, 28.5, .22, .42);
-    for (let x = -12; x <= 12; x += 4) {
-      box(mats.glass, x, 3.91, -.08, 2.87, 3.55, .08);
-      for (const side of [-1, 1]) box(mats.cream, x + side * 1.50, 3.90, -.21, .28, 4.25, .38);
-      box(mats.brass, x, 3.91, -.14, .065, 3.50, .04);
-      box(mats.brass, x, 4.79, -.14, 2.85, .075, .04);
-      for (let floor = 0; floor < 5; floor++) {
-        const y = 8.50 + floor * 3.18;
-        box(mats.darkWood, x, y, -.096, 2.01, 2.41, .12);
-        box(mats.glass, x, y, -.176, 1.80, 2.23, .032);
-        box(mats.cream, x, y, -.202, .064, 2.30, .06);
-        box(mats.cream, x, y + .29, -.202, 1.84, .075, .06);
-        box(mats.white, x, y - 1.27, -.28, 2.26, .16, .40);
-        box(mats.white, x, y + 1.28, -.22, 2.18, .14, .26);
-      }
-    }
-    for (let x = -13.8; x <= 14; x += 4.6) box(mats.white, x, 16.25, -.23, .26, 19.0, .31);
-    for (let x = -13.5; x < 14; x += .57) box(mats.white, x, 25.39, -.31, .18, .25, .37);
-    box(mats.darkWood, 0, 27.10, 6.4, 28.5, .24, 13.2);
-    box(mats.cream, 0, 28.50, 8.1, 18.4, 2.7, 8.2);
-    box(mats.white, 0, 29.89, 8.1, 19, .20, 8.8);
-    plate(labels.marketFront, 0, 6.30, -.405, 7.7, .80);
-    for (const side of [-1, 1]) {
-      cylinder(mats.iron, side * 11.2, 3.9, -2.4, .071, 7.45);
-      rod(mats.iron, V(side * 11.2, 7.5, -2.4), V(side * 9.9, 7.6, -2.4), .05);
-      sphere(mats.lamp, side * 9.9, 7.43, -2.4, .19, .20, .19);
-    }
-  }, 0, false);
+  // Market opens onto the Embarcadero in this compressed postcard city.
+  // The old end-cap building is moved to the waterfront module's open promenade.
 
   function hydrant() {
     cylinder(mats.iron, 0, .24, 0, .23, .12);

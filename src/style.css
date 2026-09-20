@@ -55,3 +55,21 @@ h1 span{color:#ffe15a}h1 i{font-size:.36em;line-height:1.8;letter-spacing:1px;co
 @media(max-width:760px){.topbar{padding:23px 24px}.brand-word{font-size:7px;letter-spacing:1px}.weather{font-size:7px;letter-spacing:.6px}.intro{padding:110px 28px 180px;justify-content:center}h1{font-size:clamp(72px,15vw,104px);line-height:.85;max-width:380px!important}h1 i{font-size:.36em}.intro-copy{font-size:12px}.race-top{top:93px;gap:20px;padding:10px 20px}.race-message{top:28%}.flight-hud{top:170px;padding:8px 15px;gap:12px}.flight-hud strong{font-size:27px}.flight-icon{font-size:28px}.flight-time{font-size:25px}.flying .race-message{top:37%}.keyboard-note{max-width:330px;font-size:7px;gap:6px}.intro-actions{gap:20px}.edition{display:none}.location-label{display:none}}
 @media(max-height:560px){.intro{padding:80px 35px 100px}h1{font-size:65px;line-height:.78}h1 i{font-size:.3em}.eyebrow{margin-bottom:12px}.intro-copy{display:none}.intro-actions{margin-top:5px}.race-top{top:20px}.flight-hud{top:86px}.tour-caption{bottom:100px}.tour-stops,.tour-actions{bottom:25px}.flight-hud strong{font-size:25px}.flight-time{font-size:23px}}
 @media(prefers-reduced-motion:reduce){.flight-hud{transition:none}.primary{transition:none}}
+
+/* Finish at the water: keep the postcard visible while the result is on screen. */
+.bay-caption{position:fixed;left:50%;top:91px;transform:translateX(-50%);text-align:center;pointer-events:none;opacity:0;transition:opacity 1s;color:#fff6dd;text-shadow:0 2px 15px #23466070;white-space:nowrap}
+.bay-caption small,.bay-caption span{display:block;font-size:8px;letter-spacing:2px}.bay-caption strong{display:block;font-family:'Barlow Condensed',Impact,sans-serif;font-size:42px;line-height:1.1;font-style:italic;margin:6px 0 8px}.at-finish .bay-caption{opacity:1;transition-delay:2.8s}
+.at-finish .touch-controls{display:none!important}.at-finish .race-shade{background:linear-gradient(0deg,#123b5733,transparent 32%)}
+#results{background:transparent;backdrop-filter:none;place-items:end center;padding:24px;pointer-events:none}
+#results .panel{pointer-events:auto;width:min(760px,100%);padding:20px 26px;display:grid;grid-template-columns:1fr 1.2fr;gap:12px 28px;background:#123f54e8;backdrop-filter:blur(12px);border-color:#fff1cf66}
+#results .panel-eyebrow{grid-column:1/-1;margin:0;font-size:8px}
+#results h2{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#results .result-main{padding:0;border:0;align-items:center;gap:15px}
+#results .result-time{font-size:43px}#results .result-medal{font-size:8px;padding:8px}
+#results .result-stats{margin:0;align-items:center;gap:18px}#results .result-stats .label{font-size:7px;letter-spacing:1px}#results .result-stats strong{font-size:23px}
+#results #result-copy{grid-column:1/-1;margin:0;line-height:1.4;font-size:11px}
+#results .primary,#results .secondary{margin:0;min-height:42px;padding:12px 16px;font-size:9px;width:100%}
+@media(max-width:600px){#results{padding:14px}#results .panel{padding:16px;gap:10px 12px;grid-template-columns:1fr 1fr}#results .result-main{grid-column:1/-1;justify-content:space-between}#results .result-stats{grid-column:1/-1;justify-content:space-between}#results .result-time{font-size:38px}#results .result-stats strong{font-size:19px}#results #result-copy{font-size:10px}.bay-caption{top:89px}.bay-caption strong{font-size:34px}.bay-caption small,.bay-caption span{font-size:7px;letter-spacing:1.4px}}
+@media(max-height:560px){.bay-caption{top:30px}.bay-caption strong{font-size:28px}#results .panel{padding:13px 20px;gap:8px 25px}#results #result-copy{display:none}#results .result-time{font-size:31px}}
+.bay-caption{left:40px;transform:none;text-align:left}
+@media(max-width:760px){.bay-caption{left:24px}.bay-caption strong{font-size:34px}}

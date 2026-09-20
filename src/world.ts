@@ -144,7 +144,7 @@ export function createWorld(scene: THREE.Scene) {
     const quat = new THREE.Quaternion().setFromUnitVectors(v(0, 1, 0), dir.clone().normalize());
     part(key, material, mid.x, mid.y, mid.z, radius, dir.length(), radius, new THREE.Euler().setFromQuaternion(quat), cylinderGeometry);
   }
-  function strip(material: THREE.Material, x1: number, x2: number, from = -100, to = 1490, lift = 0, step = 3) {
+  function strip(material: THREE.Material, x1: number, x2: number, from = -100, to = 1435, lift = 0, step = 3) {
     if (x1 > x2) [x1, x2] = [x2, x1];
     const positions: number[] = [], uvs: number[] = [], indices: number[] = [];
     const count = Math.ceil((to - from) / step);
@@ -172,11 +172,11 @@ export function createWorld(scene: THREE.Scene) {
   // The entire city sits on continuous warm paving that shares the exact hill
   // profile. Colouring this apron blue made gaps between blocks read as water,
   // especially from the new airborne camera.
-  strip(materials.sidewalk, -310, 310, -170, 1610, -.25, 1.5);
+  strip(materials.sidewalk, -310, 310, -170, 1435, -.25, 1.5);
   const intersections = [95, 315, 550, 710, 920, 1180];
   for (const side of [-1, 1]) {
     let from = -100;
-    for (const stop of [...intersections, 1500]) {
+    for (const stop of [...intersections, 1444]) {
       const to = stop - 9;
       strip(materials.sidewalk, side * (ROAD_HALF_WIDTH + .12), side * 11.65, from, to, .17);
       strip(materials.curb, side * ROAD_HALF_WIDTH, side * (ROAD_HALF_WIDTH + .17), from, to, .19);
@@ -186,8 +186,8 @@ export function createWorld(scene: THREE.Scene) {
   }
   // Two complete cable-car tracks and the center slots.
   for (const track of [-3.1, 3.1]) {
-    for (const offset of [-.72, .72]) strip(materials.rail, track + offset - .045, track + offset + .045, -100, 1490, .044);
-    strip(materials.black, track - .065, track + .065, -100, 1490, .041);
+    for (const offset of [-.72, .72]) strip(materials.rail, track + offset - .045, track + offset + .045, -100, 1428, .044);
+    strip(materials.black, track - .065, track + .065, -100, 1428, .041);
   }
   for (const offset of [-.15, .15]) strip(materials.roadLine, offset - .038, offset + .038, -100, 1310, .04);
   for (let z = 0; z < 1400; z += 13) {
@@ -892,7 +892,7 @@ export function createWorld(scene: THREE.Scene) {
   }
   for (const side of [-1, 1]) {
     for (let layer = 0; layer < 2; layer++) {
-      for (let z = -100 + layer * 19; z < 1510; z += 43) {
+      for (let z = -100 + layer * 19; z < 1390; z += 43) {
         const frontage = 32 + random() * 8;
         if (intersections.some(cross => Math.abs(z - cross) < frontage / 2 + 9)) continue;
         // Open Union Square to the east; give Westin and Beacon their own massing.
@@ -974,7 +974,7 @@ export function createWorld(scene: THREE.Scene) {
     }
   });
   // Dense, quieter silhouettes close the cross-street vistas.
-  for (const side of [-1, 1]) for (let z = -60; z < 1530; z += 66) {
+  for (const side of [-1, 1]) for (let z = -60; z < 1390; z += 66) {
     if (side === 1 && z > 650 && z < 980) continue;
     const p = sampleRoute(z), x = p.x + side * (184 + random() * 27), h = 39 + Math.floor(random() * 5) * 13;
     const style = Math.floor(random() * 4);
@@ -982,10 +982,10 @@ export function createWorld(scene: THREE.Scene) {
     secondaryFace('outer-city-facade', x - side * 18.04, p.y - 7, z, 54, h, side < 0 ? Math.PI / 2 : -Math.PI / 2, style);
     secondaryFace('outer-city-facade', x, p.y - 7, z - 27.04, 36, h, Math.PI, style);
   }
-  // South of Market is a varied office skyline; Transamerica is north-east of
-  // this route and is intentionally absent from the downhill southern vista.
+  // Keep the distant offices on the city side of the waterfront. The final
+  // Market sightline opens toward the Ferry Building and Bay Bridge.
   for (let i = 0; i < 36; i++) {
-    const x = (i < 18 ? -1 : 1) * (32 + random() * 230), z = 1440 + random() * 360, h = 26 + Math.floor(random() * 9) * 13;
+    const x = (i < 18 ? -1 : 1) * (175 + random() * 240), z = 1170 + random() * 180, h = 26 + Math.floor(random() * 9) * 13;
     const width = 16 + random() * 21, depth = 18 + random() * 24, style = i % 4;
     box('distant-skyline', skylineMat, x, h / 2 - 18, z, width, h, depth);
     secondaryFace('skyline-facade', x, -18, z - depth / 2 - .04, width, h, Math.PI, style);

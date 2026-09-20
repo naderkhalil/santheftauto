@@ -47,7 +47,7 @@ export function createSkyline(scene: THREE.Scene) {
   // Recognisable landmarks are staged along the chase-camera sightline. Their
   // storybook proportions deliberately rise above the foreground roof canyon.
   const salesforceStart = markFeature();
-  const sx = 88, sz = 1440, base = -12;
+  const sx = 180, sz = 1340, base = -12;
   const radiusAt = (y: number) => 30.5 * (1 - .29 * Math.pow(y / 286, 2));
   for (let floor = 0; floor < 61; floor++) {
     const y = floor * 4.4, r1 = radiusAt(y), r2 = radiusAt(y + 4.4);
@@ -69,15 +69,15 @@ export function createSkyline(scene: THREE.Scene) {
   stretchFeature(salesforceStart, 1.38);
 
   // 181 Fremont: slender blue prism, silver exoskeleton, asymmetric crown.
-  box(29, 202, 28, glassDeep, 430, 91, 1530);
-  for (let y = 0; y < 202; y += 4.2) box(29.45, .20, 28.45, steel, 430, -10 + y, 1530);
+  box(29, 202, 28, glassDeep, 430, 91, 1325);
+  for (let y = 0; y < 202; y += 4.2) box(29.45, .20, 28.45, steel, 430, -10 + y, 1325);
   for (const side of [-1, 1]) {
-    rod(v(430 + side * 14.8, -10, 1515.6), v(430 - side * 14.8, 192, 1515.6), .60, white);
-    box(.72, 198, .72, white, 430 + side * 14.2, 91, 1515.4);
+    rod(v(430 + side * 14.8, -10, 1310.6), v(430 - side * 14.8, 192, 1310.6), .60, white);
+    box(.72, 198, .72, white, 430 + side * 14.2, 91, 1310.4);
   }
-  for (let x = 418; x < 444; x += 3.6) box(.14, 195, .07, glassLight, x, 91, 1515.94);
-  box(15, 8, 22, steel, 436, 196, 1530);
-  add(new THREE.ConeGeometry(1, 38, 6), white, 431, 211, 1530);
+  for (let x = 418; x < 444; x += 3.6) box(.14, 195, .07, glassLight, x, 91, 1310.94);
+  box(15, 8, 22, steel, 436, 196, 1325);
+  add(new THREE.ConeGeometry(1, 38, 6), white, 431, 211, 1325);
 
   // Transamerica's elegant pyramid balances the rounded Salesforce tower.
   const pyramidStart = markFeature();
@@ -143,7 +143,7 @@ export function createSkyline(scene: THREE.Scene) {
   let seed = 31;
   const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   for (let i = 0; i < 35; i++) {
-    const x = 110 + random() * 550, z = 1120 + random() * 760;
+    const x = 180 + random() * 550, z = 1070 + random() * 275;
     const floors = 12 + Math.floor(random() * 34), h = floors * 3.85;
     const w = 16 + random() * 27, d = 16 + random() * 32;
     if (Math.abs(x - sx) < 45 && Math.abs(z - sz) < 65) continue;
