@@ -10,11 +10,11 @@ The hero is a coral coupe with an ivory roof. All four wheel assemblies unfold n
 
 ## The playable postcard
 
-The Powell Skyway is 1.3 km from Nob Hill through Union Square to Market Street. Three deliberately exaggerated hilltops launch the car at 150m, 535m and 1010m. Flights return to the road at 365m, 740m and 1230m. Grounded stretches break up the action. Union Square stays level as a moment to breathe.
+The Powell Skyway is 1.3 km from Nob Hill through Union Square to Market Street. Three deliberately exaggerated hilltops release the car just before their crests at 138m, 523m and 998m. Flights return to the road at 365m, 740m and 1230m. Grounded stretches break up the action. Union Square stays level as a moment to breathe.
 
 Speed of at least 24 m/s (~54 mph) triggers a launch. A/D steers both on the road and in flight. Boost adds lift and braking dives within the authored flight corridor. Landing restores twelve percent boost. Nine collectible sun rings replenish boost. Slower drivers can remain on the road.
 
-Flight follows a authored arc with smooth endpoints so the driver can read every landing. This is arcade flight, not an aerodynamics simulation. Keep future mechanics legible and joyful.
+Flight carries the uphill road tangent into a gentle arc, with wheel deployment following clearance and smooth endpoints so the driver can read every landing. This is arcade flight, not an aerodynamics simulation. Keep future mechanics legible and joyful.
 
 ## Reference version
 

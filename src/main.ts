@@ -21,6 +21,7 @@ import type { DriveInput } from './driving';
 import { sampleRoute, routeYaw, routeSlope, districtAt, TRACK_LENGTH, START_PROGRESS } from './route';
 import { CityTour } from './tour';
 import { createSkyCourse } from './skycourse';
+import { flightView } from './flight-view';
 import './style.css';
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
@@ -131,7 +132,7 @@ async function boot() {
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
   let cinematicQuality=safeRead('sf-night-run-quality')==='cinematic';
   let lowQuality=safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
-  let landingPulse=0, collectedRings=0;
+  let landingPulse=0, collectedRings=0, presentedLaunches=0;
   let lastDistrict='', gamepadPauseDown=false, shake=0, helpWasPaused=false, goUntil=0, finishReveal=0;
   const keys=new Set<string>(), touch=new Set<string>();
   const desiredCamera=new THREE.Vector3(), lookAt=new THREE.Vector3(), smoothedLook=new THREE.Vector3();
@@ -158,7 +159,7 @@ async function boot() {
     if(n!==countdownNumber){countdownNumber=n;el('countdown').innerHTML=`<strong>${n}</strong><span>POWELL SKYWAY · HILLS HAVE WINGS</span>`;audio.cue('count');}
   }
   function start(){
-    clearInputs();sim.reset();skyCourse.reset();collectedRings=0;landingPulse=0;topSpeed=0;phase='countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';
+    clearInputs();sim.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase='countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';
     ['help','pause-panel','results'].forEach(id=>el(id).classList.add('hidden'));
     el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.remove('hidden');el('drift-hint').classList.remove('active');
     void audio.unlock().then(()=>audio.cue('count'));updateCountdown();syncPhase();updateHud();canvas.focus();
@@ -212,14 +213,14 @@ async function boot() {
       camera.fov=camera.aspect<1.2?70:78;
     }else{
       const here=sampleRoute(s.progress),yaw=routeYaw(s.progress);car.group.position.set(here.x+s.lateral,s.y+.03,s.progress);
-      const pitch=s.airborne?THREE.MathUtils.clamp(-Math.atan2(s.verticalVelocity,Math.max(s.speed,1)),-.18,.22):-Math.atan(routeSlope(s.progress));
-      car.group.rotation.x=THREE.MathUtils.damp(car.group.rotation.x,pitch,10,dt);car.group.rotation.y=yaw+s.driftAngle;car.group.rotation.z=THREE.MathUtils.damp(car.group.rotation.z,s.airborne?-s.driftAngle*.55:-s.driftAngle*.10,7,dt);
+      const view=flightView(s,routeSlope(s.progress),sampleRoute(s.progress+23).y);
+      car.group.rotation.x=THREE.MathUtils.damp(car.group.rotation.x,view.pitch,10,dt);car.group.rotation.y=yaw+s.driftAngle;car.group.rotation.z=THREE.MathUtils.damp(car.group.rotation.z,view.bank,7,dt);
       const chaseDistance=cameraMode===1?6.3:9.4, chaseHeight=cameraMode===1?2.25:4.2;
       const behind=s.progress-chaseDistance, behindRoad=sampleRoute(behind),ahead=sampleRoute(s.progress+23);
       desiredCamera.set(here.x+s.lateral*.9-Math.sin(yaw)*chaseDistance,Math.max(s.y+chaseHeight,behindRoad.y+chaseHeight),behind);
-      lookAt.set(ahead.x+s.lateral*.68,s.airborne?s.y-1.8:s.y+THREE.MathUtils.clamp((ahead.y-s.y)*.3,-5,4)+1.2,s.progress+23);
+      lookAt.set(ahead.x+s.lateral*.68,view.lookHeight,s.progress+23);
       if(shake>.001&&!reduceMotion){desiredCamera.x+=(Math.random()-.5)*shake;desiredCamera.y+=(Math.random()-.5)*shake*.65;shake*=Math.exp(-8*dt);}
-      const targetFov=(cameraMode===1?74:72)+(reduceMotion?0:s.speed*.15+s.glide*4);camera.fov=THREE.MathUtils.damp(camera.fov,targetFov,3,dt);
+      const targetFov=(cameraMode===1?74:72)+(reduceMotion?0:s.speed*.15+view.weight*4);camera.fov=THREE.MathUtils.damp(camera.fov,targetFov,3,dt);
     }
     if(!cameraInitialized){camera.position.copy(desiredCamera);smoothedLook.copy(lookAt);cameraInitialized=true;}else{camera.position.lerp(desiredCamera,1-Math.exp(-7*dt));smoothedLook.lerp(lookAt,1-Math.exp(-8*dt));}
     if(phase!=='menu'){camera.position.z=desiredCamera.z;smoothedLook.z=lookAt.z;camera.position.y=Math.max(camera.position.y,sampleRoute(camera.position.z).y+1.8);}
@@ -296,21 +297,22 @@ async function boot() {
     }
     if(phase==='racing'){
       const events=sim.update(raceDt,input);topSpeed=Math.max(topSpeed,sim.state.speed);
-      for(const event of events){if(event==='checkpoint'&&!sim.state.finished){audio.cue('checkpoint');announce('CHECKPOINT',`${sim.state.checkpoint} OF 4 · ${formatTime(sim.state.elapsed)}`,1.6);}if(event==='crash'){audio.cue('crash');shake=.5;flashUntil=totalTime+.16;}if(event==='launch'){audio.cue('launch');announce('HELLO, SKY.','WHEELS OUT · STEER TO GLIDE',1.8);}if(event==='land'){shake=.24;landingPulse=1;audio.cue('land');announce('STUCK THE LANDING','BOOST RECHARGED',1.3);}if(event==='finish')finish();}
+      for(const event of events){if(event==='checkpoint'&&!sim.state.finished){audio.cue('checkpoint');announce('CHECKPOINT',`${sim.state.checkpoint} OF 4 · ${formatTime(sim.state.elapsed)}`,1.6);}if(event==='crash'){audio.cue('crash');shake=.5;flashUntil=totalTime+.16;}if(event==='land'){shake=.24;landingPulse=1;audio.cue('land');announce('STUCK THE LANDING','BOOST RECHARGED',1.3);}if(event==='finish')finish();}
+      if(sim.state.airborne&&sim.state.glide>.35&&sim.state.launches>presentedLaunches){presentedLaunches=sim.state.launches;audio.cue('launch');announce('HELLO, SKY.','WHEELS OUT · STEER TO GLIDE',1.8);}
       if(phase==='racing'){audio.update(sim.state.speed,input.throttle,input.drift&&Math.abs(sim.state.driftAngle)>.08,sim.boosting,sim.state.glide);updateCitySound(sim.state.progress,sim.state.lateral);}
     }
     if(goUntil&&totalTime>goUntil){el('countdown').classList.add('hidden');goUntil=0;}
     if(finishReveal&&totalTime>finishReveal){modal('results',true);finishReveal=0;}
     if(messageUntil&&totalTime>messageUntil){el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');messageUntil=0;}
     el('flash').classList.toggle('hit',totalTime<flashUntil);
-    el('drift-hint').classList.toggle('active',phase==='racing'&&(sim.state.airborne||(input.drift&&sim.state.speed>10&&Math.abs(sim.state.driftAngle)>.1)));
+    el('drift-hint').classList.toggle('active',phase==='racing'&&((sim.state.airborne&&sim.state.glide>.2)||(!sim.state.airborne&&input.drift&&sim.state.speed>10&&Math.abs(sim.state.driftAngle)>.1)));
     el('drift-hint').textContent=sim.state.airborne?'A / D TO GLIDE · BRAKE TO DIVE':'DRIFTING';el('drift-hint').setAttribute('aria-hidden',String(!el('drift-hint').classList.contains('active')));
     document.querySelector('.speed-vignette')!.classList.toggle('active',phase==='racing'&&sim.boosting);
     if(phase!=='paused')updateCamera(dt);
     if(phase!=='paused'){car.update(dt,{speed:phase==='menu'?20:phase==='tour'?(tour.paused?0:tour.speed):sim.state.speed,steer:input.steer,braking:input.brake>.1,boosting:phase==='racing'&&sim.boosting,time:totalTime,glide:phase==='menu'?1:phase==='tour'?tour.glide:sim.state.glide,airborne:phase==='menu'||(phase==='tour'?tour.airborne:sim.state.airborne),altitude:phase==='tour'?tour.altitude:sim.state.altitude,landing:landingPulse});updateSpray(dt,input);}
     landingPulse*=Math.exp(-7*dt);
     const flight=phase==='tour'?tour:sim.state;
-    const showingFlight=(phase==='racing'||phase==='tour')&&flight.airborne;
+    const showingFlight=(phase==='racing'||phase==='tour')&&flight.airborne&&flight.glide>.2;
     el('flight-hud').classList.toggle('active',showingFlight);el('flight-hud').setAttribute('aria-hidden',String(!showingFlight));
     el('flight-height').innerHTML=`${Math.round(flight.altitude)} <em>M UP</em>`;
     el('flight-time').innerHTML=`${flight.airTime.toFixed(1)}<small>SECONDS OF MAGIC</small>`;

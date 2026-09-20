@@ -1,4 +1,4 @@
-import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
 import type { LaunchZone, Obstacle } from './route.ts';
 
 export type DriveInput = { throttle: number; brake: number; steer: number; drift: boolean; boost: boolean };
@@ -212,14 +212,19 @@ export class DrivingSimulation {
       const oldLift = this.liftBias;
       this.liftBias += (targetLift - this.liftBias) * (1 - Math.exp(-3 * dt));
       s.y = Math.max(ground, sampleGlidePath(s.progress, zone) + this.liftBias * envelope);
-      const baseSlope = (sampleGlidePath(s.progress + .1, zone) - sampleGlidePath(s.progress - .1, zone)) / .2;
+      const baseSlope = glideSlope(s.progress, zone);
       const liftSlope = this.liftBias * Math.PI * Math.sin(2 * Math.PI * u) / (zone.end - zone.progress);
       s.verticalVelocity = (baseSlope + liftSlope) * forwardSpeed + (this.liftBias - oldLift) / dt * envelope;
       // Lift control fades with zero slope at both ends, preserving smooth landings.
-      // Unfold quickly at the crest, then turn the wheels back before touchdown.
+      // Let the tires leave the surface before the hover hardware unfolds.
+      // Clearance and elapsed time make the release read as momentum over a hill,
+      // while the landing envelope still restores the tires before touchdown.
+      const clearance=clamp((s.y-ground-.12)/2.8,0,1);
+      const release=clamp((s.airTime-.08)/.55,0,1);
       const remaining = clamp((zone.end - s.progress) / 32, 0, 1);
-      const targetGlide = remaining * remaining * (3 - 2 * remaining);
-      s.glide += (targetGlide - s.glide) * (1 - Math.exp(-10 * dt));
+      const targetGlide = clearance*clearance*(3-2*clearance)
+        * release*release*(3-2*release) * remaining*remaining*(3-2*remaining);
+      s.glide += (targetGlide - s.glide) * (1 - Math.exp(-9 * dt));
       if (s.progress >= zone.end) {
         s.y = ground;
         s.airborne = false;

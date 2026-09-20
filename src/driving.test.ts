@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DrivingSimulation } from './driving.ts';
 import type { DriveInput, RaceEvent } from './driving.ts';
-import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, sampleGlidePath, sampleRoute } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
 
 const throttle: DriveInput = { throttle: 1, brake: 0, steer: 0, drift: false, boost: false };
 const neutral: DriveInput = { ...throttle, throttle: 0 };
@@ -164,7 +164,7 @@ test('all three hills launch, sustain hover and land with wheels restored during
     assert.deepEqual(sequence, ['launch', 'land', 'launch', 'land', 'launch', 'land']);
     assert.equal(sim.state.launches, 3);
     assert.ok(sim.state.totalAirTime > 11, 'three flights should feel like sustained glides');
-    assert.ok(maximumAltitude > 40, 'the skyline must be visible well below the car');
+    assert.ok(maximumAltitude > 30, 'the glide should still clear the street by several storeys');
     assert.ok(fullyDeployed);
     assert.ok(sim.state.finished);
   }
@@ -249,4 +249,56 @@ test('invalid time and controls cannot poison the simulation', () => {
   sim.update(.5, { ...throttle, throttle: NaN, steer: Infinity, brake: -100 });
   for (const value of Object.values(sim.state)) if (typeof value === 'number') assert.ok(Number.isFinite(value));
   assert.equal(sim.state.speed, 0);
+});
+
+
+test('all takeoffs preserve uphill momentum instead of adding a vertical kick', () => {
+  for(const zone of LAUNCH_ZONES)for(const speed of [25,44,58]){
+    const sim=new DrivingSimulation();
+    sim.state.progress=zone.progress-3;sim.state.speed=speed;
+    sim.state.y=sampleRoute(sim.state.progress).y;
+    sim.state.verticalVelocity=routeSlope(sim.state.progress)*speed;
+    let launched=false;
+    for(let i=0;i<120&&!launched;i++){
+      const before={...sim.state},dt=1/120;
+      const events=sim.update(dt,{...throttle,boost:speed>50});
+      if(events.includes('launch')){
+        launched=true;
+        assert.ok(before.verticalVelocity>0,'release should carry the uphill climb');
+        assert.ok(Math.abs(sim.state.verticalVelocity-before.verticalVelocity)<.6,
+          `vertical velocity kicked at ${zone.label}: ${before.verticalVelocity}→${sim.state.verticalVelocity}`);
+        const expected=before.y+before.verticalVelocity*dt;
+        assert.ok(Math.abs(sim.state.y-expected)<.008,'position must continue through the release smoothly');
+        assert.ok(sim.state.glide<.005,'wheels should still be upright as they first leave the surface');
+      }
+    }
+    assert.ok(launched);
+  }
+});
+
+test('every flight clears the crest and has matching entry and exit tangents', () => {
+  for(const zone of LAUNCH_ZONES){
+    const step=.001;
+    const entry=(sampleGlidePath(zone.progress+step,zone)-sampleGlidePath(zone.progress,zone))/step;
+    const exit=(sampleGlidePath(zone.end,zone)-sampleGlidePath(zone.end-step,zone))/step;
+    assert.ok(Math.abs(entry-routeSlope(zone.progress))<.0001,'road and air must share a takeoff tangent');
+    assert.ok(Math.abs(exit-routeSlope(zone.end))<.0001,'landing must join the road tangent');
+    assert.ok(Math.abs(glideSlope(zone.progress,zone)-routeSlope(zone.progress))<1e-9);
+    for(let i=0;i<=1000;i++){
+      const progress=zone.progress+(zone.end-zone.progress)*i/1000;
+      assert.ok(sampleGlidePath(progress,zone)>=sampleRoute(progress).y-1e-8,
+        'a flight must not be clipped back onto the crest by the ground clamp');
+    }
+  }
+});
+
+test('wheel unfolding follows road clearance and eases into sustained glide', () => {
+  const sim=new DrivingSimulation();
+  while(!sim.state.airborne)sim.update(1/120,throttle);
+  drive(sim,.1);
+  assert.ok(sim.state.glide<.025,'keep the wheels upright for the initial weightless release');
+  drive(sim,.35);
+  assert.ok(sim.state.glide>.1&&sim.state.glide<.85,'unfold progressively instead of switching modes at the crest');
+  drive(sim,.55);
+  assert.ok(sim.state.glide>.95,'reach full hover once clearly above the road');
 });

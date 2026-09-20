@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { LAUNCH_ZONES, sampleGlidePath, sampleRoute, routeSlope, routeYaw, TRACK_LENGTH, type Obstacle } from './route';
 import { DrivingSimulation } from './driving';
+import { flightView } from './flight-view';
 
 /** A real run driven by an obstacle-aware autopilot, including all hover transitions. */
 export class CityTour {
@@ -19,7 +20,7 @@ export class CityTour {
     this.simulation.reset();
     const zone=LAUNCH_ZONES.find(z=>progress>z.progress&&progress<z.end);
     const start=zone?zone.progress-.02:progress;
-    Object.assign(this.simulation.state,{progress:start,y:sampleRoute(start).y,speed:zone?44:34});
+    Object.assign(this.simulation.state,{progress:start,y:sampleRoute(start).y,speed:zone?44:34,verticalVelocity:routeSlope(start)*(zone?44:34)});
     // Replaying from the crest uses the real transition and preserves hidden flight state.
     if(zone){for(let i=0;i<1800&&this.progress<progress;i++)this.simulation.update(1/120,{throttle:1,brake:0,steer:0,drift:false,boost:false});}
     this.selectedLane=0;this.orbit=0;
@@ -46,12 +47,12 @@ export class CityTour {
   getPose(){
     const s=this.simulation.state,p=sampleRoute(s.progress),ahead=sampleRoute(s.progress+24),back=sampleRoute(s.progress-10);
     const yaw=this.orbit+Math.sin(this.elapsed*.065)*.06,distance=10;
-    const pitch=s.airborne?THREE.MathUtils.clamp(-Math.atan2(s.verticalVelocity,Math.max(s.speed,1)),-.18,.22):-Math.atan(routeSlope(p.z));
+    const view=flightView(s,routeSlope(p.z),ahead.y);
     return {
       car:new THREE.Vector3(p.x+s.lateral,s.y+.03,p.z),
-      rotation:new THREE.Euler(pitch,routeYaw(p.z)+s.driftAngle,-s.driftAngle*.4),
+      rotation:new THREE.Euler(view.pitch,routeYaw(p.z)+s.driftAngle,view.bank),
       camera:new THREE.Vector3(p.x+s.lateral+Math.sin(yaw)*distance,Math.max(s.y+4.1,back.y+3.8),p.z-Math.cos(yaw)*distance),
-      look:new THREE.Vector3(ahead.x+s.lateral-Math.sin(yaw)*15,s.airborne?s.y-1.8:s.y+THREE.MathUtils.clamp((ahead.y-s.y)*.3,-5,4)+1.2,p.z+Math.cos(yaw)*24),
+      look:new THREE.Vector3(ahead.x+s.lateral-Math.sin(yaw)*15,view.lookHeight,p.z+Math.cos(yaw)*24),
     };
   }
 }

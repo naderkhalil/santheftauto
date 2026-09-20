@@ -73,14 +73,14 @@ export class GameAudio {
   cue(kind: 'count' | 'go' | 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land'): void {
     if (!this.context || !this.master || !this.ready) return;
     const ctx = this.context, t = ctx.currentTime;
-    const notes = kind==='launch'?[330,440,660,880]:kind==='land'?[220,440]:kind === 'finish' ? [523, 659, 784, 1047] : kind === 'checkpoint' ? [660, 880] : kind === 'go' ? [880] : kind === 'count' ? [440] : [75];
+    const notes = kind==='launch'?[392,523]:kind==='land'?[220,440]:kind === 'finish' ? [523, 659, 784, 1047] : kind === 'checkpoint' ? [660, 880] : kind === 'go' ? [880] : kind === 'count' ? [440] : [75];
     notes.forEach((freq, index) => {
       const start = t + index * .10;
       const osc = ctx.createOscillator(); osc.type = kind === 'crash' ? 'sawtooth' : 'sine';
       osc.frequency.setValueAtTime(freq, start);
       if (kind === 'crash') osc.frequency.exponentialRampToValueAtTime(25, start + .16);
       const envelope = ctx.createGain(); envelope.gain.setValueAtTime(.0001, start);
-      envelope.gain.exponentialRampToValueAtTime(kind === 'crash' ? .35 : .30, start + .009);
+      envelope.gain.exponentialRampToValueAtTime(kind === 'crash' ? .35 : kind==='launch'?.09:.30, start + (kind==='launch'?.08:.009));
       const duration = kind === 'go' || kind === 'finish' ? .42 : .22;
       envelope.gain.exponentialRampToValueAtTime(.0001, start + duration);
       osc.connect(envelope); envelope.connect(this.master!); osc.start(start); osc.stop(start + duration + .02);

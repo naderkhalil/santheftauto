@@ -18,9 +18,9 @@ const profile = [
 ];
 export type LaunchZone = { progress: number; end: number; label: string };
 export const LAUNCH_ZONES: readonly LaunchZone[] = [
-  { progress: 150, end: 365, label: 'NOB HILL LIFT-OFF' },
-  { progress: 535, end: 740, label: 'POWELL SKYWAY' },
-  { progress: 1010, end: 1230, label: 'DOWNTOWN DAYDREAM' },
+  { progress: 138, end: 365, label: 'NOB HILL LIFT-OFF' },
+  { progress: 523, end: 740, label: 'POWELL SKYWAY' },
+  { progress: 998, end: 1230, label: 'DOWNTOWN DAYDREAM' },
 ];
 
 export function sampleRoute(distance: number) {
@@ -35,8 +35,9 @@ export function sampleRoute(distance: number) {
 
 /**
  * Arcade lift follows an authored corridor so every crest has a readable landing.
- * A Hermite takeoff tangent rises out of the hill; the arch and its derivative
- * return to zero at the valley. Ground and flight therefore meet without a snap.
+ * Release on the rounded shoulder, carrying the exact uphill road tangent.
+ * The road falls away as that upward momentum eases into a glide; there is no
+ * extra launch impulse. Both height and velocity match the road at each end.
  * This is also the placement contract for aerial hoops and camera previews.
  */
 export function sampleGlidePath(distance: number, zone: LaunchZone): number {
@@ -45,11 +46,25 @@ export function sampleGlidePath(distance: number, zone: LaunchZone): number {
   const takeoff = sampleRoute(zone.progress).y;
   const landing = sampleRoute(zone.end).y;
   const smooth = u * u * (3 - 2 * u);
-  const launchTangent = .5 * span * u * (1 - u) ** 2;
+  const launchTangent = routeSlope(zone.progress) * span * u * (1 - u) ** 2;
   const arch = Math.sin(Math.PI * u) ** 2 * 28;
   return takeoff + (landing - takeoff) * smooth + launchTangent + arch;
 }
-export function routeSlope(distance: number) { return (sampleRoute(distance + 1).y - sampleRoute(distance - 1).y) / 2; }
+/** Analytic tangent of the actual road mesh, including a level tangent at crests. */
+export function routeSlope(distance: number) {
+  if(distance<=0||distance>=1399.99)return 0;
+  let i=0;while(i<profile.length-2&&distance>profile[i+1][0])i++;
+  const a=profile[i],b=profile[i+1],span=b[0]-a[0],u=(distance-a[0])/span;
+  return (b[1]-a[1])*6*u*(1-u)/span;
+}
+
+/** One-sided endpoints avoid halving takeoff velocity through clamped sampling. */
+export function glideSlope(distance:number,zone:LaunchZone):number {
+  const span=zone.end-zone.progress,u=Math.max(0,Math.min(1,(distance-zone.progress)/span));
+  const drop=sampleRoute(zone.end).y-sampleRoute(zone.progress).y;
+  return drop*6*u*(1-u)/span + routeSlope(zone.progress)*(1-4*u+3*u*u)
+    + 28*Math.PI*Math.sin(2*Math.PI*u)/span;
+}
 export function routeYaw(distance: number) { return Math.atan2(sampleRoute(distance + 1).x - sampleRoute(distance - 1).x, 2); }
 export function districtAt(distance: number) { return [...DISTRICTS].reverse().find(d => distance >= d.at) ?? DISTRICTS[0]; }
 export type Obstacle = { progress: number; lateral: number; width: number; length: number; kind: 'car' | 'cablecar' | 'barrier' };
