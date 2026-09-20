@@ -55,7 +55,7 @@ export class GameAudio {
     if (this.context && this.master) this.master.gain.setTargetAtTime(muted ? 0 : .42, this.context.currentTime, .07);
   }
 
-  update(speed: number, throttle: number, drifting: boolean, boosting: boolean): void {
+  update(speed: number, throttle: number, drifting: boolean, boosting: boolean, glide = 0): void {
     if (!this.ready || !this.context) return;
     const t = this.context.currentTime;
     const velocity = Math.abs(speed);
@@ -64,16 +64,16 @@ export class GameAudio {
     const revs = (velocity - gear * 12) / 12;
     const pitch = 34 + gear * 3 + revs * 41 + Math.max(0, throttle) * 8 + (boosting ? 7 : 0);
     for (let i = 0; i < this.oscillators.length; i++) this.oscillators[i].frequency.setTargetAtTime(pitch * (i + 1) + (i === 1 ? .8 : 0), t, .09);
-    this.engine?.gain.setTargetAtTime(.23 + Math.max(0, throttle) * .37 + Math.min(velocity / 100, .25), t, .12);
+    this.engine?.gain.setTargetAtTime((.23 + Math.max(0, throttle) * .37 + Math.min(velocity / 100, .25)) * (1-glide*.65), t, .12);
     this.engineFilter?.frequency.setTargetAtTime(240 + Math.max(0, throttle) * 380 + velocity * 8, t, .15);
-    this.wind?.gain.setTargetAtTime(Math.min(.44, Math.pow(velocity / 60, 2) * .22) + (boosting ? .15 : 0), t, .15);
+    this.wind?.gain.setTargetAtTime(Math.min(.44, Math.pow(velocity / 60, 2) * .22) + (boosting ? .15 : 0) + glide*.16, t, .15);
     this.tires?.gain.setTargetAtTime(drifting && velocity > 5 ? .09 + Math.min(.1, velocity / 400) : 0, t, .10);
   }
 
-  cue(kind: 'count' | 'go' | 'checkpoint' | 'finish' | 'crash'): void {
+  cue(kind: 'count' | 'go' | 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land'): void {
     if (!this.context || !this.master || !this.ready) return;
     const ctx = this.context, t = ctx.currentTime;
-    const notes = kind === 'finish' ? [523, 659, 784, 1047] : kind === 'checkpoint' ? [660, 880] : kind === 'go' ? [880] : kind === 'count' ? [440] : [75];
+    const notes = kind==='launch'?[330,440,660,880]:kind==='land'?[220,440]:kind === 'finish' ? [523, 659, 784, 1047] : kind === 'checkpoint' ? [660, 880] : kind === 'go' ? [880] : kind === 'count' ? [440] : [75];
     notes.forEach((freq, index) => {
       const start = t + index * .10;
       const osc = ctx.createOscillator(); osc.type = kind === 'crash' ? 'sawtooth' : 'sine';

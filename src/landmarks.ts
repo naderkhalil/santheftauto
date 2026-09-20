@@ -74,16 +74,16 @@ export function createLandmarks(scene: THREE.Scene) {
   stoneGrain.wrapS = stoneGrain.wrapT = THREE.RepeatWrapping; stoneGrain.repeat.set(3, 8);
   const stone = (color: THREE.ColorRepresentation) => { const mat = standard(color); mat.map = stoneGrain; return mat; };
   const mats = {
-    westin: stone('#d6bc96'), westinShadow: stone('#ac9472'), limestone: stone('#ebd8b9'),
-    terracotta: stone('#d3ae83'), flood: stone('#b79273'), floodLight: stone('#d5b797'),
+    westin: stone('#ffbf65'), westinShadow: stone('#d98b46'), limestone: stone('#fff0c7'),
+    terracotta: stone('#f68583'), flood: stone('#e79560'), floodLight: stone('#ffe0a1'),
     glass: standard('#8ab4bb', .18, .37), frame: standard('#505f61', .49, .34), bronze: standard('#426553', .4, .6),
-    darkStone: stone('#90968d'), granite: stone('#c3bcae'), whiteGranite: stone('#e4d7bd'),
+    darkStone: stone('#739fc6'), granite: stone('#c4d8dd'), whiteGranite: stone('#fff1d4'),
     warm: new THREE.MeshStandardMaterial({ color: '#d9bb80', emissive: '#ffd58f', emissiveIntensity: .12, roughness: .42 }),
     paleGlass: standard('#91c3ce', .21, .4), black: standard('#233038'), green: standard('#216f58'),
     hedge: standard('#3b793e'), leaf: new THREE.MeshStandardMaterial({ color: '#7ca344', roughness: .80, side: THREE.DoubleSide, emissive: '#3c5a24', emissiveIntensity: .06 }),
     leafDark: new THREE.MeshStandardMaterial({ color: '#47783b', roughness: .87, side: THREE.DoubleSide, emissive: '#2d4928', emissiveIntensity: .04 }),
     bark: standard('#987957'), soil: standard('#615240'), metal: standard('#365d51', .49, .46),
-    awning: standard('#176a50'), gold: standard('#d8b576', .35, .65),
+    awning: standard('#009b8d'), gold: standard('#d8b576', .35, .65),
     light: new THREE.MeshBasicMaterial({ color: '#f8d8aa', toneMapped: false }),
   };
   // Sky and opposite-façade reflections keep the landmark windows blue and
@@ -162,7 +162,7 @@ export function createLandmarks(scene: THREE.Scene) {
 
   // THE WESTIN ST. FRANCIS — the historic three-wing hotel facing Union Square.
   // The deeper modern slabs sit behind it to the west, where they belong.
-  const wx = -16.2, wz = 815, wy = 19.7, wh = 48.5;
+  const wx = -15.2, wz = 815, wy = Math.min(sampleRoute(745).y, sampleRoute(885).y) - .5, wh = 48.5;
   box('westin-mass', mats.westin, wx - 24, wy + wh / 2, wz, 48, wh, 185, undefined, true);
   for (const wingZ of [745, 815, 885]) {
     box('westin-mass', mats.westin, wx - 9.5, wy + wh / 2, wingZ, 22, wh, 43, undefined, true);
@@ -442,7 +442,7 @@ export function createLandmarks(scene: THREE.Scene) {
   const chairBack = new THREE.TorusGeometry(.36, .023, 5, 12, Math.PI);
   chairBack.rotateX(Math.PI / 2);
   const parasolLinen = new THREE.MeshStandardMaterial({ color: '#f1d4a0', roughness: .91, side: THREE.DoubleSide });
-  const parasolRust = new THREE.MeshStandardMaterial({ color: '#d66f48', roughness: .88, side: THREE.DoubleSide });
+  const parasolRust = new THREE.MeshStandardMaterial({ color: '#fb6950', roughness: .88, side: THREE.DoubleSide });
   function parasol(x: number, y: number, z: number, rust: boolean) {
     const positions: number[] = [], fabric = rust ? parasolRust : parasolLinen;
     const point = (r: number, a: number, height: number) => V(x + Math.cos(a) * r, y + height, z + Math.sin(a) * r);
@@ -503,7 +503,7 @@ export function createLandmarks(scene: THREE.Scene) {
   // x126–162 strip; the procedural background begins farther east at x166+.
   const silver = standard('#aab5b4', .26, .82), maple = standard('#b99a69', .65);
   const pavilionGlass = new THREE.MeshPhysicalMaterial({ color: '#9db1ac', roughness: .12, metalness: .12, transparent: true, opacity: .22, depthWrite: false, side: THREE.DoubleSide, envMapIntensity: .65 });
-  const ax = 128, az = 767, ay = 22.85;
+  const ax = 128, az = 767, ay = sampleRoute(767).y + .85;
   // A narrow, terrain-following Stockton Street keeps the opposite block
   // separate from the square and leaves its gardens and palms unobstructed.
   const stocktonPositions: number[] = [], stocktonIndices: number[] = [];
@@ -577,7 +577,7 @@ export function createLandmarks(scene: THREE.Scene) {
   // The southeast Stockton frontage has the taller, tightly articulated stone
   // rhythm of Union Square's historic department stores. Grouped windows, deep
   // pilasters, a dark retail base and stepped parapets interrupt the distant grid.
-  const sx = 128.2, sz = 866, sy = 18.9, sh = 38.6;
+  const sx = 128.2, sz = 866, sy = Math.min(sampleRoute(826).y, sampleRoute(906).y) - .8, sh = 38.6;
   box('stockton-stone-body', mats.limestone, 145.3, sy + sh / 2, sz, 33.8, sh, 79.5, undefined, true);
   box('stockton-recessed-base', mats.darkStone, sx - .01, sy + 4.1, sz, .13, 8.2, 79.6);
   for (let bay = -32; bay <= 32; bay += 8.0) {
@@ -610,7 +610,7 @@ export function createLandmarks(scene: THREE.Scene) {
   }
 
   // BEACON GRAND (formerly Sir Francis Drake): the slim 1920s hotel at Sutter.
-  const bx = 22.4, bz = 607, by = 37.8;
+  const bx = 15.4, bz = 607, by = Math.min(sampleRoute(547).y, sampleRoute(667).y) - .6;
   box('beacon-podium', mats.terracotta, bx + 20, by + 10, bz, 40, 20, 120, undefined, true);
   box('beacon-tower', mats.terracotta, bx + 19, by + 41, bz, 33, 82, 55, undefined, true);
   for (let floor = 0; floor < 21; floor++) {
@@ -662,11 +662,11 @@ export function createLandmarks(scene: THREE.Scene) {
 
   // The Flood Building closes the Powell corridor at Market with sandstone,
   // Beaux-Arts arches and a genuinely rounded corner, rather than a plain box.
-  const fx = -14.2, fy = 1.0, fz = 1290, fh = 44.5;
+  const fx = -13.2, fy = Math.min(sampleRoute(1200).y, sampleRoute(1380).y) - .7, fz = 1290, fh = 44.5;
   box('flood-main-mass', mats.flood, fx - 22, fy + fh / 2, fz, 44, fh, 183, undefined, true);
   box('flood-side-mass', mats.flood, fx - 42, fy + fh / 2, 1370, 52, fh, 44, undefined, true);
   for (let z = 1204; z < 1366; z += 4.9) {
-    archDoor('flood', fx + .08, fy + .7, z, 3.6, 6.0, 1, mats.floodLight);
+    archDoor('flood', fx + .08, sampleRoute(z).y + .3, z, 3.6, 6.0, 1, mats.floodLight);
     for (let floor = 0; floor < 10; floor++) windowBay('flood', fx, fy + 9.0 + floor * 3.35, z, 1, 2.02, 2.48, floor === 0 || floor === 7, mats.floodLight);
   }
   for (const h of [6.8, 7.3, 33.4, 41.8, 43.6, 44.2]) box('flood-cornice', mats.floodLight, fx + .16, fy + h, fz - 4, h > 41 ? 1.35 : .8, .26, 176);

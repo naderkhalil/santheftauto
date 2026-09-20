@@ -1,17 +1,28 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
-type CarState = { speed: number; steer: number; braking: boolean; boosting: boolean; time: number };
+export type CarState = {
+  speed: number;
+  steer: number;
+  braking: boolean;
+  boosting: boolean;
+  time: number;
+  /** 0 = road wheels, 1 = horizontal hover fans. */
+  glide?: number;
+  airborne?: boolean;
+  altitude?: number;
+  landing?: number;
+};
 type Section = [z: number, width: number, center: number, height: number];
 
 /** A small, original coachbuilt coupe. All geometry is local; +Z is forward. */
 export function createCar(): { group: THREE.Group; update: (dt: number, state: CarState) => void } {
   const group = new THREE.Group();
-  group.name = 'Scarlet coupe';
+  group.name = 'Sundrop / transforming SF coupe';
   const body = new THREE.Group();
   group.add(body);
-  const paint = new THREE.MeshPhysicalMaterial({ color: 0xf12c18, metalness: .18, roughness: .25, clearcoat: .7, clearcoatRoughness: .20 });
-  const roofPaint = paint;
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0xff4429, metalness: .22, roughness: .21, clearcoat: 1, clearcoatRoughness: .15 });
+  const roofPaint = new THREE.MeshPhysicalMaterial({ color: 0xffe4aa, metalness: .12, roughness: .27, clearcoat: .7 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x11131b, roughness: .6, metalness: .3 });
   const rubber = new THREE.MeshStandardMaterial({ color: 0x101018, roughness: .9 });
   const metal = new THREE.MeshStandardMaterial({ color: 0xaab1bd, metalness: .85, roughness: .24 });
@@ -19,6 +30,9 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   const redLight = new THREE.MeshStandardMaterial({ color: 0xff2338, emissive: 0xff1630, emissiveIntensity: .55, roughness: .25 });
   const headlight = new THREE.MeshStandardMaterial({ color: 0xfff5d2, emissive: 0xffedc2, emissiveIntensity: .7 });
   const amber = new THREE.MeshStandardMaterial({ color: 0xffb345, emissive: 0xff8f27, emissiveIntensity: .7 });
+  const hoverGlow = new THREE.MeshStandardMaterial({ color: 0x16e8cf, emissive: 0x00ffe2, emissiveIntensity: .06, roughness: .24, metalness: .28 });
+  const jetMaterial = new THREE.MeshBasicMaterial({ color: 0x1fffe0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
+  const haloMaterial = new THREE.MeshBasicMaterial({ color: 0x80fff4, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false });
 
   function mesh(geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0, parent: THREE.Object3D = body) {
     const m = new THREE.Mesh(geo, mat);
@@ -73,7 +87,7 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
     [.7, .9, .54, .25], [1.2, .94, .54, .30], [1.65, .89, .51, .26],
     [1.94, .76, .46, .17], [2.08, .58, .44, .10],
   ], paint);
-  // Deep sill and splitter separate the red bodywork from the street.
+  // A warm ivory roof and fine sill stripe keep the candy body readable from above.
   box(1.57, .105, 3.55, dark, 0, .285, 0);
   box(1.68, .09, .21, dark, 0, .285, 1.83);
   box(1.56, .105, .2, dark, 0, .32, -1.92);
@@ -119,6 +133,24 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
     const mirror = mesh(new THREE.SphereGeometry(1, 12, 8), paint, side * .995, .835, .5);
     mirror.scale.set(.145, .075, .12);
     box(.2, .07, .012, metal, side * .995, .836, .398);
+    box(.032, .034, 1.67, roofPaint, side * .883, .401, -.025);
+    box(.034, .016, 1.27, hoverGlow, side * .902, .367, -.06);
+  }
+
+  // An original little hill-climb roundel, shared by both doors.
+  const roundelCanvas = document.createElement('canvas');
+  roundelCanvas.width = roundelCanvas.height = 256;
+  const rc = roundelCanvas.getContext('2d');
+  if (rc) {
+    rc.fillStyle = '#ffe5ae'; rc.beginPath(); rc.arc(128, 128, 117, 0, Math.PI * 2); rc.fill();
+    rc.strokeStyle = '#f95030'; rc.lineWidth = 8; rc.beginPath(); rc.arc(128, 128, 105, 0, Math.PI * 2); rc.stroke();
+    rc.fillStyle = '#203348'; rc.font = '900 108px sans-serif'; rc.textAlign = 'center'; rc.textBaseline = 'middle'; rc.fillText('01', 128, 129);
+    const map = new THREE.CanvasTexture(roundelCanvas); map.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.MeshStandardMaterial({ map, transparent: true, alphaTest: .25, roughness: .36, polygonOffset: true, polygonOffsetFactor: -1 });
+    for (const side of [-1, 1]) {
+      const roundel = mesh(new THREE.PlaneGeometry(.32, .32), material, side * .893, .615, -.20);
+      roundel.rotation.y = side * Math.PI / 2;
+    }
   }
 
   // Flat rear light bar, recessed rear panel, six engine cooling slots.
@@ -142,7 +174,7 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   if (pc) {
     pc.fillStyle = '#e7e6dc'; pc.fillRect(0, 0, 512, 160);
     pc.strokeStyle = '#74808b'; pc.lineWidth = 10; pc.strokeRect(6, 6, 500, 148);
-    pc.fillStyle = '#233247'; pc.textAlign = 'center'; pc.font = 'bold 63px monospace'; pc.fillText('CITY RUN', 256, 109);
+    pc.fillStyle = '#233247'; pc.textAlign = 'center'; pc.font = 'bold 63px monospace'; pc.fillText('SF HOP', 256, 109);
     const map = new THREE.CanvasTexture(plateCanvas);
     map.colorSpace = THREE.SRGBColorSpace;
     const plate = mesh(new THREE.PlaneGeometry(.46, .144), new THREE.MeshStandardMaterial({ map, roughness: .5 }), 0, .415, -2.101);
@@ -159,17 +191,30 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   box(.93, .13, .027, dark, 0, .395, 2.032);
   for (let i = -3; i <= 3; i++) box(.018, .11, .034, metal, i * .11, .396, 2.048);
 
+  // Each wheel gets a suspension mount, an independent fold joint, a steering
+  // joint and finally the axle. Axle spin cannot unwind the hover transformation.
   const wheelSpin: THREE.Group[] = [], wheelSteer: THREE.Group[] = [];
+  const wheelMounts: { mount: THREE.Group; fold: THREE.Group; side: number }[] = [];
+  const jets: THREE.Mesh[] = [], halos: THREE.Mesh[] = [];
   const tireGeo = new THREE.TorusGeometry(.267, .077, 10, 24);
   tireGeo.rotateY(Math.PI / 2);
   const rimGeo = new THREE.CylinderGeometry(.218, .218, .08, 24);
   rimGeo.rotateZ(Math.PI / 2);
   const sidewallGeo = new THREE.CylinderGeometry(.302, .302, .16, 24);
   sidewallGeo.rotateZ(Math.PI / 2);
+  const hoverRingGeo = new THREE.TorusGeometry(.229, .022, 8, 32);
+  hoverRingGeo.rotateY(Math.PI / 2);
+  const hoverHubGeo = new THREE.CylinderGeometry(.093, .093, .026, 16);
+  hoverHubGeo.rotateZ(Math.PI / 2);
+  const jetGeo = new THREE.CylinderGeometry(.11, .35, .88, 20, 1, true);
+  const haloGeo = new THREE.RingGeometry(.245, .32, 32);
   for (const z of [-1.23, 1.22]) for (const side of [-1, 1]) {
-    const pivot = new THREE.Group(); pivot.position.set(side * .915, .345, z); group.add(pivot);
-    const spin = new THREE.Group(); pivot.add(spin); wheelSpin.push(spin);
-    if (z > 0) wheelSteer.push(pivot);
+    const mount = new THREE.Group(); mount.position.set(side * .915, .345, z); group.add(mount);
+    const fold = new THREE.Group(); fold.name = `${side < 0 ? 'left' : 'right'} ${z < 0 ? 'rear' : 'front'} hover joint`; mount.add(fold);
+    wheelMounts.push({ mount, fold, side });
+    const steer = new THREE.Group(); fold.add(steer);
+    const spin = new THREE.Group(); steer.add(spin); wheelSpin.push(spin);
+    if (z > 0) wheelSteer.push(steer);
     mesh(sidewallGeo, rubber, 0, 0, 0, spin);
     mesh(tireGeo, rubber, side * .018, 0, 0, spin);
     mesh(rimGeo, dark, side * .074, 0, 0, spin);
@@ -182,6 +227,53 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
     }
     const hub = mesh(new THREE.CylinderGeometry(.051, .051, .035, 12), metal, side * .133, 0, 0, spin);
     hub.rotation.z = Math.PI / 2;
+    // Both faces light up, so the turbine reads from the chase camera as well
+    // as from the underside of a jump. The original rubber stays visible.
+    for (const face of [-1, 1]) {
+      mesh(hoverRingGeo, hoverGlow, face * .133, 0, 0, spin);
+      mesh(hoverHubGeo, hoverGlow, face * .143, 0, 0, spin);
+      for (let blade = 0; blade < 6; blade++) {
+        const t = blade / 6 * Math.PI * 2;
+        const turbine = box(.018, .115, .034, roofPaint, face * .144, Math.cos(t) * .142, Math.sin(t) * .142, spin);
+        turbine.rotation.x = t + .32;
+      }
+    }
+    const jet = mesh(jetGeo, jetMaterial, side * .58, 0, 0, fold);
+    jet.rotation.z = side * Math.PI / 2;
+    jet.castShadow = false; jet.receiveShadow = false; jet.visible = false; jets.push(jet);
+    const halo = mesh(haloGeo, haloMaterial, side * .173, 0, 0, fold);
+    halo.rotation.y = Math.PI / 2;
+    halo.castShadow = false; halo.receiveShadow = false; halo.visible = false; halos.push(halo);
+  }
+
+  // Compact aero fins unfurl from the rear quarters. Their warm tops retain
+  // the coupe's silhouette while turquoise edges echo the four hover fans.
+  const fins: { pivot: THREE.Group; side: number }[] = [];
+  for (const side of [-1, 1]) {
+    const pivot = new THREE.Group(); pivot.position.set(side * .78, .65, -1.32); body.add(pivot);
+    const shape = new THREE.Shape();
+    shape.moveTo(0, -.42); shape.lineTo(.88, -.61); shape.lineTo(1.15, -.35); shape.lineTo(.90, .02); shape.lineTo(0, .20); shape.closePath();
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: .035, bevelEnabled: true, bevelThickness: .015, bevelSize: .025, bevelSegments: 1 });
+    geometry.rotateX(-Math.PI / 2); geometry.scale(side, 1, 1);
+    if (side < 0) {
+      // A mirrored position transform reverses winding; keep outward normals.
+      const index = geometry.index;
+      if (index) for (let i = 0; i < index.count; i += 3) { const a = index.getX(i); index.setX(i, index.getX(i + 2)); index.setX(i + 2, a); }
+      else {
+        for (const name of Object.keys(geometry.attributes)) {
+          const attr = geometry.getAttribute(name);
+          for (let i = 0; i < attr.count; i += 3) for (let c = 0; c < attr.itemSize; c++) {
+            const a = attr.getComponent(i, c); attr.setComponent(i, c, attr.getComponent(i + 2, c)); attr.setComponent(i + 2, c, a);
+          }
+        }
+      }
+      geometry.computeVertexNormals();
+    }
+    mesh(geometry, roofPaint, 0, 0, 0, pivot);
+    const edge = box(.58, .038, .052, hoverGlow, side * .72, .025, .35, pivot);
+    edge.rotation.y = side * -.25;
+    pivot.scale.x = .05; pivot.visible = false;
+    fins.push({ pivot, side });
   }
 
   // Bake only pieces that are rigid relative to the same parent. The body
@@ -220,19 +312,52 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   }
   mergeRigidParts(body, 'body');
   wheelSpin.forEach((wheel, i) => mergeRigidParts(wheel, `wheel ${i + 1}`));
+  fins.forEach(({ pivot }, i) => mergeRigidParts(pivot, `aero fin ${i + 1}`));
   // Some tire primitives are shared by all four wheels. Dispose them only
   // after every wheel has been baked, and keep any unmerged geometry alive.
   group.traverse(object => { if (object instanceof THREE.Mesh) sourceGeometries.delete(object.geometry); });
   sourceGeometries.forEach(geometry => geometry.dispose());
 
+  let hover = 0;
+  let wasAirborne = false;
+  let landingBounce = 0;
   return {
     group,
     update(dt, state) {
-      for (const wheel of wheelSpin) wheel.rotation.x += state.speed * dt / .345;
-      for (const front of wheelSteer) front.rotation.y = state.steer * .43;
-      body.position.y = Math.sin(state.time * 26) * Math.min(Math.abs(state.speed) / 100, .016);
+      const step = Math.max(0, Math.min(dt, .1));
+      const targetHover = THREE.MathUtils.clamp(state.glide ?? (state.airborne ? 1 : 0), 0, 1);
+      hover = THREE.MathUtils.damp(hover, targetHover, targetHover > hover ? 9 : 13, step);
+      if (Math.abs(hover - targetHover) < .001) hover = targetHover;
+      for (const wheel of wheelSpin) wheel.rotation.x += (state.speed / .345 * (1 - hover) + hover * 22) * step;
+      for (const front of wheelSteer) front.rotation.y = state.steer * .43 * (1 - hover);
+      for (const { mount, fold, side } of wheelMounts) {
+        mount.position.x = side * (.915 + hover * .30);
+        mount.position.y = .345 + hover * .055;
+        fold.rotation.z = -side * hover * Math.PI / 2;
+      }
+      const energy = THREE.MathUtils.smoothstep(hover, .25, .9);
+      hoverGlow.emissiveIntensity = .055 + energy * (state.boosting ? 4.8 : 2.6);
+      const pulse = .94 + Math.sin(state.time * 23) * .045 + Math.sin(state.time * 37) * .025;
+      jetMaterial.opacity = energy * .15;
+      haloMaterial.opacity = energy * .56;
+      jets.forEach(jet => { jet.visible = energy > .005; jet.scale.y = pulse * (state.boosting ? 1.5 : 1); });
+      halos.forEach(halo => { halo.visible = energy > .005; halo.scale.setScalar(pulse); });
+      fins.forEach(({ pivot, side }) => {
+        pivot.visible = hover > .025;
+        pivot.scale.x = Math.max(.05, hover);
+        pivot.rotation.z = side * (1 - hover) * -.38;
+      });
+      if (wasAirborne && !state.airborne) landingBounce = 1;
+      landingBounce = Math.max(state.landing ?? 0, landingBounce * Math.exp(-step * 8));
+      wasAirborne = state.airborne ?? false;
+      body.position.y = Math.sin(state.time * 26) * Math.min(Math.abs(state.speed) / 100, .016) * (1 - hover)
+        + Math.sin(state.time * 3.6) * .022 * hover - Math.sin(landingBounce * Math.PI) * .075;
+      body.rotation.z = THREE.MathUtils.damp(body.rotation.z, -state.steer * .035 * (1 - hover), 8, step);
       redLight.emissiveIntensity = state.braking ? 2.5 : .55;
       paint.emissive.setHex(state.boosting ? 0x26050a : 0x000000);
+      group.userData.hover = hover;
+      group.userData.wheelFoldDegrees = hover * 90;
+      group.userData.hoverAltitude = state.altitude ?? 0;
     },
   };
 }

@@ -54,13 +54,13 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   });
   const sky=new THREE.Mesh(new THREE.SphereGeometry(3500,32,20),skyMaterial);
   sky.name='Pacific blue sky';sky.renderOrder=-1000;sky.frustumCulled=false;scene.add(sky);
-  const hemisphere=new THREE.HemisphereLight('#84bcff','#776b52',.85);scene.add(hemisphere);
+  const hemisphere=new THREE.HemisphereLight('#84bcff','#f1b187',1.15);scene.add(hemisphere);
   const sun=new THREE.DirectionalLight('#fff0cb',3.6);sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048);
   sun.shadow.camera.left=-61;sun.shadow.camera.right=61;sun.shadow.camera.top=78;sun.shadow.camera.bottom=-56;
   sun.shadow.camera.near=1;sun.shadow.camera.far=390;sun.shadow.normalBias=.028;sun.shadow.bias=-.00012;sun.shadow.radius=1.3;
   scene.add(sun,sun.target);
-  const coolFill=new THREE.DirectionalLight('#71b7ff',.25);coolFill.position.set(-100,130,-120);scene.add(coolFill);
+  const coolFill=new THREE.DirectionalLight('#90dbff',.45);coolFill.position.set(-100,130,-120);scene.add(coolFill);
 
   const pmrem=new THREE.PMREMGenerator(renderer);
   const environmentScene=new THREE.Scene();
@@ -98,7 +98,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
       const p=sampleRoute(progress);sun.target.position.set(p.x,p.y+10,progress+20);
       sun.position.copy(sun.target.position).addScaledVector(sunlightDirection,210);
     },
-    setQuality(low:boolean){sun.castShadow=!low;coolFill.intensity=low?.18:.25;},
+    setQuality(low:boolean){sun.castShadow=!low;coolFill.intensity=low?.32:.45;},
     get captured(){return captured;},
   };
 }

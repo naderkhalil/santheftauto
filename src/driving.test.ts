@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DrivingSimulation } from './driving.ts';
 import type { DriveInput, RaceEvent } from './driving.ts';
-import { CHECKPOINTS, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, sampleRoute } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, sampleGlidePath, sampleRoute } from './route.ts';
 
 const throttle: DriveInput = { throttle: 1, brake: 0, steer: 0, drift: false, boost: false };
 const neutral: DriveInput = { ...throttle, throttle: 0 };
@@ -34,7 +34,7 @@ test('30, 60 and 120 Hz produce matching routes, handling and timers', () => {
     return sim.state;
   });
   for (const state of states.slice(1)) {
-    for (const key of ['progress', 'lateral', 'speed', 'elapsed', 'boost', 'y', 'driftAngle'] as const) {
+    for (const key of ['progress', 'lateral', 'speed', 'elapsed', 'boost', 'y', 'driftAngle', 'glide', 'altitude', 'airTime', 'totalAirTime'] as const) {
       assert.ok(Math.abs(state[key] - states[0][key]) < 1e-6, `${key} diverged: ${state[key]} vs ${states[0][key]}`);
     }
   }
@@ -116,10 +116,10 @@ test('passing an obstacle in an adjacent lane does not collide', () => {
   assert.equal(sim.state.collisions, 0);
 });
 
-test('curb impacts stay inside the road and the driver can steer away', () => {
+test('grounded curb impacts stay inside the road and the driver can steer away', () => {
   const sim = new DrivingSimulation();
-  drive(sim, 4);
-  const events = drive(sim, 3, { ...throttle, steer: 1 });
+  drive(sim, 1);
+  const events = drive(sim, 2, { ...throttle, steer: 1 });
   assert.ok(events.includes('crash'));
   assert.ok(Math.abs(sim.state.lateral) <= ROAD_HALF_WIDTH - .95);
   drive(sim, 1, { ...throttle, steer: -1 });
@@ -140,20 +140,105 @@ test('brakes stop the car, and steering cannot move a stopped car sideways', () 
   assert.equal(sim.state.lateral, lateral);
 });
 
-test('hill jumps land above the road and return finite state through a full run', () => {
-  const sim = new DrivingSimulation();
-  let airborne = false;
-  let landed = false;
-  for (let i = 0; i < 7200 && !sim.state.finished; i++) {
-    const events = sim.update(1 / 120, { ...throttle, boost: i < 480 });
-    airborne ||= sim.state.airborne;
-    landed ||= events.includes('land');
-    assert.ok(sim.state.y >= sampleRoute(sim.state.progress).y - 1e-6);
-    for (const value of Object.values(sim.state)) if (typeof value === 'number') assert.ok(Number.isFinite(value));
+test('all three hills launch, sustain hover and land with wheels restored during a complete run', () => {
+  for (const boosted of [false, true]) {
+    const sim = new DrivingSimulation();
+    const sequence: RaceEvent[] = [];
+    let maximumAltitude = 0;
+    let fullyDeployed = false;
+    for (let i = 0; i < 7200 && !sim.state.finished; i++) {
+      const events = sim.update(1 / 120, { ...throttle, boost: boosted && i < 480 });
+      sequence.push(...events.filter(event => event === 'launch' || event === 'land'));
+      maximumAltitude = Math.max(maximumAltitude, sim.state.altitude);
+      fullyDeployed ||= sim.state.glide > .98;
+      assert.ok(sim.state.y >= sampleRoute(sim.state.progress).y - 1e-6);
+      assert.ok(sim.state.glide >= 0 && sim.state.glide <= 1);
+      for (const value of Object.values(sim.state)) if (typeof value === 'number') assert.ok(Number.isFinite(value));
+      if (events.includes('land')) {
+        assert.equal(sim.state.airborne, false);
+        assert.equal(sim.state.glide, 0);
+        assert.equal(sim.state.altitude, 0);
+        assert.equal(sim.state.airTime, 0);
+      }
+    }
+    assert.deepEqual(sequence, ['launch', 'land', 'launch', 'land', 'launch', 'land']);
+    assert.equal(sim.state.launches, 3);
+    assert.ok(sim.state.totalAirTime > 11, 'three flights should feel like sustained glides');
+    assert.ok(maximumAltitude > 40, 'the skyline must be visible well below the car');
+    assert.ok(fullyDeployed);
+    assert.ok(sim.state.finished);
   }
-  assert.ok(airborne, 'fast descents should produce a small crest jump');
-  assert.ok(landed, 'the jump must land');
-  assert.ok(sim.state.finished);
+});
+
+test('hover retracts before landing and the flight corridor joins the road smoothly', () => {
+  const sim = new DrivingSimulation();
+  let nearLandingGlide = 1;
+  while (sim.state.progress < LAUNCH_ZONES[0].end - 4) sim.update(1 / 120, throttle);
+  nearLandingGlide = sim.state.glide;
+  assert.ok(sim.state.airborne);
+  assert.ok(nearLandingGlide < .2, `wheels are ${nearLandingGlide} deployed just before touchdown`);
+  for (const zone of LAUNCH_ZONES) {
+    assert.equal(sampleGlidePath(zone.progress, zone), sampleRoute(zone.progress).y);
+    assert.ok(Math.abs(sampleGlidePath(zone.end, zone) - sampleRoute(zone.end).y) < 1e-9);
+    const finalSlope = (sampleGlidePath(zone.end, zone) - sampleGlidePath(zone.end - .01, zone)) / .01;
+    assert.ok(Math.abs(finalSlope) < .001, 'flight and level landing have matching vertical tangents');
+  }
+});
+
+test('air steering is responsive, soft boundaries do not count as curb crashes, and braking cannot strand a glider', () => {
+  const sim = new DrivingSimulation();
+  while (!sim.state.airborne) sim.update(1 / 120, throttle);
+  const initialLateral = sim.state.lateral;
+  drive(sim, .5, { ...throttle, steer: 1 });
+  assert.ok(sim.state.lateral > initialLateral + 1);
+  const events = drive(sim, 1.5, { ...throttle, steer: 1 });
+  assert.ok(!events.includes('crash'));
+  assert.ok(Math.abs(sim.state.lateral) <= ROAD_HALF_WIDTH - .95);
+  drive(sim, .5, { ...throttle, steer: -1 });
+  assert.ok(sim.state.lateral < ROAD_HALF_WIDTH - 1.5);
+  const brakingEvents = drive(sim, 14, { ...neutral, brake: 1 });
+  assert.ok(brakingEvents.includes('land'));
+  assert.equal(sim.state.airborne, false);
+  assert.equal(sim.state.speed, 0);
+});
+
+test('boost gains lift, braking dives, and both return smoothly to the same landing', () => {
+  const modes = [throttle, { ...throttle, boost: true }, { ...throttle, brake: .7 }];
+  const midflightOffsets: number[] = [];
+  const first = LAUNCH_ZONES[0];
+  for (const control of modes) {
+    const sim = new DrivingSimulation();
+    while (!sim.state.airborne) sim.update(1 / 120, throttle);
+    while (sim.state.progress < (first.progress + first.end) / 2) sim.update(1 / 120, control);
+    midflightOffsets.push(sim.state.y - sampleGlidePath(sim.state.progress, first));
+    let landingEvents: RaceEvent[] = [];
+    while (sim.state.airborne) {
+      landingEvents = sim.update(1 / 120, control);
+      assert.ok(sim.state.y >= sampleRoute(sim.state.progress).y);
+      assert.ok(Number.isFinite(sim.state.verticalVelocity));
+      if (sim.state.progress > first.end - .5) assert.ok(Math.abs(sim.state.verticalVelocity) < 1.5);
+    }
+    assert.ok(landingEvents.includes('land'));
+    assert.ok(Math.abs(sim.state.y - sampleRoute(sim.state.progress).y) < 1e-9);
+  }
+  assert.ok(Math.abs(midflightOffsets[0]) < 1e-9);
+  assert.ok(midflightOffsets[1] > 6, 'boost should add visible midflight lift');
+  assert.ok(midflightOffsets[2] < -7, 'braking should produce a controllable dive');
+});
+
+test('slow driving stays grounded and gliders clear obstacles beneath their flight corridor', () => {
+  const slow = new DrivingSimulation();
+  slow.state.progress = LAUNCH_ZONES[0].progress - .05;
+  slow.state.y = sampleRoute(slow.state.progress).y;
+  slow.state.speed = 12;
+  assert.ok(!slow.update(.2, neutral).includes('launch'));
+  assert.equal(slow.state.airborne, false);
+  assert.equal(slow.state.launches, 0);
+  const flight = new DrivingSimulation([{ progress: 250, lateral: 0, width: 6, length: 8, kind: 'cablecar' }]);
+  const flightEvents = drive(flight, 10);
+  assert.ok(flightEvents.includes('launch'));
+  assert.ok(flightEvents.includes('land'));
+  assert.ok(!flightEvents.includes('crash'));
 });
 
 test('invalid time and controls cannot poison the simulation', () => {

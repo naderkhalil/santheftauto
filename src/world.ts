@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CHECKPOINTS, ROAD_HALF_WIDTH, TRACK_LENGTH, sampleRoute, routeSlope, type Obstacle } from './route';
 
 // Original procedural architecture, with CC0 scanned masonry surface materials.
@@ -7,7 +8,7 @@ type Batch = { name: string; chunk: number; casts: boolean; horizon: boolean; ge
 const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 // Painted Edwardian / Beaux-Arts streetfronts: seafoam, salmon, ochre,
 // warm brick, periwinkle and buttercream, all with a deliberate warm/cool balance.
-const stoneColors = ['#54a99a', '#dc8974', '#d4a041', '#b85c41', '#8da5ce', '#e8d2a0'];
+const stoneColors = ['#08bea6', '#ff7057', '#f6b82f', '#de5269', '#9279df', '#f4d974'];
 function rng(seed: number) {
   let s = seed;
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
@@ -22,7 +23,7 @@ function canvasTexture(width: number, height: number, paint: (ctx: CanvasRenderi
 function facadeTexture(style: number) {
   const random = rng(82 + style * 717);
   return canvasTexture(1024, 256, ctx => {
-    const colors = ['#78bbaa', '#e8a18a', '#e8b962', '#b9694b', '#a8b8e1', '#f3dfb8'];
+    const colors = ['#21cfb6', '#ff836a', '#ffc941', '#e65b75', '#ae90f1', '#ffe58a'];
     ctx.fillStyle = colors[style % colors.length]; ctx.fillRect(0, 0, 1024, 256);
     for (let i = 0; i < 18000; i++) {
       ctx.fillStyle = random() > .5 ? 'rgba(30,22,17,.038)' : 'rgba(255,243,215,.06)';
@@ -90,6 +91,7 @@ function labelTexture(text: string, color = '#f1d5b1', bg = '#233246', sub?: str
 export function createWorld(scene: THREE.Scene) {
   const world = new THREE.Group(); world.name = 'Powell Street · architectural streetscape'; scene.add(world);
   const random = rng(2137), batches = new Map<string, Batch>(), obstacles: Obstacle[] = [];
+  const terrainStrips: THREE.Mesh[] = [];
   const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
   const planeGeometry = new THREE.PlaneGeometry(1, 1);
   const cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, 8);
@@ -97,9 +99,9 @@ export function createWorld(scene: THREE.Scene) {
   const standard = (color: THREE.ColorRepresentation, roughness = .8, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
   const materials = {
     stone: standard('#d4b994'), trim: standard('#f2dfb8'), darkTrim: standard('#344853'),
-    sidewalk: standard('#b7b4a3'), curb: standard('#d9d4c3'), asphalt: standard('#121b2a', .65, .06),
-    roadLine: standard('#b4a07c', .6), rail: standard('#687888', .2, .85), metal: standard('#253449', .6, .7),
-    foliage: standard('#2d7051'), trunk: standard('#6a5149'), grass: standard('#203b42'),
+    sidewalk: standard('#efb28b'), curb: standard('#fff0cb'), asphalt: standard('#263451', .79, .025),
+    roadLine: standard('#ffd94c', .6), rail: standard('#687888', .2, .85), metal: standard('#253449', .6, .7),
+    foliage: standard('#18a16e'), trunk: standard('#6a5149'), grass: standard('#203b42'),
     warm: new THREE.MeshBasicMaterial({ color: '#ffcc8b' }), pale: new THREE.MeshBasicMaterial({ color: '#c3dedb' }),
     cyan: new THREE.MeshBasicMaterial({ color: '#80a978' }), red: new THREE.MeshBasicMaterial({ color: '#ff665b' }),
     black: standard('#171f2c'), glass: standard('#294259', .17, .65), gold: standard('#ceac76', .36, .7),
@@ -154,7 +156,7 @@ export function createWorld(scene: THREE.Scene) {
     }
     const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geometry.setIndex(indices); geometry.computeVertexNormals();
-    const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; world.add(mesh); return mesh;
+    const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; world.add(mesh); terrainStrips.push(mesh); return mesh;
   }
 
   // Fine road grain remains beneath the scanned, sunlit surface material.
@@ -167,7 +169,10 @@ export function createWorld(scene: THREE.Scene) {
   asphaltTexture.wrapS = asphaltTexture.wrapT = THREE.RepeatWrapping; materials.asphalt.map = asphaltTexture;
   materials.asphalt.envMapIntensity = .10;
   strip(materials.asphalt, -ROAD_HALF_WIDTH, ROAD_HALF_WIDTH).name = 'powell-asphalt';
-  strip(standard('#73858b'), -310, 310, -170, 1610, -.23, 8);
+  // The entire city sits on continuous warm paving that shares the exact hill
+  // profile. Colouring this apron blue made gaps between blocks read as water,
+  // especially from the new airborne camera.
+  strip(materials.sidewalk, -310, 310, -170, 1610, -.25, 1.5);
   const intersections = [95, 315, 550, 710, 920, 1180];
   for (const side of [-1, 1]) {
     let from = -100;
@@ -193,8 +198,12 @@ export function createWorld(scene: THREE.Scene) {
   const streetNames = ['PINE ST', 'BUSH ST', 'SUTTER ST', 'POST ST', 'GEARY ST', 'ELLIS ST'];
   for (let n = 0; n < intersections.length; n++) {
     const z = intersections[n], p = sampleRoute(z);
-    // Cross streets stop at the main road; a level slab here would cut through a hill.
-    for (const side of [-1, 1]) box('crossroads', materials.asphalt, p.x + side * (ROAD_HALF_WIDTH + 45), p.y - .12, z, 90, .22, 17);
+    // Side streets drape over these exaggerated hills too. A level box leaves
+    // a five-metre cliff at its far edge on the steepest launch approaches.
+    for (const side of [-1, 1]) {
+      strip(materials.asphalt, side * ROAD_HALF_WIDTH, side * (ROAD_HALF_WIDTH + 110), z - 8.8, z + 8.8, -.015, 1.5);
+      for (const edge of [-1, 1]) strip(materials.sidewalk, side * ROAD_HALF_WIDTH, side * (ROAD_HALF_WIDTH + 112), z + edge * 8.9 - .14, z + edge * 8.9 + .14, .17, .14);
+    }
     for (const zz of [-10.5, 10.5]) for (let x = -6.4; x <= 6.4; x += 1.28) {
       const pp = sampleRoute(z + zz);
       box('crosswalk', materials.curb, pp.x + x, pp.y + .025, z + zz, .62, .026, 3.1, new THREE.Euler(-Math.atan(routeSlope(z + zz)), 0, 0));
@@ -246,7 +255,7 @@ export function createWorld(scene: THREE.Scene) {
   const sideMaterials = stoneColors.map(c => standard(c));
   const victorianFacades = stoneColors.map((color, style) => new THREE.MeshStandardMaterial({
     map: canvasTexture(1024, 256, ctx => {
-      ctx.fillStyle = ['#72bca6', '#eda08a', '#e8b962', '#b9694b', '#a7bae3', '#f3dfb8'][style]; ctx.fillRect(0,0,1024,256);
+      ctx.fillStyle = ['#21cfb6', '#ff836a', '#ffc941', '#e65b75', '#ae90f1', '#ffe58a'][style]; ctx.fillRect(0,0,1024,256);
       // Actual narrow lap siding, with a bright top edge and shaded overlap.
       for(let y=0;y<256;y+=10) {ctx.fillStyle='rgba(31,54,60,.22)';ctx.fillRect(0,y,1024,1.1);ctx.fillStyle='rgba(255,246,211,.27)';ctx.fillRect(0,y+1.3,1024,.75);}
       void color;
@@ -274,7 +283,7 @@ export function createWorld(scene: THREE.Scene) {
     material.normalScale.set(.15, .15);
     if (style === 3) {
       material.map = brickFloorColor;
-      material.color.set('#ffd5ab');
+      material.color.set('#ff8399');
     }
     sideMaterials[style].normalMap = plasterBodyNormal;
     sideMaterials[style].normalScale.set(.12, .12);
@@ -304,15 +313,15 @@ export function createWorld(scene: THREE.Scene) {
   };
   windowAtlasMaterial.customProgramCacheKey = () => 'sf-window-atlas-v1';
   const windowMaterials = Array.from({length: 8}, () => windowAtlasMaterial);
-  const windowFrame = ['#ffedc6', '#285e60', '#fff1c7', '#edc796', '#2e547c', '#a05246'].map(c => standard(c));
-  const paintedTrim = ['#e9e7bf', '#f9dab3', '#266175', '#e9cc92', '#f1deaf', '#48797a'].map(c => standard(c));
-  const shopBases = ['#245c5e', '#843d42', '#245675', '#663e36', '#304e7e', '#a65e41'].map(c => standard(c));
-  const roofSlate = standard('#345f76');
-  const copperRoof = standard('#4b8b82', .67, .16);
+  const windowFrame = ['#fff2bb', '#177c80', '#fff5cd', '#ffc679', '#373a86', '#b24b73'].map(c => standard(c));
+  const paintedTrim = ['#fff2bd', '#ffe9b9', '#197c9b', '#ffd69b', '#fff0c5', '#218e83'].map(c => standard(c));
+  const shopBases = ['#076f71', '#b43255', '#237bad', '#7e3152', '#504393', '#ce702d'].map(c => standard(c));
+  const roofSlate = standard('#2356a0');
+  const copperRoof = standard('#07a99d', .53, .16);
   const storefrontGlass = [standard('#365e67', .19, .25), standard('#376d79', .12, .35), standard('#556d62', .2, .22)];
   const shopNames = ['POWELL STREET BOOKS', 'CAFÉ MARCEL', 'THE STRATFORD', 'GOLDEN GATE CAMERA', 'SAN FRANCISCO OPTICAL', 'BOTTEGA', 'CITY LIGHT FLORIST', 'SUTTER JEWELERS', 'UNION COFFEE', 'GRAND TAILORS', 'PACIFIC RECORDS', 'THE CABLE CAR BAKERY', 'RUE & ROSE', 'HOTEL VICTORIA', 'POST STREET GALLERY', 'CALIFORNIA WINES', 'PAPER & INK', 'FAR EAST ANTIQUES'];
   const shopMaterials = shopNames.map((name, i) => new THREE.MeshStandardMaterial({ map: labelTexture(name, i % 3 === 0 ? '#e0d3b2' : '#dfdfd0', ['#1d6869', '#9b403e', '#284f86', '#896323'][i % 4]), roughness: .75, emissive: '#d6bf93', emissiveIntensity: .045, side: THREE.DoubleSide }));
-  const shopAwningMaterials = ['#087c80', '#b74334', '#d29b37', '#315f99', '#cb7757'].map(c => standard(c));
+  const shopAwningMaterials = ['#03b6ac', '#f34e61', '#f8bd32', '#5267d9', '#f07bb3'].map(c => standard(c));
   const warmInterior = new THREE.MeshStandardMaterial({color: '#9d845d', roughness: .85, emissive: '#e8b772', emissiveIntensity: .17});
   const paper = standard('#f0e1bf'), pottery = standard('#b76d48'), redPaint = standard('#b9493e');
   // Half-octagonal bay shell. Angled cheeks and projecting sills give Victorian
@@ -332,6 +341,26 @@ export function createWorld(scene: THREE.Scene) {
   const mansardGeometry = new THREE.CylinderGeometry(1.02, Math.SQRT2, 1, 4);
   mansardGeometry.rotateY(Math.PI / 4);
   const turretRoofGeometry = new THREE.ConeGeometry(1, 1, 8);
+  // Swept eaves, with corners curling upward, give the small Chinatown-inspired
+  // rooftop pavilions a legible silhouette high above the cable-car canyon.
+  const pagodaRoofGeometry = (() => {
+    const points: number[] = [], indices: number[] = [];
+    const rings = [[0, 1.65], [.34, .88], [.72, .20], [1, 0], [1.07, .09]];
+    for (const [radius, height] of rings) for (let edge = 0; edge < 4; edge++) for (let i = 0; i < 8; i++) {
+      const t = i / 8, u = t * 2 - 1;
+      const x = edge === 0 ? u : edge === 1 ? 1 : edge === 2 ? -u : -1;
+      const z = edge === 0 ? -1 : edge === 1 ? u : edge === 2 ? 1 : -u;
+      points.push(x * radius, height + Math.pow(Math.abs(u), 4) * radius * .42, z * radius);
+    }
+    for (let ring = 0; ring < rings.length - 1; ring++) for (let i = 0; i < 32; i++) {
+      const a = ring * 32 + i, b = ring * 32 + (i + 1) % 32, c = a + 32, d = b + 32;
+      indices.push(a, c, b, b, c, d);
+    }
+    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    geometry.setIndex(indices); geometry.computeVertexNormals(); return geometry;
+  })();
+  const lacquer = standard('#ef4b57', .47), jadeTile = standard('#09b79e', .49, .10);
+  jadeTile.side = THREE.DoubleSide;
   const bracketShape = new THREE.Shape();
   bracketShape.moveTo(0,0);bracketShape.lineTo(0,1);bracketShape.lineTo(.92,1);bracketShape.lineTo(.92,.75);bracketShape.bezierCurveTo(.47,.72,.31,.48,.17,.12);bracketShape.closePath();
   const victorianBracket = new THREE.ExtrudeGeometry(bracketShape,{depth:.22,bevelEnabled:false});
@@ -378,9 +407,11 @@ export function createWorld(scene: THREE.Scene) {
       const groundLow = Math.min(sampleRoute(z - frontage / 2).y, sampleRoute(z + frontage / 2).y);
       const groundHigh = Math.max(sampleRoute(z - frontage / 2).y, sampleRoute(z + frontage / 2).y);
       const base = groundLow - .45, storey = 3.25, upperBase = groundHigh + 4.25;
-      const floors = victorianHero ? 3 : 3 + Math.floor(random() * (z < 570 ? 4 : 5));
+      // Slender, extravagantly tall Painted Ladies turn each block into a city canyon.
+      // Deliberate low/high beats preserve glimpses of the next impossible hill.
+      const floors = victorianHero ? (queenAnne ? 10 : 8) : (bidx % 7 === 0 ? 17 : 7 + Math.floor(random() * 7));
       const height = upperBase - base + floors * storey + .8;
-      const front = p.x + side * (11.72 + (bidx % 5 === 3 ? .68 : 0)), middle = front + side * depth / 2;
+      const front = p.x + side * (10.72 + (bidx % 5 === 3 ? .42 : 0)), middle = front + side * depth / 2;
       const style = victorianHero ? (side === 1 ? 0 : queenAnne ? 1 : 4) : bidx % 6; bidx++;
       const frame = windowFrame[style % 6];
       box(`building-masonry-${style}`, sideMaterials[style], middle, base + height / 2, z, depth, height, frontage);
@@ -388,15 +419,23 @@ export function createWorld(scene: THREE.Scene) {
       box('stone-ground-floor', shopBases[style], front - side * .06, (base + upperBase) / 2, z, .20, upperBase - base, frontage);
       for (let yy = base + .38; yy < upperBase; yy += .48) box('rusticated-stone-joints', materials.darkTrim, front - side * .172, yy, z, .018, .017, frontage - .12);
       box('ground-floor-architrave', paintedTrim[style], front - side * .18, upperBase, z, .5, .31, frontage + .16);
-      const columns = victorianHero ? 3 : bidx % 3 === 0 ? 7 : 8, pitch = frontage / columns;
+      const columns = victorianHero ? 3 : bidx % 3 === 0 ? 5 : 6, pitch = frontage / columns;
       const hasBays = victorianHero || ((z < 560 || bidx % 3 === 0) && style !== 3);
+      // The impossible gradients create deep stepped foundations. Populate
+      // their exposed portions with real windows rather than blank retaining walls.
+      for (let col = 0; col < columns; col++) {
+        const zz = z - frontage / 2 + pitch * (col + .5), terrain = sampleRoute(zz).y;
+        for (let yy = upperBase - 1.77; yy > terrain + 5.0; yy -= storey) {
+          facadeWindow(front, yy, zz, side, style, (col + bidx) % 8, 1.30, 2.02);
+        }
+      }
       for (let f = 0; f < floors; f++) {
         const floorY = upperBase + f * storey;
         plane(`masonry-storey-${style}`, victorianHero ? victorianFacades[style] : facadeMaterials[style], front - side * .016, floorY + storey / 2, z, frontage, storey, frontRotation);
         // Return walls read as buildings at intersections, with real-size windows.
         for (const end of [-1, 1]) {
           plane(`masonry-storey-${style}`, victorianHero ? victorianFacades[style] : facadeMaterials[style], middle, floorY + storey / 2, z + end * (frontage / 2 + .013), depth, storey, new THREE.Euler(0, end < 0 ? Math.PI : 0, 0));
-          for (let dx = 2; dx < depth - 1; dx += 3.15) {
+          for (let dx = 2; dx < depth - 1; dx += 4.4) {
             const wi = Math.floor(random() * 8), x = front + side * dx;
             plane(`window-return-${wi}`, windowMaterials[wi], x, floorY + 1.48, z + end * (frontage / 2 + .024), 1.2, 1.95, new THREE.Euler(0, end < 0 ? Math.PI : 0, 0));
             box('return-window-sills', materials.trim, x, floorY + .39, z + end * (frontage / 2 + .09), 1.54, .13, .20);
@@ -406,7 +445,7 @@ export function createWorld(scene: THREE.Scene) {
           const zz = z - frontage / 2 + pitch * (col + .5), y = floorY + 1.48;
           const wi = Math.floor(random() * 8);
           if (queenAnne && col === 2) { /* Continuous octagonal corner bay is authored below. */ }
-          else if (hasBays && (victorianHero ? col !== 1 : (col === 2 || col === 5))) bay(front, y, zz, side, style, wi);
+          else if (hasBays && (victorianHero ? col !== 1 : (col === 1 || col === columns - 2))) bay(front, y, zz, side, style, wi);
           else facadeWindow(front, y, zz, side, style, wi);
           // Select small wrought-iron balconettes on French-window buildings.
           if (!hasBays && style === 0 && f % 2 === 1 && col % 3 === 1) {
@@ -634,6 +673,32 @@ export function createWorld(scene: THREE.Scene) {
         pole('roof-chimney', materials.stone, middle + side * 4, roofH + 1.4, z - 5, .38, 2.4);
         box('chimney-cap', materials.darkTrim, middle + side * 4, roofH + 2.64, z - 5, 1.15, .15, 1.15);
       }
+      if (style === 3 && z > 220 && z < 690) {
+        const pavilionX = front + side * 4.8;
+        // A continuous lacquered core carries the stepped pavilions through
+        // their open eaves; from flight the three roofs must never read as
+        // independent floating blocks. Gilded corner posts expose the support.
+        box('pagoda-continuous-tower-core', lacquer, pavilionX, roofH + 8.0, z, 3.35, 16.0, 3.35);
+        for (const cornerX of [-1, 1]) for (const cornerZ of [-1, 1]) {
+          box('pagoda-continuous-golden-posts', materials.gold, pavilionX + cornerX * 1.78, roofH + 8.1, z + cornerZ * 1.78, .24, 16.2, .24);
+        }
+        for (let tier = 0; tier < 3; tier++) {
+          const radius = 5.0 - tier * .95, yy = roofH + 1.0 + tier * 5.2;
+          box('pagoda-rooftop-room', lacquer, pavilionX, yy + 1.55, z, radius * 1.32, 3.1, radius * 1.40);
+          for (const edge of [-1, 1]) {
+            box('pagoda-gilded-columns', materials.gold, pavilionX - side * radius * .70, yy + 1.8, z + edge * radius * .65, .26, 3.6, .26);
+            box('pagoda-gallery-rail', materials.gold, pavilionX - side * radius * .85, yy + .90, z, .12, .13, radius * 1.65);
+            for (let spindle = -3; spindle <= 3; spindle++) box('pagoda-gallery-balusters', materials.gold, pavilionX - side * radius * .85, yy + .53, z + spindle * radius * .25, .08, .70, .08);
+          }
+          box('pagoda-dark-window', materials.glass, pavilionX - side * radius * .667, yy + 1.95, z, .08, 1.84, radius * .94);
+          part('pagoda-upturned-jade-roof', jadeTile, pavilionX, yy + 3.1, z, radius, 1.1, radius, new THREE.Euler(), pagodaRoofGeometry);
+          for (const cornerX of [-1, 1]) for (const cornerZ of [-1, 1]) {
+            part('pagoda-golden-roof-tip', materials.gold, pavilionX + cornerX * radius * 1.04, yy + 3.72, z + cornerZ * radius * 1.04, .19, .24, .19, new THREE.Euler(), sphereGeometry);
+          }
+        }
+        pole('pagoda-roof-finial', materials.gold, pavilionX, roofH + 16.6, z, .075, 2.9);
+        part('pagoda-finial-pearl', materials.gold, pavilionX, roofH + 17.8, z, .32, .32, .32, new THREE.Euler(), sphereGeometry);
+      }
       if (bidx % 8 === 0) {
         box(`building-setback-${style}`, sideMaterials[style], middle + side * 3, roofH + 1.5, z, depth * .60, 3, frontage * .64);
         box('building-setback-cap', materials.trim, middle + side * 3, roofH + 3.06, z, depth * .63, .18, frontage * .67);
@@ -642,17 +707,17 @@ export function createWorld(scene: THREE.Scene) {
   }
 
   // Tall blade signs create a readable, layered downtown silhouette.
-  const bladeSpecs = [{ z: 145, side: 1, text: 'PACIFIC', color: '#ffc087' }, { z: 448, side: -1, text: 'HOTEL', color: '#ff9989' }, { z: 1090, side: -1, text: 'HOTEL', color: '#ead5a4' }, { z: 1014, side: 1, text: 'UNION', color: '#ffbbaa' }];
+  const bladeSpecs = [{ z: 145, side: 1, text: 'PACIFIC', color: '#ffe865' }, { z: 448, side: -1, text: 'HOTEL', color: '#ff87cf' }, { z: 1090, side: -1, text: 'FLY SF', color: '#86ffdf' }, { z: 1014, side: 1, text: 'UNION', color: '#ffc06b' }, {z: 36, side: -1, text: 'HELLO', color: '#7affec'}];
   for (let i = 0; i < bladeSpecs.length; i++) {
     const { z, side, text, color } = bladeSpecs[i], p = sampleRoute(z);
     const texture = canvasTexture(180, 1024, ctx => {
-      ctx.fillStyle = '#273342'; ctx.fillRect(0, 0, 180, 1024); ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.strokeRect(8, 8, 164, 1008);
+      ctx.fillStyle = i % 2 ? '#8b265f' : '#145ea0'; ctx.fillRect(0, 0, 180, 1024); ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.strokeRect(8, 8, 164, 1008);
       ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = 'bold 105px sans-serif';
       [...text].forEach((letter, j) => ctx.fillText(letter, 90, 110 + j * (800 / (text.length - 1))));
     });
     const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-    box('blade-sign-body', materials.darkTrim, p.x + side * 10.95, p.y + 15, z, 2.2, 12.8, .45);
-    plane(`blade-sign-${i}`, mat, p.x + side * 10.95, p.y + 15, z - .24, 2.2, 12.8, new THREE.Euler(0, Math.PI, 0));
+    box('blade-sign-body', materials.darkTrim, p.x + side * 10.2, p.y + 23, z, 2.7, 16.8, .45);
+    plane(`blade-sign-${i}`, mat, p.x + side * 10.2, p.y + 23, z - .24, 2.7, 16.8, new THREE.Euler(0, Math.PI, 0));
   }
 
   const glowTexture = canvasTexture(128, 128, ctx => {
@@ -686,6 +751,37 @@ export function createWorld(scene: THREE.Scene) {
     wire(v(p.x - 8.2, p.y + 7.2, z), v(p.x + 8.2, p.y + 7.2, z), .6);
     const next = sampleRoute(z + 42);
     for (const side of [-1, 1]) wire(v(p.x + side * 3.1, p.y + 6.7, z), v(next.x + side * 3.1, next.y + 6.7, z + 42), .15);
+  }
+  // Festival colour is visible both from the pavement and from flight. Keep
+  // cross-street pennants in the grounded portions of the route, clear of jumps.
+  const flagGeometry = new THREE.BufferGeometry();
+  flagGeometry.setAttribute('position', new THREE.Float32BufferAttribute([-.5, .5, 0, 0, -.5, 0, .5, .5, 0], 3));
+  flagGeometry.computeVertexNormals();
+  const festivalColors = ['#ff5273', '#ffd343', '#08cdb9', '#ac7aff'].map(color => {
+    const material = standard(color, .68); material.side = THREE.DoubleSide; return material;
+  });
+  for (const z of [68, 396, 842, 1280]) {
+    const p = sampleRoute(z), height = p.y + 20;
+    wire(v(p.x - 12, height, z), v(p.x + 12, height, z), 2.1);
+    for (let i = 0; i < 17; i++) {
+      const t = (i + .5) / 17, x = p.x - 12 + t * 24;
+      part('festival-pennants', festivalColors[i % 4], x, height - Math.sin(t * Math.PI) * 2.1 - .54, z, 1.09, 1.32, 1, new THREE.Euler(0, Math.PI, 0), flagGeometry);
+    }
+  }
+  const lanternRed = standard('#f43854', .43), lanternGold = standard('#ffdb66', .41, .14);
+  for (let z = 314; z < 541; z += 24) for (const side of [-1, 1]) {
+    const p = sampleRoute(z), x = p.x + side * 9.0;
+    pole('festival-lantern-pole', lacquer, x, p.y + 6.3, z, .082, 12.6);
+    for (let level = 0; level < 2; level++) {
+      const yy = p.y + 10.6 - level * 2.05, lx = x - side * .61;
+      segment('festival-lantern-arm', lanternGold, v(x, yy + .80, z), v(lx, yy + .80, z), .046);
+      part('festival-red-lantern', lanternRed, lx, yy, z, .52, .66, .52, new THREE.Euler(), sphereGeometry);
+      for (const dy of [-.57, .57]) pole('festival-lantern-caps', lanternGold, lx, yy + dy, z, .23, .13);
+      pole('festival-lantern-tassel', lanternGold, lx, yy - .98, z, .035, .60);
+      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+        segment('festival-lantern-gold-ribs', lanternGold, v(lx + Math.cos(angle) * .50, yy - .34, z + Math.sin(angle) * .50), v(lx + Math.cos(angle) * .50, yy + .34, z + Math.sin(angle) * .50), .014);
+      }
+    }
   }
   // Human-scale curbside objects: SF hydrants, ribbed litter baskets, parking
   // signs and the occasional news rack. Keep the racing surface readable.
@@ -769,7 +865,7 @@ export function createWorld(scene: THREE.Scene) {
 
   // The surrounding city is built in 13-metre, four-storey modules: skyline
   // windows retain the same physical scale as the foreground architecture.
-  const skylineMat = standard('#8aa5b4');
+  const skylineMat = standard('#8fc9d2');
   const secondaryMaterials = stoneColors.slice(0, 4).map((_, style) => {
     const map = canvasTexture(512, 512, ctx => {
       const masonry = facadeTexture(style).image as HTMLCanvasElement;
@@ -806,7 +902,7 @@ export function createWorld(scene: THREE.Scene) {
         const front = p.x + side * (layer === 0 ? 48 + random() * 7 : 106 + random() * 10);
         const x = front + side * depth / 2;
         const base = Math.min(sampleRoute(z - frontage / 2).y, sampleRoute(z + frontage / 2).y) - 2;
-        const height = 13 * (2 + Math.floor(random() * (layer ? 4 : 3))), style = Math.floor(random() * 4);
+        const height = 13 * (4 + Math.floor(random() * (layer ? 6 : 5))), style = Math.floor(random() * 4);
         box(`secondary-city-body-${style}`, sideMaterials[style], x, base + height / 2, z, depth, height, frontage);
         secondaryFace('secondary-city-facade', front - side * .04, base, z, frontage, height, side < 0 ? Math.PI / 2 : -Math.PI / 2, style);
         secondaryFace('secondary-city-facade', x, base, z - frontage / 2 - .04, depth, height, Math.PI, style);
@@ -895,6 +991,22 @@ export function createWorld(scene: THREE.Scene) {
     secondaryFace('skyline-facade', x, -18, z - depth / 2 - .04, width, h, Math.PI, style);
     if (i % 3 === 0) box('skyline-roof', materials.darkTrim, x, h - 17, z, width * .7, 2, depth * .7);
     if (i % 5 === 0) pole('skyline-roof-aerial', materials.metal, x, h - 13, z, .09, 8);
+  }
+
+  // Continuous hills, sidewalks and cross streets share one draw per surface;
+  // the finer terrain tessellation does not add a draw for every city block.
+  const stripBatches = new Map<THREE.Material, THREE.Mesh[]>();
+  for (const mesh of terrainStrips) {
+    const mat = mesh.material as THREE.Material;
+    const strips = stripBatches.get(mat) ?? []; strips.push(mesh); stripBatches.set(mat, strips);
+  }
+  for (const [mat, strips] of stripBatches) {
+    const geometry = mergeGeometries(strips.map(mesh => mesh.geometry));
+    if (!geometry) continue;
+    const mesh = new THREE.Mesh(geometry, mat); mesh.receiveShadow = true;
+    mesh.name = strips.some(strip => strip.name === 'powell-asphalt') ? 'powell-asphalt' : 'continuous city terrain';
+    for (const strip of strips) { world.remove(strip); strip.geometry.dispose(); }
+    world.add(mesh);
   }
 
   // One instanced draw per geometry/material family, including windows and props.

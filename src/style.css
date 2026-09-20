@@ -21,3 +21,37 @@ canvas#world{touch-action:none}
 .racing:has(.tour-ui:not(.hidden)) .race-shade{background:linear-gradient(0deg,#06243888,transparent 28%)}
 .race-hud{text-shadow:0 2px 8px #062438a0}
 .topbar{text-shadow:0 1px 10px #08283860}
+
+/* Whimsical SF: a bright postcard wrapped around a playable city. */
+:root{--acid:#ffe15a;--line:#fff6dc40;color:#fff8e7;background:#148fb2}
+.brand-mark{color:#fff7db;text-shadow:3px 3px 0 #f26458;letter-spacing:-2px}
+.brand-word{font-size:9px;letter-spacing:1.6px}
+.weather-dot{background:#ffe15a;box-shadow:0 0 12px #ffda48aa}
+.topbar{padding:27px 38px}.weather{font-size:8px}
+.intro{padding:105px 5.5vw 145px}
+h1{font-size:clamp(80px,8.7vw,137px);font-weight:900;line-height:.82;letter-spacing:-1px;text-shadow:5px 7px 0 #183a534a;max-width:540px!important}
+h1 span{color:#ffe15a}h1 i{font-size:.36em;line-height:1.8;letter-spacing:1px;color:#fff6dc;display:block}
+.eyebrow{color:#fff7d5;letter-spacing:2.6px;font-size:9px;margin-bottom:23px}
+.eyebrow:before{height:3px;width:28px;background:#ff785b}
+.intro-copy{color:#fff7e5;font-size:13px;line-height:1.8;margin-top:-5px;text-shadow:0 2px 8px #193852}
+.primary{background:#ffe15a;color:#19354b;border-radius:5px;box-shadow:0 4px 0 #b58d30,0 10px 24px #16334930;font-weight:800;letter-spacing:1.3px}
+.primary:hover{background:#fff094;transform:translateY(-2px)}.primary:active{transform:translateY(3px);box-shadow:0 1px 0 #b58d30}
+.keyboard-note,.text-button{color:#fff3d9}.keyboard-note{font-size:8px;letter-spacing:.7px}
+.route-card{border-top-color:#fff6dc65}.route-text small,.route-text em,.location-label{color:#fff0d7}.route-index{color:#ffdd57}.route-text strong{color:#fff9e8}
+.shade{background:linear-gradient(90deg,rgba(15,50,66,.75),rgba(17,53,72,.32) 32%,transparent 64%),linear-gradient(0deg,#16374d75,transparent 22%)}
+.panel{background:#153e54f5;border-radius:12px;border-color:#ffedb640;box-shadow:0 20px 80px #102f4a66}.panel:before{background:#ff835f;border-radius:10px;width:90px}.panel p{color:#e1e9de}
+.panel h2{color:#fff3d5}.panel-eyebrow{color:#ffdc56}.panel .secondary{border-radius:4px}.control-item{color:#e5eedf}
+.race-top{background:#123d5782;backdrop-filter:blur(10px);border:1px solid #ffffff30;border-radius:100px;padding:13px 25px;top:24px;gap:26px}
+.label{color:#e0eddf}.stat-value{font-size:28px}.stat-value em{color:#ffebbc}
+.race-message strong{color:#ffdf59;text-shadow:3px 4px 0 #28506366}.race-message span{background:#173c55bc;border-radius:30px;padding:7px 16px;line-height:1.5;color:#fff8e1}
+.boost-fill,.progress-fill{background:#ffe15a}.map-course{stroke:#ffe15a}.map-progress{stroke:#ffe15a}.speed{color:#fff7de;text-shadow:4px 5px 0 #254d6b66}
+.speed-vignette{box-shadow:inset 0 0 120px #6bfaff30}.flying .speed-vignette{opacity:.7;box-shadow:inset 0 -30px 100px #64eade15}
+.flight-hud{position:fixed;left:50%;top:122px;transform:translate(-50%,-8px);display:flex;align-items:center;gap:16px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;color:#e3fffb;background:#134962c9;border:1px solid #a0fff699;border-radius:12px;padding:12px 20px;backdrop-filter:blur(8px);z-index:7;box-shadow:0 10px 32px #1037531f}
+.flight-hud.active{opacity:1;transform:translate(-50%,0)}.flight-icon{font-size:38px;color:#78fff2}.flight-hud small{font-size:8px;letter-spacing:1.7px;display:block}.flight-hud strong{font-family:'Barlow Condensed',Impact,sans-serif;font-size:33px;line-height:1.1}.flight-hud em{font:600 9px 'DM Sans',Arial,sans-serif;letter-spacing:1px;font-style:normal;color:#86ffef}
+.flight-time{padding-left:18px;border-left:1px solid #d6ffff44;font-family:'Barlow Condensed',Impact,sans-serif;font-size:29px;line-height:1.1}.flight-time small{font:600 7px 'DM Sans',Arial,sans-serif;letter-spacing:1px;margin-top:3px;white-space:nowrap}
+.flying .race-message{top:34%}.drift-hint{background:#164763b0;padding:8px 14px;border-radius:30px;color:#b8fff3;font-size:8px;letter-spacing:1.4px}
+.tour-actions button,.tour-stops button{background:#174b63df;border-radius:4px;color:#fff5d6}.tour-actions #tour-race{background:#ffe15a}.tour-caption strong{color:#fff5d6}.tour-caption span{color:#ffe15a}.tour-caption small{color:#e5f4ea}
+.loading{background:#15465b}.loading .brand-mark{color:#ffdf56}
+@media(max-width:760px){.topbar{padding:23px 24px}.brand-word{font-size:7px;letter-spacing:1px}.weather{font-size:7px;letter-spacing:.6px}.intro{padding:110px 28px 180px;justify-content:center}h1{font-size:clamp(72px,15vw,104px);line-height:.85;max-width:380px!important}h1 i{font-size:.36em}.intro-copy{font-size:12px}.race-top{top:93px;gap:20px;padding:10px 20px}.race-message{top:28%}.flight-hud{top:170px;padding:8px 15px;gap:12px}.flight-hud strong{font-size:27px}.flight-icon{font-size:28px}.flight-time{font-size:25px}.flying .race-message{top:37%}.keyboard-note{max-width:330px;font-size:7px;gap:6px}.intro-actions{gap:20px}.edition{display:none}.location-label{display:none}}
+@media(max-height:560px){.intro{padding:80px 35px 100px}h1{font-size:65px;line-height:.78}h1 i{font-size:.3em}.eyebrow{margin-bottom:12px}.intro-copy{display:none}.intro-actions{margin-top:5px}.race-top{top:20px}.flight-hud{top:86px}.tour-caption{bottom:100px}.tour-stops,.tour-actions{bottom:25px}.flight-hud strong{font-size:25px}.flight-time{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.flight-hud{transition:none}.primary{transition:none}}

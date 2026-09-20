@@ -1,5 +1,5 @@
-import { CHECKPOINTS, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, routeSlope, sampleRoute } from './route.ts';
-import type { Obstacle } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
+import type { LaunchZone, Obstacle } from './route.ts';
 
 export type DriveInput = { throttle: number; brake: number; steer: number; drift: boolean; boost: boolean };
 export type DriveState = {
@@ -12,18 +12,24 @@ export type DriveState = {
   y: number;
   verticalVelocity: number;
   airborne: boolean;
+  /** Wheel deployment: 0 = road, 1 = hover. */
+  glide: number;
+  altitude: number;
+  airTime: number;
+  totalAirTime: number;
+  launches: number;
   finished: boolean;
   checkpoint: number;
   collisions: number;
   distanceDrifted: number;
 };
-export type RaceEvent = 'checkpoint' | 'finish' | 'crash' | 'land';
+export type RaceEvent = 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land';
 
 const STEP = 1 / 120;
 const CAR_HALF_WIDTH = .95;
 const CAR_HALF_LENGTH = 2.1;
 const EDGE = ROAD_HALF_WIDTH - CAR_HALF_WIDTH;
-const GRAVITY = 14;
+const MIN_LAUNCH_SPEED = 24;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const inputNumber = (value: number, min: number, max: number) => Number.isFinite(value) ? clamp(value, min, max) : 0;
 
@@ -31,7 +37,7 @@ function initialState(): DriveState {
   return {
     progress: START_PROGRESS, lateral: 0, speed: 0, elapsed: 0, boost: 1,
     driftAngle: 0, y: sampleRoute(START_PROGRESS).y, verticalVelocity: 0,
-    airborne: false, finished: false, checkpoint: 0, collisions: 0, distanceDrifted: 0,
+    airborne: false, glide: 0, altitude: 0, airTime: 0, totalAirTime: 0, launches: 0, finished: false, checkpoint: 0, collisions: 0, distanceDrifted: 0,
   };
 }
 
@@ -63,8 +69,9 @@ export class DrivingSimulation {
   private obstacles: Obstacle[];
   private lateralVelocity = 0;
   private edgeCooldown = 0;
-  private jumpCooldown = 0;
-  private airborneTime = 0;
+  private activeLaunch: LaunchZone | undefined;
+  private liftBias = 0;
+  private launchedZones = new Set<number>();
   private boostLocked = false;
   private lastBoosting = false;
   private hitObstacles = new Set<number>();
@@ -83,8 +90,9 @@ export class DrivingSimulation {
     this.state = initialState();
     this.lateralVelocity = 0;
     this.edgeCooldown = 0;
-    this.jumpCooldown = 0;
-    this.airborneTime = 0;
+    this.activeLaunch = undefined;
+    this.liftBias = 0;
+    this.launchedZones.clear();
     this.boostLocked = false;
     this.lastBoosting = false;
     this.hitObstacles.clear();
@@ -116,7 +124,6 @@ export class DrivingSimulation {
     const oldProgress = s.progress;
     const oldLateral = s.lateral;
     this.edgeCooldown = Math.max(0, this.edgeCooldown - dt);
-    this.jumpCooldown = Math.max(0, this.jumpCooldown - dt);
     if (!input.boost) this.boostLocked = false;
     const boosting = input.boost && !this.boostLocked && s.boost > 0 && input.throttle > 0 && input.brake < .2;
     this.lastBoosting = boosting;
@@ -131,15 +138,17 @@ export class DrivingSimulation {
     const engine = (boosting ? 28 : 19) * input.throttle;
     const rollingResistance = s.speed > 0 ? .6 + .015 * s.speed : 0;
     const drag = .003 * s.speed * s.speed;
-    const driftDrag = input.drift ? 3.8 + .045 * s.speed : 0;
-    const downhill = s.speed > .5 ? -routeSlope(s.progress) * 4 : 0;
+    const driftDrag = input.drift && !s.airborne ? 3.8 + .045 * s.speed : 0;
+    const downhill = s.speed > .5 && !s.airborne ? -routeSlope(s.progress) * 4 : 0;
     s.speed += (engine - rollingResistance - drag - input.brake * 34 - driftDrag + downhill) * dt;
     if (s.speed > terminalSpeed) s.speed = Math.max(terminalSpeed, s.speed - 24 * dt);
-    s.speed = clamp(s.speed, 0, 60);
+    // Lift keeps forward motion even if the driver releases the accelerator in flight.
+    s.speed = clamp(s.speed, s.airborne ? 18 : 0, 60);
 
     const routeBend = (sampleRoute(s.progress + 2).x - 2 * sampleRoute(s.progress).x + sampleRoute(s.progress - 2).x) / 4;
-    const targetLateralVelocity = input.steer * s.speed * .19 * (input.drift ? 1.38 : 1) - routeBend * s.speed * s.speed * .22;
-    const grip = s.airborne ? 1.1 : input.drift ? 3.3 : 9;
+    const targetLateralVelocity = input.steer * s.speed * (s.airborne ? .17 : .19) * (input.drift && !s.airborne ? 1.38 : 1)
+      - (s.airborne ? 0 : routeBend * s.speed * s.speed * .075);
+    const grip = s.airborne ? 4.2 : input.drift ? 3.3 : 9;
     this.lateralVelocity += (targetLateralVelocity - this.lateralVelocity) * (1 - Math.exp(-grip * dt));
     this.lateralVelocity = clamp(this.lateralVelocity, -16, 16);
     if (s.speed < .1 && !s.airborne) this.lateralVelocity = 0;
@@ -151,13 +160,13 @@ export class DrivingSimulation {
     if (Math.abs(s.lateral) > EDGE) {
       const side = Math.sign(s.lateral);
       s.lateral = side * EDGE;
-      if (this.edgeCooldown === 0 && s.speed > 8 && this.lateralVelocity * side > 1) {
+      if (!s.airborne && this.edgeCooldown === 0 && s.speed > 8 && this.lateralVelocity * side > 1) {
         s.speed *= .68;
         s.collisions++;
         events.push('crash');
         this.edgeCooldown = .8;
       }
-      this.lateralVelocity = -side * Math.abs(this.lateralVelocity) * .22;
+      this.lateralVelocity = s.airborne ? 0 : -side * Math.abs(this.lateralVelocity) * .22;
     }
 
     for (let i = 0; i < this.obstacles.length; i++) {
@@ -181,27 +190,52 @@ export class DrivingSimulation {
     if (input.drift && s.speed > 10 && Math.abs(this.lateralVelocity) > 1.4 && !s.airborne) s.distanceDrifted += s.speed * dt;
 
     const ground = sampleRoute(s.progress).y;
-    const verticalCurvature = (routeSlope(s.progress + 1) - routeSlope(s.progress - 1)) / 2;
-    if (!s.airborne && this.jumpCooldown === 0 && s.speed > 31 && verticalCurvature * s.speed * s.speed < -GRAVITY * 1.05) {
-      s.airborne = true;
-      s.verticalVelocity = routeSlope(oldProgress) * s.speed + 1.25;
-      this.airborneTime = 0;
-      this.jumpCooldown = 1.2;
+    if (!s.airborne && s.speed >= MIN_LAUNCH_SPEED && input.brake < .4) {
+      const index = LAUNCH_ZONES.findIndex((zone, i) => !this.launchedZones.has(i) && oldProgress <= zone.progress && s.progress >= zone.progress);
+      if (index !== -1) {
+        this.activeLaunch = LAUNCH_ZONES[index];
+        this.liftBias = 0;
+        this.launchedZones.add(index);
+        s.airborne = true;
+        s.airTime = 0;
+        s.launches++;
+        events.push('launch');
+      }
     }
-    if (s.airborne) {
-      this.airborneTime += dt;
-      s.y += s.verticalVelocity * dt - GRAVITY * dt * dt / 2;
-      s.verticalVelocity -= GRAVITY * dt;
-      if (s.y <= ground) {
+    if (s.airborne && this.activeLaunch) {
+      const zone = this.activeLaunch;
+      s.airTime += dt;
+      s.totalAirTime += dt;
+      const u = clamp((s.progress - zone.progress) / (zone.end - zone.progress), 0, 1);
+      const envelope = Math.sin(Math.PI * u) ** 2;
+      const targetLift = (boosting ? 7 : 0) - input.brake * 11;
+      const oldLift = this.liftBias;
+      this.liftBias += (targetLift - this.liftBias) * (1 - Math.exp(-3 * dt));
+      s.y = Math.max(ground, sampleGlidePath(s.progress, zone) + this.liftBias * envelope);
+      const baseSlope = (sampleGlidePath(s.progress + .1, zone) - sampleGlidePath(s.progress - .1, zone)) / .2;
+      const liftSlope = this.liftBias * Math.PI * Math.sin(2 * Math.PI * u) / (zone.end - zone.progress);
+      s.verticalVelocity = (baseSlope + liftSlope) * forwardSpeed + (this.liftBias - oldLift) / dt * envelope;
+      // Lift control fades with zero slope at both ends, preserving smooth landings.
+      // Unfold quickly at the crest, then turn the wheels back before touchdown.
+      const remaining = clamp((zone.end - s.progress) / 32, 0, 1);
+      const targetGlide = remaining * remaining * (3 - 2 * remaining);
+      s.glide += (targetGlide - s.glide) * (1 - Math.exp(-10 * dt));
+      if (s.progress >= zone.end) {
         s.y = ground;
         s.airborne = false;
+        s.glide = 0;
+        s.airTime = 0;
         s.verticalVelocity = routeSlope(s.progress) * s.speed;
-        if (this.airborneTime > .14) events.push('land');
+        s.boost = Math.min(1, s.boost + .12);
+        this.activeLaunch = undefined;
+        events.push('land');
       }
     } else {
       s.y = ground;
+      s.glide = 0;
       s.verticalVelocity = routeSlope(s.progress) * s.speed;
     }
+    s.altitude = Math.max(0, s.y - ground);
 
     const actualStep = s.progress >= TRACK_LENGTH && s.progress > oldProgress ? dt * clamp((TRACK_LENGTH - oldProgress) / (s.progress - oldProgress), 0, 1) : dt;
     s.elapsed += actualStep;

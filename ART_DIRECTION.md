@@ -1,42 +1,25 @@
-# SF / City Run — visual direction
+# Whimsical SF
 
-## The target
+A San Francisco postcard that learned to fly. The city is recognizable in its bay windows, cable-car tracks, steep streets, Victorian trim, palms, pagoda rooftops, Union Square, Transamerica, Salesforce and the orange bridge. Its scale and geography are intentionally impossible.
 
-A vivid California driving postcard: clean Pacific blue sky, warm afternoon sun, colorful painted architecture, crisp blue shadows, healthy greenery and a brilliant red car. The place should be recognizable from its street proportions, hills, cable cars and landmarks even with every label hidden. Keep the rendering grounded in material and lighting behavior, with an intentionally heightened color palette.
+## The visual language
 
-## What the first version got wrong
+Saturated coral, marigold, turquoise, lavender and ivory. Very narrow, very tall façades frame the road. Detailed Victorian bays and fire escapes repeat vertically into playful towers. A wide camera with a mild fisheye lens bends the edges of the city, while the center remains readable for driving. Bright blue Pacific sky, warm stone sidewalks and dry asphalt keep the colors distinct.
 
-Gray atmospheric fog obscured the skyline. Too much ambient light flattened the buildings. Repeated window grids and similar building silhouettes dominated each view. Broad wet-road glare and nighttime effects competed with the city. Additional objects increased complexity without establishing a coherent visual hierarchy.
+The hero is a coral coupe with an ivory roof. All four wheel assemblies unfold ninety degrees into cyan turbine pods, slide outward and deploy small fins. Air trails and animated sun hoops reveal the flight line. Wheels return upright before landing and the suspension absorbs touchdown.
 
-## Current correction
+## The playable postcard
 
-- A photographic clear blue HDR sky, with color direction matched to the scene, and lower-density blue distance haze.
-- Warm directional sun, cooler shadow fill, architectural shadow casters.
-- Color-preserving tone mapping; restrained bloom and vignette.
-- Mostly dry asphalt; removed projected night headlight/taillight pools.
-- Curated seafoam, coral, ochre, cream and periwinkle streetfronts with contrasting trim.
-- Three curated Victorian hero facades, varied roofs, an articulated Union Square backdrop and a flowering plaza.
-- Two optimized real jacaranda models with cutout leaf silhouettes and shadows.
-- Brighter blue/teal glazing and richer vehicle/foliage colors.
+The Powell Skyway is 1.3 km from Nob Hill through Union Square to Market Street. Three deliberately exaggerated hilltops launch the car at 150m, 535m and 1010m. Flights return to the road at 365m, 740m and 1230m. Grounded stretches break up the action. Union Square stays level as a moment to breathe.
 
-## The next major asset pass
+Speed of at least 24 m/s (~54 mph) triggers a launch. A/D steers both on the road and in flight. Boost adds lift and braking dives within the authored flight corridor. Landing restores twelve percent boost. Nine collectible sun rings replenish boost. Slower drivers can remain on the road.
 
-Build a single 150–250 m hero stretch to a consistent standard before expanding the map. Use street photography as reference for actual facade rhythms, door proportions, bay windows, curb widths, fixtures and street signs.
+Flight follows a authored arc with smooth endpoints so the driver can read every landing. This is arcade flight, not an aerodynamics simulation. Keep future mechanics legible and joyful.
 
-1. Author a small family of distinctive Victorian and Edwardian facades as clean 3D assets, plus the exact hero landmark visible in the chosen view. Include deep entrances, dimensional ornament and restrained weathering. Preserve separate modular pieces for reuse without making every building identical.
-2. Use a properly modeled hero vehicle and suitable detailed foliage. Clean topology, normal maps, reflections and grounded contact shadows matter more than a large object count.
-3. Build a material library at consistent real-world scale: painted wood, stucco, limestone, brick, glass, aged copper and asphalt. Texture wear should support each surface, not uniformly dirty every object.
-4. Compose three views: the top-of-hill reveal, the street-level passage, and the landmark arrival. Review them both as still images and at race speed. A skyline vista must be geographically plausible for the direction of travel.
-5. Export browser assets as optimized glTF/GLB with mesh compression, compact textures, sensible detail levels and reusable materials. Keep distant geometry simple and foreground geometry deliberate.
+## Reference version
 
-## Acceptance criteria
+The previous sunny street-racing prototype is preserved by Git tag `pre-whimsical-sf`, commit `8e7c7af`. Preserve this tag. Use a separate checkout to compare it without discarding this version.
 
-- An unlabelled screenshot evokes San Francisco through shape, street rhythm and setting.
-- Materials retain color in sunlight; shadow details remain readable.
-- Close buildings have distinct entrances, rooflines and storefronts.
-- Trees read as foliage rather than geometric blobs, and plants meet the ground.
-- The driver can read the racing line, rails, obstacles and checkpoints at speed.
-- Visual improvements survive a moving-camera review without shimmer, clipping, floating details or abrupt pop-in.
-- Measure frame rate and draw calls on the actual target device. Offer a reduced-effects mode without changing the course.
+## Next art investment
 
-The current course remains a stylized authored interpretation. The sunny pass establishes its palette; a professional hero-asset pass is the next substantial step toward a showcase environment.
+Replace selected procedural repeated façades with a small bespoke modular kit. A hand-modeled cable-car kart, bakery, corner Victorian and Chinatown gate would add more character than increasing the number of generic buildings. Keep level expansions curated: one beautiful route per neighborhood, each with its own flight rhythm.
