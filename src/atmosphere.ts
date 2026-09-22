@@ -95,7 +95,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     bakeCityReflections,
     update(time:number,progress:number){
       sky.position.copy(camera.position);skyMaterial.uniforms.time.value=time;
-      const p=sampleRoute(progress);sun.target.position.set(p.x,p.y+10,progress+20);
+      const p=sampleRoute(progress);sun.target.position.set(p.x,p.y+10,p.z);
       sun.position.copy(sun.target.position).addScaledVector(sunlightDirection,210);
     },
     setQuality(low:boolean){sun.castShadow=!low;coolFill.intensity=low?.32:.45;},

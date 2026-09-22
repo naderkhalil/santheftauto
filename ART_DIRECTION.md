@@ -1,27 +1,37 @@
 # Whimsical SF
 
-A San Francisco postcard that learned to fly. The city is recognizable in its bay windows, cable-car tracks, steep streets, Victorian trim, palms, pagoda rooftops, Union Square, Transamerica, Salesforce, the orange Golden Gate Bridge and the Ferry Building with the silver Bay Bridge behind it. Its scale and geography are intentionally impossible.
+A San Francisco postcard that learned to fly. The city should be recognizable from its streets, building proportions and public spaces before the car ever leaves the ground. Keep the saturated sunlight and playful glides, and spend detail on the places people remember.
 
 ## The visual language
 
-Saturated coral, marigold, turquoise, lavender and ivory. Very narrow, very tall façades frame the road. Detailed Victorian bays and fire escapes repeat vertically into playful towers. A wide camera with a mild fisheye lens bends the edges of the city, while the center remains readable for driving. Bright blue Pacific sky, warm stone sidewalks and dry asphalt keep the colors distinct.
+Warm limestone and granite, brick and painted plaster, blue window reflections, green roof tiles, red Chinatown lanterns, coral bodywork and turquoise bay water. Color comes from distinct materials and daylight. Human-scale doors, windows, paving joints, café furniture and cornices give the larger city its scale.
 
-The hero is a coral coupe with an ivory roof. All four wheel assemblies unfold ninety degrees into cyan turbine pods, slide outward and deploy small fins. Air trails and animated sun hoops reveal the flight line. Wheels return upright before landing and the suspension absorbs touchdown.
+Union Square is an open terraced plaza, with the slender Dewey Monument rising above palms, granite steps, lawn planters, corner heart sculptures and red umbrellas. The Westin's historic wings and recessed courts face it from Powell, with modern towers behind; Macy's anchors Geary, and the low glass Apple pavilion faces Post. Surrounding façades have detailed returns so turning the corner reveals another occupied street.
 
-## The playable postcard
+Powell is a cable-car climb framed by masonry buildings. Grant Avenue is a narrower Chinatown corridor: Dragon Gate at the entrance, varied small shopfronts, bilingual signs, balconies, lantern strings and green tile roofs. The skyline and waterfront should appear in believable directions. Building heights, footprints and landmark relationships carry more weight than adding generic towers.
 
-The Powell Skyway is 1.3 km from Nob Hill through Union Square to Market Street. Three deliberately exaggerated hilltops release the car just before their crests at 138m, 523m and 998m. Flights return to the road at 365m, 740m and 1230m. Grounded stretches break up the action. Union Square stays level as a moment to breathe.
+A wide chase camera retains a gentle fisheye character, while the center remains clear for driving. Preserve bright sky, dry asphalt and warm stone without washing out material colors.
 
-Market Street opens onto a final waterfront postcard: the Ferry Building stands on a pier over animated turquoise water, with the silver Bay Bridge spanning the background. A smooth finish reveal and compact results preserve the view. The automatic tour stops at the bay; its Market St landmark button previews the same scene. All waterfront geometry is procedural.
+## The route
 
-Speed of at least 24 m/s (~54 mph) triggers a launch. A/D steers both on the road and in flight. Boost adds lift and braking dives within the authored flight corridor. Landing restores twelve percent boost. Nine collectible sun rings replenish boost. Slower drivers can remain on the road.
+The approximately 2.33 km course laps Union Square along **Post, Stockton, Geary and Powell**, continues up **Powell**, turns along **Bush** into **Grant Avenue**, then follows **Washington** toward the **Embarcadero** and **Market Street / Ferry Building** finish.
 
-Flight carries the uphill road tangent into a gentle arc, with wheel deployment following clearance and smooth endpoints so the driver can read every landing. This is arcade flight, not an aerodynamics simulation. Keep future mechanics legible and joyful.
+This is a compressed interpretation of those street connections. Block spacing, rounded turns, architecture and hill heights are authored for the game, not surveyed geography. The more grounded street layout makes the three deliberate departures into flight feel special.
 
-## Reference version
+Three hill glides occur on Powell, Grant and Washington. Their flight paths carry the uphill tangent into a gentle arc and return to the road smoothly. The coral coupe's four wheels pivot ninety degrees into cyan hover pods, slide outward and deploy fins. Nine gold sun rings indicate the flight line and refill boost. Wheels return before touchdown, followed by a small suspension response.
 
-The previous sunny street-racing prototype is preserved by Git tag `pre-whimsical-sf`, commit `8e7c7af`. Preserve this tag. Use a separate checkout to compare it without discarding this version.
+Speed of at least 24 m/s (about 54 mph) triggers a launch. Steering remains active in flight; boost adds lift and braking dives within the flight corridor. Slower drivers can remain on the road. Street corners guide the car along the route while allowing lane choice, braking and drifting. This is approachable arcade driving and flight.
 
-## Next art investment
+## The waterfront payoff
 
-Replace selected procedural repeated façades with a small bespoke modular kit. A hand-modeled cable-car kart, bakery, corner Victorian and Chinatown gate would add more character than increasing the number of generic buildings. Keep level expansions curated: one beautiful route per neighborhood, each with its own flight rhythm.
+Market Street opens onto the Ferry Building on a pier over animated turquoise water, with the silver Bay Bridge spanning the background. A smooth camera reveal and compact results keep that composition visible. Ferries and sailboats give the bay movement. The automatic tour also ends here, and its **The Bay** button previews the finish.
+
+## Asset status and next investment
+
+The current city, landmark and vehicle geometry is procedural. No Blender-authored replacements have been imported for this version. Existing texture and sky sources retain their documented credits.
+
+Keep the route, collision layout and gameplay in code. Use Blender next for the shapes procedural construction handles least convincingly: the Westin's detailed architectural silhouette, the Dewey Victory sculpture, and the Dragon Gate's roof, carvings and guardian lions. Approve each model from actual driving and menu cameras before replacing another landmark. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) specifies the authoring and export plan.
+
+## Preserved versions
+
+`pre-city-loop` (`d47bae0`) preserves the previous linear course and waterfront finish. `whimsical-sf-v1` (`e147015`) preserves the first hover-flight interpretation. `pre-whimsical-sf` (`8e7c7af`) preserves the original sunny driving prototype. Keep all three tags; compare in separate checkouts rather than discarding the current work.

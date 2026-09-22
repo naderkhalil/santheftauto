@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** A condensed western Bay Bridge: two silver suspension spans and their
  * monumental centre anchorage, framed across the water behind the Ferry Building. */
-export function createBayBridge(scene: THREE.Scene): THREE.Group {
+export function createBayBridge(scene: THREE.Object3D): THREE.Group {
   const group = new THREE.Group();
   group.name = 'Bay Bridge / western double suspension spans';
   scene.add(group);

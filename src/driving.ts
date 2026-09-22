@@ -1,4 +1,4 @@
-import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeCurvature, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
 import type { LaunchZone, Obstacle } from './route.ts';
 
 export type DriveInput = { throttle: number; brake: number; steer: number; drift: boolean; boost: boolean };
@@ -30,6 +30,8 @@ const CAR_HALF_WIDTH = .95;
 const CAR_HALF_LENGTH = 2.1;
 const EDGE = ROAD_HALF_WIDTH - CAR_HALF_WIDTH;
 const MIN_LAUNCH_SPEED = 24;
+/** Gentle corner weight; the road guides heading while the driver chooses a lane. */
+export const CORNER_DRIFT = .012;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const inputNumber = (value: number, min: number, max: number) => Number.isFinite(value) ? clamp(value, min, max) : 0;
 
@@ -145,9 +147,9 @@ export class DrivingSimulation {
     // Lift keeps forward motion even if the driver releases the accelerator in flight.
     s.speed = clamp(s.speed, s.airborne ? 18 : 0, 60);
 
-    const routeBend = (sampleRoute(s.progress + 2).x - 2 * sampleRoute(s.progress).x + sampleRoute(s.progress - 2).x) / 4;
+    const routeBend = routeCurvature(s.progress);
     const targetLateralVelocity = input.steer * s.speed * (s.airborne ? .17 : .19) * (input.drift && !s.airborne ? 1.38 : 1)
-      - (s.airborne ? 0 : routeBend * s.speed * s.speed * .075);
+      - (s.airborne ? 0 : routeBend * s.speed * s.speed * CORNER_DRIFT);
     const grip = s.airborne ? 4.2 : input.drift ? 3.3 : 9;
     this.lateralVelocity += (targetLateralVelocity - this.lateralVelocity) * (1 - Math.exp(-grip * dt));
     this.lateralVelocity = clamp(this.lateralVelocity, -16, 16);

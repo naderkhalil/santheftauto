@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** A compressed Embarcadero postcard, facing the last stretch of Market Street. */
-export function createWaterfront(scene: THREE.Scene) {
+export function createWaterfront(scene: THREE.Object3D) {
   const group = new THREE.Group(); group.name = 'Embarcadero · Ferry Building and sparkling bay'; scene.add(group);
   const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
@@ -168,7 +168,7 @@ export function createWaterfront(scene: THREE.Scene) {
     uniforms: waterUniforms, fog: true,
     vertexShader: `varying vec3 vWorld; varying vec3 vView;
       #include <fog_pars_vertex>
-      void main(){vec4 world=modelMatrix*vec4(position,1.);vWorld=world.xyz;vec4 mvPosition=viewMatrix*world;vView=-mvPosition.xyz;gl_Position=projectionMatrix*mvPosition;
+      void main(){vec4 world=modelMatrix*vec4(position,1.);vWorld=vec3(position.x,-2.,3135.-position.y);vec4 mvPosition=viewMatrix*world;vView=-mvPosition.xyz;gl_Position=projectionMatrix*mvPosition;
       #include <fog_vertex>
       }`,
     fragmentShader: `uniform float time;uniform float lowQuality;varying vec3 vWorld;varying vec3 vView;

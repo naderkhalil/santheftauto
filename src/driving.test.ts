@@ -187,6 +187,9 @@ test('hover retracts before landing and the flight corridor joins the road smoot
 
 test('air steering is responsive, soft boundaries do not count as curb crashes, and braking cannot strand a glider', () => {
   const sim = new DrivingSimulation();
+  sim.state.progress = LAUNCH_ZONES[2].progress - .02;
+  sim.state.speed = 44;
+  sim.state.y = sampleRoute(sim.state.progress).y;
   while (!sim.state.airborne) sim.update(1 / 120, throttle);
   const initialLateral = sim.state.lateral;
   drive(sim, .5, { ...throttle, steer: 1 });
@@ -234,7 +237,11 @@ test('slow driving stays grounded and gliders clear obstacles beneath their flig
   assert.ok(!slow.update(.2, neutral).includes('launch'));
   assert.equal(slow.state.airborne, false);
   assert.equal(slow.state.launches, 0);
-  const flight = new DrivingSimulation([{ progress: 250, lateral: 0, width: 6, length: 8, kind: 'cablecar' }]);
+  const first = LAUNCH_ZONES[0];
+  const flight = new DrivingSimulation([{ progress: (first.progress + first.end) / 2, lateral: 0, width: 6, length: 8, kind: 'cablecar' }]);
+  flight.state.progress = first.progress - 30;
+  flight.state.speed = 44;
+  flight.state.y = sampleRoute(flight.state.progress).y;
   const flightEvents = drive(flight, 10);
   assert.ok(flightEvents.includes('launch'));
   assert.ok(flightEvents.includes('land'));

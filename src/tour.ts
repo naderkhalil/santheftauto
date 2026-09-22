@@ -1,14 +1,15 @@
 import * as THREE from 'three';
-import { LAUNCH_ZONES, sampleGlidePath, sampleRoute, routeSlope, routeYaw, TRACK_LENGTH, type Obstacle } from './route';
-import { DrivingSimulation } from './driving';
-import { flightView } from './flight-view';
+import { LAUNCH_ZONES, sampleGlidePath, sampleRoute, routePoint, routeFrame, routeSlope, routeCurvature, TRACK_LENGTH, START_PROGRESS, type Obstacle } from './route.ts';
+import { DrivingSimulation, CORNER_DRIFT } from './driving.ts';
+import { flightView } from './flight-view.ts';
 
 /** A real run driven by an obstacle-aware autopilot, including all hover transitions. */
 export class CityTour {
   paused=false;orbit=0;elapsed=0;
   private simulation:DrivingSimulation;
   private selectedLane=0;
-  constructor(private obstacles:Obstacle[]){this.simulation=new DrivingSimulation(obstacles);this.jump(85);}
+  private obstacles:Obstacle[];
+  constructor(obstacles:Obstacle[]){this.obstacles=obstacles;this.simulation=new DrivingSimulation(obstacles);this.jump(START_PROGRESS);}
   get progress(){return this.simulation.state.progress;}
   get lateral(){return this.simulation.state.lateral;}
   get speed(){return this.simulation.state.speed;}
@@ -44,17 +45,18 @@ export class CityTour {
       if(score>bestScore){bestScore=score;bestLane=lane;}
     }
     this.selectedLane=next.length?bestLane:0;
-    this.simulation.update(dt,{throttle:1,brake:0,steer:THREE.MathUtils.clamp((this.selectedLane-this.lateral)*.13,-.6,.6),drift:false,boost:false});
+    const cornerCompensation = this.airborne ? 0 : routeCurvature(this.progress) * this.speed * CORNER_DRIFT / .19;
+    this.simulation.update(dt,{throttle:1,brake:0,steer:THREE.MathUtils.clamp((this.selectedLane-this.lateral)*.13+cornerCompensation,-.6,.6),drift:false,boost:false});
   }
   getPose(){
-    const s=this.simulation.state,p=sampleRoute(s.progress),ahead=sampleRoute(s.progress+24),back=sampleRoute(s.progress-10);
-    const yaw=this.orbit+Math.sin(this.elapsed*.065)*.06,distance=10;
-    const view=flightView(s,routeSlope(p.z),ahead.y);
+    const s=this.simulation.state,p=routePoint(s.progress,s.lateral),ahead=routePoint(s.progress+24,s.lateral),back=routePoint(s.progress-10,s.lateral);
+    const frame=routeFrame(s.progress),yaw=frame.yaw+this.orbit+Math.sin(this.elapsed*.065)*.06,distance=10;
+    const view=flightView(s,frame.slope,ahead.y);
     return {
-      car:new THREE.Vector3(p.x+s.lateral,s.y+.03,p.z),
-      rotation:new THREE.Euler(view.pitch,routeYaw(p.z)+s.driftAngle,view.bank),
-      camera:new THREE.Vector3(p.x+s.lateral+Math.sin(yaw)*distance,Math.max(s.y+4.1,back.y+3.8),p.z-Math.cos(yaw)*distance),
-      look:new THREE.Vector3(ahead.x+s.lateral-Math.sin(yaw)*15,view.lookHeight,p.z+Math.cos(yaw)*24),
+      car:new THREE.Vector3(p.x,s.y+.03,p.z),
+      rotation:new THREE.Euler(view.pitch,frame.yaw+s.driftAngle,view.bank,'YXZ'),
+      camera:new THREE.Vector3(p.x-Math.sin(yaw)*distance,Math.max(s.y+4.1,back.y+3.8),p.z-Math.cos(yaw)*distance),
+      look:new THREE.Vector3(ahead.x-frame.normal.x*Math.sin(this.orbit)*15,view.lookHeight,ahead.z-frame.normal.z*Math.sin(this.orbit)*15),
     };
   }
 }
