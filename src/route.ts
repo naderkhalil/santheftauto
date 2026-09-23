@@ -91,9 +91,45 @@ function terrainField(x: number, z: number): number {
   return blend(eastSide, profileHeight(x, washingtonHeights), z, 610, 682);
 }
 
+/** Footprints reserved for the authored square, ordered minX, maxX, minZ, maxZ.
+ * These include cornices/returns, not the racing street or its sidewalks.
+ * Keep in step with the north-square and square-frontages Blender sources.
+ */
+const squareParcels: readonly (readonly [number, number, number, number])[] = [
+  [-60, 60, -50, 50],                         // public square
+  [-161, -92, -50, 50],                       // Westin
+  [-67, 63, 79, 132],                         // Post frontage and Apple garden
+  [31, 63, 132, 185], [-67, -28, 132, 183],   // Hyatt and Beacon Grand
+  [-131, -87, 80, 111], [-113, -87, 110, 136], [-143, -129, 80, 136],
+  [88, 130, 80, 132], [88, 128, 138, 169],    // 278 Post and Campton Place
+  [-129, -87, -138, -82], [-186, -128, -138, -82],
+  [-61, 61, -137, -82], [93, 138, -129, -82], // Macy's and Neiman Marcus
+  [93, 130, 5, 49], [93, 130, -49, -5],      // Stockton, leaving Maiden Lane open
+];
+
+/** Used by background buildings and non-racing cross streets only. */
+export function intersectsSquareParcel(x: number, z: number, width: number, depth: number): boolean {
+  return squareParcels.some(([minX, maxX, minZ, maxZ]) =>
+    x + width / 2 > minX && x - width / 2 < maxX &&
+    z + depth / 2 > minZ && z - depth / 2 < maxZ);
+}
+
+function squareTerrain(x: number, z: number, field: number): number {
+  // The clear Apple interior and its public garden need a real level lot;
+  // the old Powell hill field rose straight through their floors. Carry that
+  // block datum behind the Post frontage, then ease back into the wider city.
+  const dx = Math.max(-143 - x, 0, x - 131);
+  const dz = Math.max(79 - z, 0, z - 185);
+  const lotWeight = 1 - smooth(clamp(Math.hypot(dx, dz) / 64, 0, 1));
+  // Preserve the full uphill Powell sidewalk. The opaque hotel foundations
+  // meet the rising hillside; a broad transition avoids a trench beside it.
+  const awayFromPowell = smooth(clamp((Math.abs(x + 75) - 12.7) / 43, 0, 1));
+  return field + (22 - field) * lotWeight * awayFromPowell;
+}
+
 /** Shared grade for street meshes and buildings, including the flat square. */
 export function groundHeight(x: number, z: number): number {
-  const field = terrainField(x, z), nearest = planAt(routeProgressAt(x, z));
+  const field = squareTerrain(x, z, terrainField(x, z)), nearest = planAt(routeProgressAt(x, z));
   const distance = Math.hypot(x - nearest.x, z - nearest.z);
   // A street cuts a level cross-section through the surrounding hill. Match
   // the entire sidewalk width, then ease back into the broader terrain.

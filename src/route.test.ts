@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LAUNCH_ZONES, ROUTE_STOPS, TRACK_LENGTH, groundHeight, routeFrame, routePoint, routeProgressAt, sampleRoute } from './route.ts';
+import { LAUNCH_ZONES, ROUTE_STOPS, TRACK_LENGTH, groundHeight, intersectsSquareParcel, routeFrame, routePoint, routeProgressAt, sampleRoute } from './route.ts';
 import { CityTour } from './tour.ts';
 
 const near = (a: number, b: number, epsilon = 1e-6) => assert.ok(Math.abs(a - b) < epsilon, `${a} differs from ${b}`);
@@ -41,6 +41,32 @@ test('Union Square is flat and the lap meets the original Powell/Post corner wit
   near(afterLap.position.x, northwest.x); near(afterLap.position.z, northwest.z);
   near(afterLap.tangent.x, 0); near(afterLap.tangent.z, 1);
   assert.ok(lastSide > 500);
+});
+
+test('Apple has a level interior without changing the hill course or Powell sidewalks', () => {
+  for (let x = 20; x <= 62; x += 3) for (let z = 83; z <= 129; z += 2) near(groundHeight(x, z), 22);
+  // Fixed course elevations protect the accepted takeoff/landing feel from
+  // scenery edits accidentally changing the shared driving height field.
+  for (const [x, z, height] of [
+    [-75, 120, 25.432], [-75, 150, 38.5], [-75, 180, 51.568], [-75, 200, 55],
+    [175, 400, 61.26953125], [175, 476, 84.13484375], [350, 700, 56.83885402110245],
+  ]) near(sampleRoute(routeProgressAt(x, z)).y, height);
+  for (let z = 100; z <= 240; z += 2) {
+    const progress = routeProgressAt(-75, z);
+    for (const lateral of [-12.7, -7.4, 0, 7.4, 12.7]) {
+      const edge = routePoint(progress, lateral);
+      near(groundHeight(edge.x, edge.z), edge.y);
+    }
+  }
+});
+
+test('authored square parcels exclude duplicate buildings while keeping roads and Maiden Lane open', () => {
+  assert.ok(intersectsSquareParcel(-48, 156, 29, 21), 'Beacon replaces the old east-Powell box');
+  assert.ok(intersectsSquareParcel(-102, 132, 29, 21), 'Chancellor replaces its overlapping background box');
+  assert.ok(!intersectsSquareParcel(-102, 156, 29, 21), 'the next uphill west-Powell parcel is still available');
+  assert.ok(intersectsSquareParcel(46, 181, 20, 7), 'Sutter background strips cannot run through the Hyatt');
+  assert.ok(!intersectsSquareParcel(-75, 145, 14.8, 5), 'the Powell carriageway remains clear');
+  assert.ok(!intersectsSquareParcel(110, 0, 20, 6), 'Maiden Lane remains a real gap between the boutiques');
 });
 
 test('flights stay within straight hill corridors and every landing clears the following turn', () => {

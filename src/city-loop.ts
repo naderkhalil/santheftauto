@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createCableCarAsset } from './street-assets';
-import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_POLYLINE, ROUTE_STOPS, TRACK_LENGTH, groundHeight, routePoint, routeProgressAt, routeSlope, routeYaw, sampleRoute, type Obstacle } from './route';
+import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_POLYLINE, ROUTE_STOPS, TRACK_LENGTH, groundHeight, intersectsSquareParcel, routePoint, routeProgressAt, routeSlope, routeYaw, sampleRoute, type Obstacle } from './route';
 
 /** A compact street grid, with the square and Grant left to their authored sets. */
 export function createCityLoop(scene: THREE.Scene) {
@@ -57,7 +57,18 @@ export function createCityLoop(scene: THREE.Scene) {
   function crossRoad(ax:number,az:number,bx:number,bz:number,width=14.8){
     const length=Math.hypot(bx-ax,bz-az),dx=(bx-ax)/length,dz=(bz-az)/length;const points:number[]=[],ids:number[]=[];
     const n=Math.ceil(length/5);
-    for(let i=0;i<=n;i++)for(const side of [-1,1]){const x=ax+(bx-ax)*i/n+dz*width/2*side,z=az+(bz-az)*i/n-dx*width/2*side;points.push(x,groundHeight(x,z)+.07,z);if(i<n&&side===-1){const j=i*2;ids.push(j,j+2,j+1,j+1,j+2,j+3);}}
+    for(let i=0;i<=n;i++)for(const side of [-1,1]){
+      const x=ax+(bx-ax)*i/n+dz*width/2*side,z=az+(bz-az)*i/n-dx*width/2*side;
+      points.push(x,groundHeight(x,z)+.07,z);
+      if(i<n&&side===-1){
+        const middle=(i+.5)/n,cx=ax+(bx-ax)*middle,cz=az+(bz-az)*middle;
+        // The compressed background grid must not paint Sutter through the
+        // Hyatt lobby or cross another authored parcel. Racing ribbons above
+        // are independent and remain continuous through every intersection.
+        if(intersectsSquareParcel(cx,cz,Math.abs(dx)*length/n+Math.abs(dz)*width,Math.abs(dz)*length/n+Math.abs(dx)*width))continue;
+        const j=i*2;ids.push(j,j+2,j+1,j+1,j+2,j+3);
+      }
+    }
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setIndex(ids);g.computeVertexNormals();if(!batches.has(sideRoad))batches.set(sideRoad,[]);batches.get(sideRoad)!.push(g);
   }
   for(const z of streetsZ)crossRoad(-260,z,635,z);
@@ -95,6 +106,7 @@ export function createCityLoop(scene: THREE.Scene) {
   // Narrow frontages, regular floor heights, recessed glazing and real rooflines.
   const palette=['#d9c7af','#c7b0a2','#d5d4bf','#c29b84','#bcbfc0','#e5d5be','#a9b7ad','#dbc59c'];
   function building(x:number,z:number,w:number,d:number,h:number,index:number,front:'east'|'west'|'north'|'south'='south'){
+    if(intersectsSquareParcel(x,z,w+1,d+1))return;
     const base=Math.min(groundHeight(x-w/2,z-d/2),groundHeight(x+w/2,z+d/2));
     const wall=mat(palette[index%palette.length]);box(wall,x,base+h/2,z,w,h,d);
     box(stone,x,base+3.2,z,w+.16,.65,d+.16);box(stone,x,base+h-.7,z,w+.5,.45,d+.5);box(roof,x,base+h+.1,z,w+.25,.65,d+.25);
@@ -142,7 +154,6 @@ export function createCityLoop(scene: THREE.Scene) {
   // The square belongs to a continuous city, with streets visible beyond every turn.
   building(-192,0,43,101,54,index++,'east');
   building(149,0,25,99,48,index++,'west');
-  for(const x of [-43,31])building(x,145,54,40,34+(index%2)*10,index++,'south');
   const outerX=[-660,-530,-400,-270,-150,-20,110,240,365,485,590];
   const outerZ=[-660,-525,-390,-250,-130,15,140,255,375,495,615,785,920,1050];
   for(const x of [-600,-465,-335])crossRoad(x,-730,x,1110);

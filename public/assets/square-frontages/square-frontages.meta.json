@@ -1,0 +1,34 @@
+{
+  "triangles": 152876,
+  "lodTriangles": 62674,
+  "meshes": 56,
+  "materials": 22,
+  "bytes": 3429320,
+  "lodBytes": 3053004,
+  "origin": "world X/Z ground relative; place glTF at (0,22,0)",
+  "bounds": {
+    "Macys": [
+      -60,
+      -136,
+      60,
+      -83
+    ],
+    "Neiman": [
+      94,
+      -128,
+      137,
+      -83
+    ],
+    "Stockton": [
+      94,
+      -48,
+      129,
+      48
+    ]
+  },
+  "sources": [
+    "https://www.nilesbolton.com/neiman-marcus-union-square",
+    "https://en.wikipedia.org/wiki/Macy%27s_Union_Square"
+  ],
+  "runtimeMaterialBatches": 25
+}

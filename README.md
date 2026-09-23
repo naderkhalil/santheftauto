@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around. **The Westin** pauses across the square for a close architectural view; **Resume** returns to driving.
+Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Resume** returns to driving.
 
 ## Controls
 
@@ -31,7 +31,11 @@ The approximately **2.33 km city loop** follows:
 
 **Post → Stockton → Geary → Powell → Bush → Grant → Washington → Embarcadero → Market / Ferry Building**
 
-The opening lap passes all four sides of Union Square. Its open granite terraces, Dewey Monument, palm trees, corner hearts and red café umbrellas sit between the historic Westin St. Francis, Macy's, the Apple pavilion and surrounding storefronts. Powell's cable-car rails lead uphill to Bush and the Dragon Gate. Grant Avenue narrows into Chinatown's masonry storefronts, balconies, lanterns and green tiled roofs. Washington descends toward the bay; the Embarcadero connects to the Market Street finish.
+The opening lap passes all four sides of Union Square. Its raised granite terraces, Dewey Monument, seven date palms, four jacaranda canopies, corner hearts and café pavilions sit between the historic Westin St. Francis, Macy's and I. Magnin on Geary, and the individual Post and Stockton storefronts. Broad stairs, retaining walls and a southeast subway entrance give the square its elevation and street-level scale.
+
+Apple faces south across Post, west of Stockton, with its public garden and Grand Hyatt behind it. Saks, Tiffany and the former Williams-Sonoma building complete the north frontage. Neiman Marcus occupies the southeast corner across Geary; Maiden Lane remains open between the smaller Stockton parcels. The previously empty outside corners now have authored hotel and retail buildings. [The geographic reference](art/references/union-square-layout.md) records the actual relationships and the game's approximate placements.
+
+Powell's cable-car rails lead uphill to Bush and the Dragon Gate. Grant Avenue narrows into Chinatown's masonry storefronts, balconies, lanterns and green tiled roofs. Washington descends toward the bay; the Embarcadero connects to the Market Street finish.
 
 The street connections and landmark relationships establish a more recognizable city. Block lengths, building dimensions, turns and hill profiles are compressed or exaggerated for play; this is not a survey-accurate reconstruction. Three flight sections remain, on Powell, Grant and Washington.
 
@@ -41,11 +45,11 @@ City-loop times use the separate local-storage key `whimsical-sf-city-loop-best-
 
 ## Stack and assets
 
-TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. The Westin St. Francis, Dewey Monument, twelve date palms and Powell cable car are now authored in Blender and loaded as local GLB assets. The Westin has a separate distant model with Draco compression; the palms are instanced. Other city buildings, the player car, Chinatown and the waterfront remain procedural geometry. Labels and many material details are generated locally.
+TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. Local Blender GLBs supply the Westin, Post frontage and surrounding hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms and Powell cable car. The three architectural groups have separate distant models with Draco compression. Seven palms and four CC0 jacarandas use instancing; the stepped plaza and furnishings remain authored Three.js geometry. The wider city, player car, Chinatown and waterfront still use procedural geometry. Labels and many material details are generated locally.
 
 The asphalt maps and photographic sky use CC0 source assets. Additional source assets from earlier prototypes remain in the repository; see [asset credits](public/assets/CREDITS.md) and the adjacent source notes. Google Fonts is optional; system fallbacks keep the game playable once local assets are available.
 
-[BLENDER_ASSETS.md](BLENDER_ASSETS.md) documents the implemented asset pipeline, editable source files, exact placements and measured asset budgets. The art pass adds local reflections, broader plaza shadows and contact shading, while retaining the route and driving simulation.
+[BLENDER_ASSETS.md](BLENDER_ASSETS.md) documents the implemented asset pipeline, editable source files, placements and measured asset budgets. Architectural studies are in `art/reviews/north-square.png`, `apple-post-street.png`, `square-frontages-overview.png` and `neiman-rotunda-study.png`; these are Blender review renders. Local reflections, plaza shadows and contact shading support the game view. Apple has a level lot, and parcel reservations prevent duplicate background buildings and streets; the racing route and flight heights are retained.
 
 ## Verify
 
@@ -54,16 +58,19 @@ npm test
 npm run build
 ```
 
-Tests cover route geometry and driving behavior, including frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs.
+Tests cover route geometry and driving behavior, including frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap.
 
 The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state and hover deployment. `window.sfNightRun` provides read-only diagnostic snapshots.
 
 ## Recovery checkpoints
 
+The expanded square, corrected parcels, terraces and storefront assets are saved at `union-square-fidelity-v2`.
+
 Preserve these existing tags:
 
 | Tag | Commit | Version |
 | --- | --- | --- |
+| `union-square-blender-v1` | `ffae8dc` | First Westin, monument, palms and cable-car Blender pass, before the wider square corrections |
 | `pre-art-direction-v2` | `3f03057` | Connected city loop before the Blender art pass |
 | `pre-city-loop` | `d47bae0` | Previous linear course, smooth hill glides and Ferry Building/Bay Bridge finish |
 | `whimsical-sf-v1` | `e147015` | First exaggerated-hill and hover-wheel version |

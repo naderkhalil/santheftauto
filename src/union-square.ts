@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import { createWestin } from './westin';
+import { createNorthSquare } from './north-square';
+import { createSquareFrontages } from './square-frontages';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createPlazaAssets } from './plaza-assets';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { PLAZA_LEVELS, PLAZA_PALMS } from './plaza-layout';
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
@@ -107,57 +111,144 @@ export function createUnionSquare(scene: THREE.Scene) {
     mat.name = 'Union Square / dressed rectangular granite pavers'; return mat;
   };
 
-  // Low modern terraces, the enormous pale paved center and four lawn panels
-  // are the square's silhouette. The park is open enough to see across at speed.
-  box(120, .34, 100, m.riser, 0, ground + .17, 0);
-  box(118.5, .12, 98.5, paving(118.5, 98.5), 0, ground + .40, 0);
-  box(84, .8, 67, m.riser, 0, ground + .77, 0);
-  box(83.6, .12, 66.6, paving(83.6, 66.6), 0, ground + 1.23, 0);
-  // Broad, shallow steps on all four sides: visually and physically gentle.
-  for (let step = 0; step < 5; step++) {
-    const h = .16 * (5 - step), d = .74;
-    for (const side of [-1, 1]) {
-      box(80, h, d, m.light, 0, ground + .45 + h / 2, side * (33.8 + step * d));
-      box(d, h, 47, m.light, side * (42.4 + step * d), ground + .45 + h / 2, 0);
-    }
-  }
-  // The square's darker granite bands run through a field of light pavers.
-  for (const z of [-28, 28]) box(82, .014, .34, m.seam, 0, ground + 1.305, z);
-  for (const x of [-34, 34]) box(.34, .014, 66, m.seam, x, ground + 1.305, 0);
-  for (const z of [-8, 8]) box(82, .014, .15, m.granite, 0, ground + 1.307, z);
+  // Union Square is the roof of a garage on sloping city ground. It reads as
+  // a sequence of outdoor rooms, not a lawn on a thin flat slab. The broad
+  // southern stair rises to the event plaza; the planted Post Street terrace
+  // sits another four risers above it. These compressed heights keep the road.
+  const plaza = PLAZA_LEVELS.center;
+  const perimeter = PLAZA_LEVELS.perimeter;
+  const north = PLAZA_LEVELS.north;
+  const darkPaving = material('flamed charcoal granite ribbons', '#78847d', .88);
+  const flowerLeaf = material('perennial planting', '#4c7139', .87);
+  const flowerCream = material('white flowering borders', '#e7e4bf', .89);
+  const flowerLavender = material('violet salvias', '#8577ae', .85);
   const stainless = material('brushed stainless handrails', '#b9c5c0', .34, .82);
-  // Paired slender rails follow the stairs down, including rounded end returns.
-  for (const sign of [-1, 1]) for (const x of [-14, 14]) {
-    const top = V(x, ground + 2.30, sign * 33.2), bottom = V(x, ground + 1.49, sign * 37.5);
-    rod(top, bottom, .045, stainless);
-    for (const t of [0, .5, 1]) {
-      const p = top.clone().lerp(bottom, t); rod(p, p.clone().add(V(0, -.95, 0)), .037, stainless);
-      cylinder(.12, .045, stainless, p.x, p.y - .945, p.z, .12, 12);
+  const softBox = (w:number,h:number,d:number,mat:THREE.Material,x:number,y:number,z:number,r=.026) =>
+    add(new RoundedBoxGeometry(w,h,d,1,Math.min(r,h*.18)),mat,x,y,z);
+  const pavement = (w:number,d:number,top:number,x:number,z:number) => {
+    box(w,top-ground-.09,d,m.riser,x,(ground+top-.09)/2,z);
+    softBox(w,.09,d,paving(w,d),x,top-.045,z,.018);
+  };
+  pavement(120,100,perimeter,0,0);
+  // The ceremonial center remains genuinely open, as in the reference photo.
+  pavement(89.4,52.4,plaza,0,-2.5);
+  for(const z of [-25,-15,-5,5,15]) box(89.2,.012,3.2,darkPaving,0,plaza+.008,z);
+  for(const x of [-42.7,42.7]) box(.22,.014,52.2,m.seam,x,plaza+.01,-2.5);
+  for(const z of [-28.48,23.48]) box(89.2,.014,.24,m.seam,0,plaza+.01,z);
+
+  // Real stair proportions and a small bevel catch the sunlight on each nosing.
+  function stairs(width:number,count:number,rise:number,tread:number,x:number,z:number,base:number,direction:1|-1) {
+    for(let i=0;i<count;i++) {
+      const top=base+(i+1)*rise;
+      const zz=z+direction*(i+.5)*tread;
+      box(width,top-perimeter-.02,tread,m.riser,x,(top+perimeter-.02)/2,zz);
+      softBox(width+.04,.07,tread+.035,m.light,x,top-.035,zz,.013);
+      box(width-.08,.016,.035,m.seam,x,top+.009,zz-direction*(tread*.5-.12));
     }
-    rod(top.clone().add(V(0, 0, -sign * .36)), top, .045, stainless);
-    rod(bottom, bottom.clone().add(V(0, 0, sign * .36)), .045, stainless);
   }
-  for (const sign of [-1, 1]) for (const z of [-9, 9]) {
-    const top = V(sign * 41.6, ground + 2.30, z), bottom = V(sign * 46.1, ground + 1.49, z);
-    rod(top, bottom, .045, stainless);
-    for (const t of [0, .5, 1]) { const p = top.clone().lerp(bottom, t); rod(p, p.clone().add(V(0, -.95, 0)), .037, stainless); }
+  stairs(90,12,(plaza-perimeter)/12,.69,0,-36.98,perimeter,1);
+  stairs(89.4,4,(north-plaza)/4,.70,0,23.7,plaza,1);
+  // Raised north gardens are separated by an actual entrance and landing.
+  pavement(39.6,17.1,north,-29.8,35.05);
+  pavement(39.6,17.1,north,29.8,35.05);
+  pavement(20,8.8,north,0,30.9);
+  stairs(19.8,16,(north-perimeter)/16,.52,0,43.62,perimeter,-1);
+  for(const sx of [-1,1]) pavement(5.4,7.6,plaza,sx*52.3,26.2);
+
+  // Continuous side ramps connect the street promenade to the upper paving.
+  // A wedge, rather than tilted box sides, keeps every edge planted in ground.
+  function ramp(x:number,z0:number,z1:number,width:number,y0:number,y1:number) {
+    const geometry=new THREE.BoxGeometry(width,1,z1-z0);
+    const position=geometry.getAttribute('position');
+    for(let i=0;i<position.count;i++) {
+      const zz=position.getZ(i)+(z0+z1)/2;
+      const yy=position.getY(i)>0?THREE.MathUtils.lerp(y0,y1,(zz-z0)/(z1-z0)):ground+.10;
+      position.setXYZ(i,position.getX(i)+x,yy,zz);
+    }
+    geometry.computeVertexNormals(); add(geometry,m.granite,0,0,0);
+    for(let i=0;i<24;i++) {
+      const t=(i+.5)/24, zz=THREE.MathUtils.lerp(z0,z1,t), yy=THREE.MathUtils.lerp(y0,y1,t);
+      box(width-.06,.012,.04,m.seam,x,yy+.008,zz);
+    }
   }
-  // Flat lawn beds sit within raised granite retaining edges; corner paths and
-  // café terraces remain clear, as in the real public square.
-  for (const x of [-50.6, 50.6]) for (const z of [-21, 21]) {
-    box(13.8, .92, 20, m.riser, x, ground + .86, z);
-    box(14.2, .20, 20.4, m.light, x, ground + 1.40, z);
-    box(12.7, .10, 18.9, m.lawn, x, ground + 1.54, z);
-    box(12, .30, 1.3, m.hedge, x, ground + 1.73, z + Math.sign(z) * 8.4);
+  for(const sx of [-1,1]) {
+    if(sx<0)ramp(sx*56.5,-42,26,3.8,perimeter,plaza);
+    ramp(sx*51.3,26,42,2.0,plaza,north);
+    pavement(3.3,2.0,north,sx*50.6,42.65);
+    // Slim continuous seatwalls frame the center, with breaks at both ends.
+    if(sx<0)pavement(7.8,45,plaza,sx*48.6,-4);
+    else { pavement(7.8,18,plaza,sx*48.6,-17); pavement(8.5,18,plaza,48.95,13); }
+    const gardenZ=sx<0?[9]:[-17];
+    for(const z of gardenZ) {
+      softBox(7.6,.50,18,m.granite,sx*48.5,plaza+.25,z);
+      softBox(7.9,.14,18.3,m.light,sx*48.5,plaza+.55,z);
+      box(6.8,.06,17.2,m.soil,sx*48.5,PLAZA_LEVELS.sideSoil-.03,z);
+      // Native-looking low groundcover leaves the palm trunks fully readable.
+      for(let ix=0;ix<5;ix++)for(let iz=0;iz<11;iz++) {
+        const xx=sx*48.5-2.7+ix*1.35,zz=z-7.6+iz*1.5;
+        sphere(.59,.28,.62,flowerLeaf,xx,PLAZA_LEVELS.sideSoil+.17,zz);
+        if((ix+iz)%4===0)sphere(.25,.13,.25,flowerLavender,xx+.08,PLAZA_LEVELS.sideSoil+.46,zz);
+      }
+    }
   }
-  // Terrace retaining walls double as seating, with actual wood slats.
-  for (const x of [-29, 29]) for (const z of [-40, 40]) {
-    box(17.2, .56, 1.6, m.granite, x, ground + .76, z);
-    for (let slat = 0; slat < 5; slat++) box(16.9, .09, .21, m.timber, x, ground + 1.08, z - .54 + slat * .27);
+  // The Stockton entrance is a longer flight, framed by cafe and garden,
+  // rather than another copy of the broad Geary stair. Its seventeen risers
+  // echo the mapped eastern flights while fitting this compressed game block.
+  for(let i=0;i<17;i++){
+    const top=perimeter+(i+1)*(plaza-perimeter)/17;
+    const x=58.8-(i+.5)*.825;
+    box(.825,top-perimeter-.02,11.4,m.riser,x,(top+perimeter-.02)/2,-2);
+    softBox(.86,.065,11.44,m.light,x,top-.0325,-2,.012);
+    box(.033,.014,11.36,m.seam,x+.28,top+.008,-2);
   }
-  for (const side of [-1, 1]) {
-    box(11, 1.35, .85, m.riser, side * 43, ground + 1.12, side * 46.6);
-    sign('UNION SQUARE', 'SAN FRANCISCO', 10.4, 1.24, side * 43, ground + 1.24, side * 47.04, side === 1 ? 0 : Math.PI, '#676e61', '#fff5df');
+  softBox(5.8,.50,4.1,m.granite,-48.5,plaza+.25,-25);
+  softBox(6,.14,4.3,m.light,-48.5,plaza+.55,-25);
+  box(5.15,.05,3.45,m.soil,-48.5,PLAZA_LEVELS.sideSoil-.025,-25);
+
+  // Layered, low planting and long granite seatwalls fill the north terrace.
+  for(const sx of [-1,1]) {
+    softBox(37,.50,11.6,m.granite,sx*30,north+.25,36);
+    softBox(37.4,.14,12,m.light,sx*30,north+.55,36);
+    box(36,.06,10.8,m.soil,sx*30,PLAZA_LEVELS.northSoil-.03,36);
+    for(let ix=0;ix<24;ix++)for(const zz of [31.15,40.8]) {
+      const xx=sx*29-14.7+ix*1.28;
+      sphere(.58,.39,.51,flowerLeaf,xx,north+.45,zz);
+      if(ix%2===0) sphere(.38,.14,.34,flowerCream,xx,north+.83,zz-.07);
+    }
+    // Four south-facing timber benches sit on the upper plaza, not in mid-air.
+    for(const xx of [sx*21,sx*37]) {
+      softBox(9,.43,.94,m.granite,xx,north+.215,28.2);
+      for(let slat=0;slat<4;slat++) softBox(8.88,.085,.18,m.timber,xx,north+.472,27.88+slat*.21,.014);
+      for(const dx of [-3.6,3.6]) box(.07,.15,.82,stainless,xx+dx,north+.51,28.2);
+    }
+  }
+  // Palm gardens on the southern promenade leave a generous diagonal route
+  // from each street corner to the monumental stair and its center landing.
+  for(const x of [-31]) {
+    softBox(17,.52,5.1,m.granite,x,perimeter+.26,-44);
+    softBox(17.2,.13,5.3,m.light,x,perimeter+.555,-44);
+    box(16.2,.04,4.35,m.lawn,x,PLAZA_LEVELS.southSoil-.02,-44);
+    for(let i=0;i<11;i++)sphere(.62,.25,.42,flowerLeaf,x-7.4+i*1.48,PLAZA_LEVELS.southSoil+.18,-45.65);
+    for(let slat=0;slat<4;slat++)softBox(16.3,.09,.20,m.timber,x,perimeter+.66,-41.9+slat*.22,.014);
+  }
+  // A continuous upper and lower rail, slender posts and wall mounts make
+  // the level changes convincing in the moving camera.
+  function handrail(a:THREE.Vector3,b:THREE.Vector3,postCount=4) {
+    rod(a.clone().add(V(0,.94,0)),b.clone().add(V(0,.94,0)),.042,stainless);
+    rod(a.clone().add(V(0,.65,0)),b.clone().add(V(0,.65,0)),.03,stainless);
+    for(let i=0;i<postCount;i++) {
+      const p=a.clone().lerp(b,i/(postCount-1));
+      rod(p,p.clone().add(V(0,.94,0)),.034,stainless);
+      cylinder(.11,.035,stainless,p.x,p.y+.018,p.z,.11,10);
+    }
+  }
+  for(const x of [-31,-11,11,31])handrail(V(x,perimeter,-37.3),V(x,plaza,-28.4),5);
+  for(const x of [-7.0,7.0])handrail(V(x,perimeter,44),V(x,north,35.1),5);
+  for(const x of [-16,16])handrail(V(x,plaza,23.4),V(x,north,26.6),3);
+  for(const sx of [-1,1]) {
+    if(sx<0)handrail(V(sx*58.3,perimeter,-42),V(sx*58.3,plaza,26),15);
+    box(12.2,1.08,.68,m.riser,sx*43.2,perimeter+.54,sx*47);
+    sign('UNION SQUARE','SAN FRANCISCO',11.7,.92,sx*43.2,perimeter+.58,sx*47.35,sx===1?0:Math.PI,'#656d62','#fff5df');
   }
 
   // Separately batched development fallbacks are retired only after GLBs load.
@@ -173,7 +264,6 @@ export function createUnionSquare(scene: THREE.Scene) {
   batches = new Map();
   // Dewey Monument: tall granite shaft, Corinthian capital and the small
   // bronze Victory holding a wreath and trident, above a layered square plinth.
-  const plaza = ground + 1.30;
   for (let tier = 0; tier < 4; tier++) box(9.5 - tier * 1.25, .32, 9.5 - tier * 1.25, tier % 2 ? m.light : m.granite, 0, plaza + .16 + tier * .32, 0);
   box(4.2, 2.25, 4.2, m.light, 0, plaza + 2.35, 0);
   for (const s of [-1, 1]) { box(2.6, 1.0, .03, m.bronze, 0, plaza + 2.2, s * 2.12); box(.03, 1.0, 2.6, m.bronze, s * 2.12, plaza + 2.2, 0); }
@@ -203,8 +293,8 @@ export function createUnionSquare(scene: THREE.Scene) {
   finishFallback(monumentFallback);
   batches = new Map();
 
-  function palm(x: number, z: number, height: number, phase: number) {
-    const y = ground + 1.53, top = y + height;
+  function palm(x: number, z: number, height: number, phase: number, y: number) {
+    const top = y + height;
     cylinder(.39, height, m.bark, x, y + height / 2, z, .24, 9);
     for (let ring = 0; ring < height; ring += .46) cylinder(.40 - ring / height * .13, .09, m.stoneShadow, x, y + ring, z, .40 - ring / height * .13, 9);
     sphere(.68, .93, .68, m.leafShade, x, top, z);
@@ -227,8 +317,7 @@ export function createUnionSquare(scene: THREE.Scene) {
       add(geo, f % 3 ? m.leaf : m.leafShade, 0, 0, 0);
     }
   }
-  for (const x of [-50.6, 50.6]) for (const z of [-28, -13, 13, 28]) palm(x, z, 12.5 + (Math.abs(z) === 28 ? 2.0 : 0), x * .04 + z * .03);
-  for (const x of [-29, 29]) for (const z of [-42.4, 42.4]) palm(x, z, 13.2, x * .05);
+  for (const p of PLAZA_PALMS) palm(p.x,p.z,13.2*p.scale,p.angle,p.y);
 
   finishFallback(palmFallback);
   batches = architectureBatches;
@@ -237,8 +326,8 @@ export function createUnionSquare(scene: THREE.Scene) {
 
   // The corner hearts are sculptural objects, with a painted SF palette.
   const heartMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5, metalness: .08 }); heartMat.name = 'Union Square / painted heart sculptures';
-  for (const [index, [x, z]] of [[-53, -42], [53, -42], [-53, 42], [53, 42]].entries()) {
-    box(2.45, .85, 2.45, m.light, x, ground + .87, z);
+  for (const [index, [x, z]] of [[-53, -44], [53, -44], [-53, 46], [53, 46]].entries()) {
+    softBox(2.45, .85, 2.45, m.light, x, perimeter + .425, z);
     const shape = new THREE.Shape(); shape.moveTo(0, 0); shape.bezierCurveTo(-.28, .49, -1.35, 1.05, -1.35, 1.97); shape.bezierCurveTo(-1.35, 2.77, -.38, 2.88, 0, 2.14); shape.bezierCurveTo(.38, 2.88, 1.35, 2.77, 1.35, 1.97); shape.bezierCurveTo(1.35, 1.05, .28, .49, 0, 0);
     const geometry = new THREE.ExtrudeGeometry(shape, { depth: .62, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: .19, bevelThickness: .20, curveSegments: 15 });
     geometry.translate(0, 0, -.31); const colors: number[] = [], position = geometry.getAttribute('position');
@@ -248,11 +337,11 @@ export function createUnionSquare(scene: THREE.Scene) {
       const color = new THREE.Color(palette[band]); colors.push(color.r, color.g, color.b);
     }
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    add(geometry, heartMat, x, ground + 1.32, z, Math.atan2(x, z));
+    add(geometry, heartMat, x, perimeter + .93, z, Math.atan2(x, z));
   }
 
   function cafeTable(x: number, z: number, parasol: boolean) {
-    const y = ground + 1.32;
+    const y = plaza;
     cylinder(.10, .80, m.metal, x, y + .4, z); cylinder(.85, .10, m.timber, x, y + .85, z, .85, 16);
     for (let chair = 0; chair < 3; chair++) {
       const angle = chair * Math.PI * 2 / 3, xx = x + Math.sin(angle) * 1.33, zz = z + Math.cos(angle) * 1.33;
@@ -266,26 +355,107 @@ export function createUnionSquare(scene: THREE.Scene) {
     cylinder(2.15, .17, m.red, x, y + 2.37, z, 2.15, 10);
     for (let rib = 0; rib < 10; rib++) { const angle = rib * Math.PI / 5; rod(V(x, y + 3.08, z), V(x + Math.sin(angle) * 2.13, y + 2.42, z + Math.cos(angle) * 2.13), .021, m.cream); }
   }
-  for (const x of [-29, -22, 22, 29]) for (const z of [-23, 23]) cafeTable(x, z, true);
-  for (const x of [-21, -14, 14, 21]) cafeTable(x, -16, false);
-  // Low café kiosks along the north edge, not tall obstructions across the park.
-  for (const x of [-19, 19]) {
-    box(11, 2.75, 6, m.granite, x, ground + 1.83, 44.6);
-    box(11.5, .24, 6.7, m.light, x, ground + 3.35, 44.6);
-    box(8.4, 1.65, .10, m.dark, x, ground + 1.88, 41.55);
-    box(9.5, .11, 1.1, m.timber, x, ground + 1.3, 41.20);
+  for (const x of [-35,-28,28,35]) cafeTable(x,18,true);
+  for (const x of [-36,-29,29,36]) cafeTable(x,-20,false);
+  // The real cafe pavilions belong to the east and west flanks. Separate
+  // light roofs, glazing, marble counters and planted edges give each a small
+  // but complete architecture, with no fictional row of kiosks across Post.
+  function cafePavilion(x:number,z:number,depth:number,label:string){
+    const facing=x<0?1:-1,front=x+facing*4.25;
+    softBox(8.5,2.72,depth,m.granite,x,plaza+1.36,z);
+    box(.09,1.95,depth-1.2,m.dark,front+facing*.02,plaza+1.50,z);
+    box(.05,1.58,depth-1.4,m.glass,front+facing*.08,plaza+1.60,z);
+    for(let zz=z-depth/2+.9;zz<z+depth/2;zz+=2.1)box(.13,2.13,.07,m.gold,front+facing*.13,plaza+1.54,zz);
+    box(1.02,.12,depth-1.1,m.light,front+facing*.45,plaza+.98,z);
+    softBox(10.2,.18,depth+1.4,m.light,x,plaza+2.85,z);
+    softBox(9.9,.10,depth+1.1,m.dark,x,plaza+2.72,z);
+    for(let slat=0;slat<22;slat++)box(9.5,.05,.095,m.timber,x,plaza+2.64,z-depth/2+(slat+.5)*depth/22);
+    sign(label,'',depth-1.5,.43,front+facing*.17,plaza+2.48,z,facing*Math.PI/2,'#38584c','#f9e9c7',false);
+    for(const side of [-1,1]){
+      box(5.9,1.65,.055,m.dark,x,plaza+1.49,z+side*(depth/2+.03));
+      for(const dx of [-2.8,0,2.8])box(.06,1.88,.13,m.gold,x+dx,plaza+1.53,z+side*(depth/2+.08));
+    }
   }
+  cafePavilion(48.95,13,12.4,'MILLER & LUX');
+  cafePavilion(-48.6,-13,12.4,'UNION SQUARE BAKERY');
+  for(const z of [-6.7,2.7])handrail(V(58.9,perimeter,z),V(44.7,plaza,z),6);
 
-  // Fluted park litter bins and small ground uplights set a human scale.
-  for (const x of [-38.8, 38.8]) for (const z of [-40.3, 40.3]) {
-    cylinder(.39, 1.03, m.dark, x, ground + .99, z, .39, 16);
-    for (let rib = 0; rib < 18; rib++) { const a = rib * Math.PI / 9; box(.04, .89, .06, m.metal, x + Math.cos(a) * .395, ground + .99, z + Math.sin(a) * .395, -a); }
-    cylinder(.445, .07, m.metal, x, ground + 1.55, z, .445, 24);
-    cylinder(.29, .016, m.dark, x, ground + 1.590, z, .29, 20);
+  // Union Square / Market Street station occupies the southeast apron by
+  // Geary. Its mapped footprint runs east-west, with entry at the western end;
+  // this low glass-and-stone volume also gives that corner a real purpose.
+  const stationX=34, stationZ=-42, stationFloor=perimeter+.02;
+  const stationSteel=material('subway stainless steel', '#98aaa9', .28, .72);
+  const stationRubber=material('escalator black handrails', '#273433', .68);
+  const stationGlass=material('station canopy glazed panels', '#9db6b0', .18, .26);
+  // Recessed charcoal reveals separate the granite walls from their capstone.
+  for(const side of [-1,1]){
+    softBox(17.5,.42,.73,m.granite,stationX,stationFloor+.21,stationZ+side*4.75);
+    box(17.15,2.38,.16,stationGlass,stationX,stationFloor+1.60,stationZ+side*4.68);
+    box(17.6,.17,.79,m.light,stationX,stationFloor+2.85,stationZ+side*4.72);
+    for(let bay=0;bay<8;bay++)box(.08,2.49,.22,stationSteel,25.5+bay*2.4,stationFloor+1.6,stationZ+side*4.77);
+    box(17.0,.11,.11,stationSteel,stationX,stationFloor+1.45,stationZ+side*4.84);
   }
-  for (const x of [-50.6, 50.6]) for (const z of [-28, -13, 13, 28]) {
-    cylinder(.18, .034, stainless, x + .95, ground + 1.605, z, .18, 16);
-    cylinder(.145, .012, m.dark, x + .95, ground + 1.628, z, .145, 16);
+  softBox(.85,2.95,9.6,m.granite,42.75,stationFloor+1.475,stationZ);
+  softBox(18.5,.16,10.65,stationSteel,stationX,stationFloor+3.07,stationZ);
+  for(let bay=0;bay<7;bay++){
+    box(2.51,.07,10.35,stationGlass,26.2+bay*2.60,stationFloor+3.185,stationZ);
+    box(.075,.12,10.60,stationSteel,24.9+bay*2.60,stationFloor+3.205,stationZ);
+  }
+  // The west portal is open between two slim piers. The upper escalator treads
+  // disappear behind a dark throat, avoiding a brightly lit fake subway room.
+  for(const side of [-1,1]){
+    box(.28,2.83,.19,stationSteel,25.15,stationFloor+1.415,stationZ+side*4.48);
+    box(.46,.28,1.03,m.light,25.15,stationFloor+.14,stationZ+side*4.47);
+  }
+  box(.055,2.54,8.6,m.dark,29.4,stationFloor+1.29,stationZ);
+  box(4.15,.028,8.53,m.dark,27.12,stationFloor+.016,stationZ);
+  for(const lane of [-1,1]){
+    const z=stationZ+lane*1.45;
+    for(let tread=0;tread<11;tread++){
+      const x=25.37+tread*.33,y=stationFloor+.035-tread*.043;
+      box(.32,.075,2.2,stationSteel,x,y,z);
+      box(.04,.025,2.05,m.gold,x-.125,y+.045,z);
+      for(let rib=0;rib<17;rib++)box(.30,.014,.018,stationRubber,x,y+.046,z-.94+rib*.117);
+    }
+    for(const edge of [-1,1]){
+      rod(V(25.0,stationFloor+.88,z+edge*1.16),V(29.1,stationFloor+.36,z+edge*1.16),.062,stationRubber);
+      rod(V(25.0,stationFloor+.67,z+edge*1.16),V(29.1,stationFloor+.15,z+edge*1.16),.16,stationSteel);
+    }
+    cylinder(.14,.18,stationSteel,25.20,stationFloor+.64,z+lane*1.30,.14,16);
+  }
+  box(.13,.54,8.8,m.dark,25.02,stationFloor+2.77,stationZ);
+  sign('UNION SQUARE / MARKET STREET','MUNI METRO · T THIRD',8.32,.46,24.94,stationFloor+2.77,stationZ,-Math.PI/2,'#253f42','#f6eee0',false);
+  // The familiar Muni red blade is readable from the driving line on Geary.
+  box(.80,4.55,.37,m.red,42.2,perimeter+2.275,-48.0);
+  sign('T','MUNI',.68,1.05,42.2,perimeter+3.70,-48.21,Math.PI,'#af3445','#fff6df',false);
+  sign('T','MUNI',.68,1.05,42.2,perimeter+3.70,-47.79,0,'#af3445','#fff6df',false);
+  // A relocated palm bed keeps the station forecourt clear at the SE corner.
+  softBox(6.2,.50,5.1,m.granite,49,perimeter+.25,-31);
+  softBox(6.4,.14,5.3,m.light,49,perimeter+.55,-31);
+  box(5.45,.05,4.45,m.soil,49,PLAZA_LEVELS.southSoil-.025,-31);
+  for(const z of [-32.6,-29.4])for(let x=47;x<=51;x+=1)sphere(.52,.24,.38,flowerLeaf,x,PLAZA_LEVELS.southSoil+.18,z);
+
+  // Fluted litter bins, square drains, small ground lights and a few flagpoles
+  // keep the large civic paving from losing its pedestrian scale.
+  for (const x of [-41,41]) for (const z of [-40,45]) {
+    cylinder(.39,1.03,m.dark,x,perimeter+.515,z,.39,16);
+    for(let rib=0;rib<18;rib++){const a=rib*Math.PI/9;box(.04,.89,.06,m.metal,x+Math.cos(a)*.395,perimeter+.515,z+Math.sin(a)*.395,-a);}
+    cylinder(.445,.07,m.metal,x,perimeter+1.045,z,.445,24);
+    cylinder(.29,.016,m.dark,x,perimeter+1.089,z,.29,20);
+  }
+  for(const p of PLAZA_PALMS){
+    cylinder(.18,.034,stainless,p.x+.95,p.y+.012,p.z,.18,16);
+    cylinder(.145,.012,m.dark,p.x+.95,p.y+.035,p.z,.145,16);
+  }
+  for(const x of [-41,41])for(const z of [-24,-4,16]){
+    box(.45,.012,.45,m.dark,x,plaza+.009,z);
+    for(let i=0;i<7;i++)box(.025,.013,.42,stainless,x-.18+i*.06,plaza+.018,z);
+  }
+  for(const x of [-11,11]){
+    cylinder(.12,.12,m.granite,x,north+.06,31,.12,16);
+    cylinder(.049,7.2,stainless,x,north+3.7,31,.027,12);
+    sphere(.085,.085,.085,m.gold,x,north+7.33,31);
+    for(let fold=0;fold<10;fold++)box(.17,2.4,.028,fold%3===0?m.gold:m.red,x+.1+fold*.15,north+5.55,31+Math.sin(fold*.62)*.17);
   }
 
   // A facade's local x runs left-to-right, local +z faces the street.
@@ -367,111 +537,27 @@ export function createUnionSquare(scene: THREE.Scene) {
   }
   const westinAsset=createWestin(group,westinFallback);
 
-  // MACY'S south across Geary: broad light masonry, huge display windows,
-  // red star wordmark and deep horizontal shadow lines, never a fake tower.
-  const macys = facade(0, -83, 0);
-  macys.b(118, 31, 53, m.limestone, 0, 15.5, -26.5);
-  macys.b(118, 6.1, .45, m.stoneShadow, 0, 3.05, .12);
-  for (let x = -53; x <= 53; x += 8.15) {
-    macys.b(6.5, 4.4, .17, m.dark, x, 2.8, .41); macys.b(5.95, 3.86, .10, m.display, x, 2.9, .53);
-    for (const side of [-1, 1]) macys.b(.12, 4.4, .15, m.gold, x + side * 2.15, 2.8, .59);
-    for (const y of [10.1, 15.8, 21.5, 27.1]) macys.window(x, y, 4.0, 3.45, .11);
-    macys.b(.62, 24.5, .70, m.light, x - 3.7, 18.2, .36);
-  }
-  for (const y of [6.4, 7.0, 12.9, 18.6, 24.3, 30.6, 31.1]) macys.b(119, .29, .90, m.light, 0, y, .27);
-  macys.b(118, .78, 54, m.stoneShadow, 0, 31.8, -26.1);
-  macys.lettering('★ macy’s', '', 21.5, 4.15, 0, 27.0, .76, '#eedfc9', '#b52636', false);
-  for (const x of [-39, 39]) macys.lettering('macy’s', '', 12.5, 2.05, x, 6.6, .88, '#ead6b9', '#a62131', false);
-  for (const side of [-1, 1]) {
-    const end = facade(side * 59.08, -108, side * Math.PI / 2);
-    for (let x = -19; x <= 19; x += 8) for (const y of [10.1, 15.8, 21.5, 27.1]) end.window(x, y, 3.8, 3.45);
-  }
-
-  // Apple Union Square's exceptionally clear two-story glass box on Post.
-  // The visible timber tables, planted back wall and thin pale roof identify it.
-  const appleGlass = new THREE.MeshPhysicalMaterial({ color: '#a9d5d6', transparent: true, opacity: .24, roughness: .12, metalness: .12, side: THREE.DoubleSide, depthWrite: false }); appleGlass.name = 'Union Square / Apple structural glass';
-  box(52, .55, 31.5, m.white, 33.5, ground + .27, 98.6);
-  box(52, .78, 31.8, m.white, 33.5, ground + 11.8, 98.6);
-  box(52, 10.9, .25, m.hedge, 33.5, ground + 5.95, 114.1);
-  box(51.4, 10.8, .12, appleGlass, 33.5, ground + 5.96, 82.88);
-  for (const x of [7.7, 59.3]) box(.12, 10.8, 30.4, appleGlass, x, ground + 5.96, 98.3);
-  box(50, .37, 15.0, m.white, 33.5, ground + 5.8, 106.2);
-  for (let x = 8; x <= 59; x += 6.4) box(.095, 11.1, .17, m.white, x, ground + 6.1, 82.76);
-  box(51.7, .12, .18, m.white, 33.5, ground + 6.0, 82.72);
-  for (const x of [17, 29, 41, 53]) for (const z of [89.5, 101]) {
-    box(5.0, .18, 2.6, m.timber, x, ground + 1.35, z);
-    for (const side of [-1, 1]) box(.25, 1.0, 2.2, m.timber, x + side * 1.8, ground + .8, z);
-    for (const dx of [-1.5, 0, 1.5]) box(.46, .07, .32, m.dark, x + dx, ground + 1.48, z);
-  }
-  for (const x of [12.5, 54.5]) {
-    cylinder(1.15, 1.1, m.white, x, ground + .95, 109.5);
-    rod(V(x, ground + 1.2, 109.5), V(x, ground + 4.7, 109.5), .15, m.bark);
-    sphere(2.1, 2.2, 1.8, m.leafShade, x, ground + 5.15, 109.5);
-  }
-  const appleMark = texture(256, 320, ctx => {
-    ctx.clearRect(0, 0, 256, 320); ctx.fillStyle = '#fffdfa';
-    ctx.beginPath(); ctx.moveTo(128, 112); ctx.bezierCurveTo(100, 83, 39, 96, 37, 159); ctx.bezierCurveTo(30, 209, 64, 283, 94, 274); ctx.bezierCurveTo(112, 261, 130, 261, 147, 274); ctx.bezierCurveTo(176, 289, 205, 235, 215, 212); ctx.bezierCurveTo(171, 195, 171, 148, 209, 128); ctx.bezierCurveTo(187, 96, 155, 92, 128, 112); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(128, 93); ctx.bezierCurveTo(122, 61, 144, 31, 170, 28); ctx.bezierCurveTo(174, 53, 154, 89, 128, 93); ctx.fill();
-  });
-  const logoMaterial = new THREE.MeshStandardMaterial({ map: appleMark, transparent: true, roughness: .50, emissive: '#fff3d7', emissiveIntensity: .25 }); logoMaterial.name = 'Union Square / Apple pavilion mark';
-  add(new THREE.PlaneGeometry(2.5, 3.13), logoMaterial, 33.5, ground + 8.8, 82.68, Math.PI);
-
-  // Other real-scale street walls complete the recognizable four-sided room.
-  const post = facade(-30, 83.4, Math.PI);
-  post.b(58, 24, 30, m.brick, 0, 12, -15);
-  post.b(58, 5.8, .34, m.limestone, 0, 2.9, .15);
-  for (let x = -24; x <= 24; x += 6) {
-    post.arch(x, .20, 4.1, 4.9, .4);
-    for (const y of [8.6, 13.5, 18.4]) post.window(x, y, 2.2, 3.1, .12, true);
-  }
-  for (const y of [5.9, 6.45, 21.4, 22.5, 23.2, 24.1]) post.b(58.7, .35, .74, m.limestone, 0, y, .22);
-  post.lettering('SAKS FIFTH AVENUE', '', 22, 1.25, 0, 5.9, .70, '#d6c3a7', '#38413c');
-  for (const x of [-18, 18]) { post.b(10, .20, 1.2, m.awning, x, 4.6, .75); post.b(10, .4, .10, m.awning, x, 4.35, 1.33); }
-  const stockton = facade(94, 0, -Math.PI / 2);
-  stockton.b(96, 29.5, 35, m.limestone, 0, 14.75, -17.5);
-  stockton.b(96, 6, .42, m.sandstone, 0, 3, .14);
-  for (let x = -42; x <= 42; x += 7) {
-    stockton.arch(x, .2, 4.8, 5.1, .4);
-    for (const y of [9.4, 14.7, 20, 25.3]) stockton.window(x, y, 3.0, 3.8, .12, true);
-    stockton.b(.56, 23, .54, m.light, x - 3.25, 17.6, .23);
-  }
-  for (const y of [6.15, 7, 27.8, 28.8, 29.5]) stockton.b(96.7, .35, .82, m.light, 0, y, .25);
-  stockton.lettering('NEIMAN MARCUS', '', 24, 1.45, -22, 6.4, .78, '#eee0c7', '#34423c');
-  // Full north/south returns matter from the aerial menu and both turning
-  // approaches. Carry the same coursing and fenestration around the corners.
-  for (const side of [-1, 1]) {
-    const end = facade(111.5, side * 48.10, side === 1 ? 0 : Math.PI);
-    end.b(35, 6.0, .26, m.sandstone, 0, 3.0, .12);
-    for (let bay = -12; bay <= 12; bay += 6) {
-      end.arch(bay, .2, 3.9, 5.1, .30);
-      for (const y of [9.4, 14.7, 20, 25.3]) end.window(bay, y, 3.0, 3.8, .12, true);
+  // Keep correctly placed street walls while the compressed Blender assets load.
+  // Fallbacks are independent, so a failed asset never erases another block.
+  const makeBuildingFallback = (name: string, parcels: number[][]) => {
+    const target = new THREE.Group(); target.name = name; group.add(target);
+    for (const [x,z,w,d,h] of parcels) {
+      const base = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m.limestone);
+      base.position.set(x,ground+h/2,z);base.castShadow=true;base.receiveShadow=true;target.add(base);
     }
-    for (const x of [-16.5, 16.5]) end.b(.58, 23.0, .55, m.light, x, 17.6, .24);
-    for (const y of [6.15, 7, 12.1, 17.4, 22.7, 27.8, 28.8, 29.5]) end.b(35.7, .30, .83, m.light, 0, y, .25);
-    end.b(19, .18, 1.0, m.awning, 0, 4.5, .5);
-    end.b(19, .38, .08, m.awning, 0, 4.25, .98);
-  }
-  // The Stockton back is also articulated, so orbital views never expose a
-  // featureless extrusion. It remains inside the x=130 building boundary.
-  const stocktonBack = facade(129.1, 0, Math.PI / 2);
-  for (let bay = -41; bay <= 41; bay += 7) for (const y of [9.4, 14.7, 20, 25.3]) stocktonBack.window(bay, y, 2.5, 3.8, .08);
-  for (const y of [6.15, 27.8, 29.5]) stocktonBack.b(96.6, .3, .70, m.light, 0, y, .22);
-  // Post Street's historic block has occupied side and rear elevations too.
-  for (const side of [-1, 1]) {
-    const end = facade(side === 1 ? -.90 : -59.10, 98.4, side * Math.PI / 2);
-    for (const bay of [-10, -5, 0, 5, 10]) {
-      end.arch(bay, .2, 3.4, 4.9, .22);
-      for (const y of [8.6, 13.5, 18.4]) end.window(bay, y, 2.1, 3.1, .09, true);
-    }
-    for (const y of [5.9, 6.45, 21.4, 22.5, 23.2, 24.1]) end.b(30.5, .3, .62, m.limestone, 0, y, .17);
-  }
-  const postBack = facade(-30, 113.45, 0);
-  for (let bay = -24; bay <= 24; bay += 6) for (const y of [3.0, 8.6, 13.5, 18.4]) postBack.window(bay, y, 2.2, 3.1, .1, y === 18.4);
-  for (const y of [5.9, 6.45, 21.4, 22.5, 23.2, 24.1]) postBack.b(58.6, .32, .72, m.limestone, 0, y, .2);
-  // Apple’s planted living wall has a slender structural grid, rather than a
-  // green box back. Pale edge trims preserve its lightweight pavilion form.
-  for (let x = 8.5; x <= 59; x += 6.2) box(.12, 10.8, .2, m.white, x, ground + 5.95, 114.31);
-  for (const y of [.7, 6.0, 11.2]) box(51.5, .14, .2, m.white, 33.5, ground + y, 114.34);
+    return target;
+  };
+  const northFallback = makeBuildingFallback('Post Street / loading fallback', [
+    [-40,105,52,49,27],[-2.5,105,23,49,42],[15,105,12,49,17],[45,97,36,32,15],
+    [46.5,158.5,30,51,94],[-47.5,157.5,37,49,62],[-109,95.5,42,29,20],
+    [-100,122.5,24,25,52],[-136,108,12,54,29],[109,106,40,50,27],
+    [108,153.5,38,29,33],[-108,-110,40,54,27],[-157,-110,56,54,28],
+  ]);
+  const frontageFallback = makeBuildingFallback('Geary and Stockton / loading fallback', [
+    [0,-109,120,52,34],[115,-105,42,44,28],[111.5,-27,35,42,25],[111.5,28,35,40,40],
+  ]);
+  const northAsset = createNorthSquare(group,northFallback);
+  const frontageAsset = createSquareFrontages(group,frontageFallback);
 
   // Static detail is merged by material; no individual window/tree/table draws.
   let triangles = 0;
@@ -479,19 +565,21 @@ export function createUnionSquare(scene: THREE.Scene) {
     if(!geometries.length)continue;
     const merged = mergeGeometries(geometries, false)!; geometries.forEach(geometry => geometry.dispose());
     merged.computeBoundingSphere(); triangles += merged.getAttribute('position').count / 3;
-    const mesh = new THREE.Mesh(merged, mat); mesh.name = mat.name; mesh.castShadow = mat !== appleGlass && mat !== logoMaterial; mesh.receiveShadow = true; group.add(mesh);
+    const mesh = new THREE.Mesh(merged, mat); mesh.name = mat.name; mesh.castShadow = !mat.transparent; mesh.receiveShadow = true; group.add(mesh);
   }
   group.userData.drawCalls = group.children.length; group.userData.triangles = triangles;
   return {
     group,
-    ready:Promise.all([westinAsset.ready, plazaReady]),
-    update(_time: number, _progress: number, camera?:THREE.Camera) { if(camera)westinAsset.update(camera); },
+    ready:Promise.all([westinAsset.ready, plazaReady, northAsset.ready, frontageAsset.ready]),
+    update(_time: number, _progress: number, camera?:THREE.Camera) { if(camera){westinAsset.update(camera);northAsset.update(camera);frontageAsset.update(camera);} },
     setQuality(low: boolean) {
       westinAsset.setQuality(low);
+      northAsset.setQuality(low);
+      frontageAsset.setQuality(low);
       plazaArt.setQuality(low);
-      for(const fallback of [monumentFallback, palmFallback]) fallback.traverse(child => { if(child instanceof THREE.Mesh) child.castShadow = !low; });
+      for(const fallback of [monumentFallback, palmFallback, northFallback, frontageFallback]) fallback.traverse(child => { if(child instanceof THREE.Mesh) child.castShadow = !low; });
       westinFallback.traverse(child=>{if(child instanceof THREE.Mesh)child.castShadow=!low;});
-      for (const child of group.children) if (child instanceof THREE.Mesh) child.castShadow = !low && child.material !== appleGlass && child.material !== logoMaterial;
+      for (const child of group.children) if (child instanceof THREE.Mesh) child.castShadow = !low && !(child.material as THREE.Material).transparent;
     },
   };
 }
