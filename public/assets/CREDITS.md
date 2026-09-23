@@ -10,9 +10,19 @@ This project includes material scans distributed by [Poly Haven](https://polyhav
 
 The local filenames are project-specific names for maps from those material assets. Material tiling, colors, normal strength, reflections, and wetness are adjusted by the game's rendering code.
 
-Most vehicle, building, landmark, and furnishing geometry is constructed in code. The two jacaranda trees use an optimized CC0 model. Window interiors, facade patterns, signs, and other procedural textures are separate from the Poly Haven scans. Depicted businesses and landmarks are not sponsors or endorsers of this project.
+Most background building and furnishing geometry is constructed in code. The current foreground hero assets are authored in Blender; the earlier optimized CC0 jacaranda model remains available in the repository. Window interiors, facade patterns, signs, and other procedural textures are separate from the Poly Haven scans. Depicted businesses and landmarks are not sponsors or endorsers of this project.
 
 ## Natural scenery
 
 - **Jacaranda Tree** — [Poly Haven](https://polyhaven.com/a/jacaranda_tree), Rico Cilliers with Rob Tuytel guidance, CC0. Optimized from the original model; [source and processing details](vegetation/SOURCE.md).
 - **Kloofendal 43d Clear (Pure Sky)** — [Poly Haven](https://polyhaven.com/a/kloofendal_43d_clear_puresky), Greg Zaal, CC0. Original photographic HDR sky; [source and orientation details](sky/SOURCE.md).
+
+## Original Blender hero models
+
+- **Westin St. Francis** — original modeled geometry and generated stone/window maps. References: [Westin source notes](../../art/references/westin.md).
+- **Dewey Monument and date palms** — original modeled/sculpted geometry. [Plaza source notes](plaza/SOURCE.md).
+- **Powell combination cable car** — original modeled geometry, lettering and oak material. [Cable car source notes](models/cable-car-SOURCE.md).
+
+## Runtime decoder
+
+The locally bundled Draco WebAssembly decoder and wrapper are from the Three.js glTF decoder distribution (Google Draco, Apache License 2.0). [License](draco/LICENSE). Three.js itself uses the MIT license.

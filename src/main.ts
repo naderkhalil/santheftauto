@@ -15,7 +15,7 @@ import { createCar } from './car';
 import { GameAudio } from './audio';
 import { DrivingSimulation } from './driving';
 import type { DriveInput } from './driving';
-import { sampleRoute, routePoint, routeFrame, groundHeight, routeYaw, routeSlope, districtAt, CHECKPOINTS, ROUTE_STOPS, TRACK_LENGTH, START_PROGRESS } from './route';
+import { sampleRoute, routePoint, routeFrame, groundHeight, routeYaw, routeSlope, routeProgressAt, districtAt, CHECKPOINTS, ROUTE_STOPS, TRACK_LENGTH, START_PROGRESS } from './route';
 import { CityTour } from './tour';
 import { createSkyCourse } from './skycourse';
 import { flightView } from './flight-view';
@@ -55,7 +55,7 @@ app.innerHTML = `
 <div class="flight-hud" id="flight-hud" aria-hidden="true"><span class="flight-icon">✧</span><div><small id="flight-mode">HOVER DRIVE</small><strong id="flight-height">0 <em>M UP</em></strong></div><div class="flight-time" id="flight-time">0.0<small>SECONDS OF MAGIC</small></div></div><div class="drift-hint" id="drift-hint">DRIFTING</div>
 <div class="countdown hidden" id="countdown" aria-live="polite"></div>
 <div class="race-message faded" id="message" aria-live="polite" aria-hidden="true"><strong></strong><span></span></div>
-<div class="race-flash" id="flash"></div><div class="tour-ui hidden" id="tour-ui"><div class="tour-caption"><span>POSTCARD MODE / AUTOPILOT</span><strong id="tour-place">UNION SQUARE</strong><small>Drag to look around</small></div><div class="tour-stops"><button data-stop="35">UNION SQUARE</button><button data-stop="${ROUTE_STOPS.powell}">POWELL ST</button><button data-stop="${ROUTE_STOPS.grant-8}">GRANT AVE</button><button data-stop="${TRACK_LENGTH}">THE BAY</button></div><div class="tour-actions"><button id="tour-pause">PAUSE</button><button id="tour-race">LET’S RACE ↗</button><button id="tour-exit" aria-label="Exit scenic drive">×</button></div></div>
+<div class="race-flash" id="flash"></div><div class="tour-ui hidden" id="tour-ui"><div class="tour-caption"><span>POSTCARD MODE / AUTOPILOT</span><strong id="tour-place">UNION SQUARE</strong><small>Drag to look around</small></div><div class="tour-stops"><button data-stop="35">UNION SQUARE</button><button data-stop="${routeProgressAt(-75,-15)}" data-scene="westin">THE WESTIN</button><button data-stop="${ROUTE_STOPS.powell}">POWELL ST</button><button data-stop="${ROUTE_STOPS.grant-8}">GRANT AVE</button><button data-stop="${TRACK_LENGTH}">THE BAY</button></div><div class="tour-actions"><button id="tour-pause">PAUSE</button><button id="tour-race">LET’S RACE ↗</button><button id="tour-exit" aria-label="Exit scenic drive">×</button></div></div>
 <div class="touch-controls"><div class="touch-group"><button class="touch-button" data-control="left" aria-label="Steer left">‹</button><button class="touch-button" data-control="right" aria-label="Steer right">›</button><button class="touch-button small" data-control="drift" aria-label="Handbrake drift">DRIFT</button></div><div class="touch-group"><button class="touch-button small" data-control="boost" aria-label="Boost">N₂O</button><button class="touch-button small" data-control="brake" aria-label="Brake">BRAKE</button><button class="touch-button gas" data-control="gas" aria-label="Accelerate">GAS</button></div></div>
 <div class="modal-layer hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="panel"><button class="panel-close" id="close-help" aria-label="Close instructions">×</button><div class="panel-eyebrow">A LITTLE LOCAL KNOWLEDGE</div><h2 id="help-title">THE HILLS<br>HAVE WINGS.</h2><p>Lap Union Square, climb Powell, and enter Chinatown through the Dragon Gate on Grant Avenue. The route guides you around street corners: steer within your lane, brake or drift to take a tighter line. Build speed up the three hills, then launch. Your wheels fold flat automatically: steer through the sky, collect sun rings, and touch down with a boost refill.</p><div class="control-list"><div class="control-item"><div class="keys"><kbd>W</kbd><kbd>↑</kbd></div>Accelerate</div><div class="control-item"><div class="keys"><kbd>S</kbd><kbd>↓</kbd></div>Brake</div><div class="control-item"><div class="keys"><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></div>Steer · on road & in air</div><div class="control-item"><div class="keys"><kbd>SPACE</kbd></div>Hold to drift</div><div class="control-item"><div class="keys"><kbd>SHIFT</kbd></div>Boost · recharges</div><div class="control-item"><div class="keys"><kbd>R</kbd><kbd>ESC</kbd><kbd>C</kbd></div>Restart · pause · camera</div></div><p class="help-caption">Controller: left stick to steer, RT to accelerate, LT to brake, A to boost, X to drift, Menu to pause. Touch controls appear on touchscreens. Wheels deploy automatically above 54 mph at a launch. Brake to dive; boost to gain lift. Watch a Run demonstrates the course; drag to look around.</p><div class="settings-row"><button id="quality">GRAPHICS: HIGH</button><span>/</span><button id="fullscreen">FULLSCREEN ↗</button></div><div class="settings-row" style="margin-top:12px;padding-top:12px"><button id="auto-throttle" aria-pressed="false">AUTO ACCELERATE: OFF</button><span>/</span><button id="reset-best">RESET BEST</button></div><button class="primary" id="help-play">LET’S DRIVE <span class="arrow">↗</span></button></div></div>
 <div class="modal-layer hidden" id="pause-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="panel"><div class="panel-eyebrow">TAKE A BREATHER</div><h2 id="pause-title">CITY ON<br>STANDBY.</h2><p>Your run is paused. The clock can wait.</p><button class="primary" id="resume">BACK TO THE RUN <span class="arrow">↗</span></button><button class="secondary" id="restart">RESTART RACE</button><button class="secondary" id="pause-home">MAIN MENU</button></div></div>
@@ -92,7 +92,7 @@ async function boot() {
   const landmarks=createUnionSquare(scene),chinatown=createChinatown(scene);
   const bayStage=new THREE.Group();bayStage.rotation.y=Math.PI/2;bayStage.position.set(-750,0,250);scene.add(bayStage);
   const waterfront=createWaterfront(bayStage);createBayBridge(bayStage);
-  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky()]);
+  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready]);
   const car = createCar(); scene.add(car.group);
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);scene.add(heroFill);
   const sim = new DrivingSimulation(world.obstacles);
@@ -112,7 +112,7 @@ async function boot() {
   }
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene,camera));
-  const ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.blendIntensity=.55;ao.updateGtaoMaterial({radius:.65,thickness:.6,distanceExponent:1.6,samples:8});ao.updatePdMaterial({radius:4,rings:2,samples:8});
+  const ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.blendIntensity=.45;ao.updateGtaoMaterial({radius:1.05,thickness:.75,distanceExponent:1.6,samples:8});ao.updatePdMaterial({radius:4,rings:2,samples:8});
   const resizeAO=ao.setSize.bind(ao);ao.setSize=(w,h)=>resizeAO(Math.ceil(w*.55),Math.ceil(h*.55));composer.addPass(ao);
   const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.12,.38,1.55);
   composer.addPass(bloom);
@@ -128,6 +128,7 @@ async function boot() {
 
   type Phase = 'menu'|'countdown'|'racing'|'paused'|'finished'|'tour';
   const tour=new CityTour(world.obstacles);
+  let tourArt=false;
   let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0;
   let topSpeed=0, best=Number(safeRead('whimsical-sf-city-loop-best-v1'))||0, muted=safeRead('sf-night-run-muted')==='true';
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
@@ -144,7 +145,7 @@ async function boot() {
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   audio.setMuted(muted);
   function updateSoundButton(){el('sound').innerHTML=muted?muteIcon:speakerIcon;el('sound').setAttribute('aria-label',muted?'Unmute sound':'Mute sound');el('sound').setAttribute('aria-pressed',String(muted));}
-  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.03:.12;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=cinematicQuality&&!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
+  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.02:.065;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
   function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);}
   function modal(id:string, open:boolean){el(id).classList.toggle('hidden',!open);if(open){lastFocus=document.activeElement as HTMLElement;el(id).querySelector<HTMLButtonElement>('button')?.focus();}else if(lastFocus?.isConnected){lastFocus.focus();}}
   function clearInputs(){keys.clear();touch.clear();document.querySelectorAll('.touch-button').forEach(b=>b.classList.remove('pressed'));}
@@ -220,11 +221,12 @@ async function boot() {
         lookAt.copy(finishLookStart).lerp(bayLook,ease);lookAt.z-=Math.sin(tour.orbit)*90*ease;
         camera.fov=THREE.MathUtils.damp(camera.fov,camera.aspect<.65?82:camera.aspect<1?65:58,3,dt);
       }
-      else{desiredCamera.copy(pose.camera);lookAt.copy(pose.look);camera.fov=76;}
+      else if(tourArt){desiredCamera.set(-18+Math.sin(tour.orbit)*22,31,-25+Math.cos(tour.orbit)*4);lookAt.set(-104,43,0);camera.fov=camera.aspect<.7?76:62;}
+      else{desiredCamera.copy(pose.camera);lookAt.copy(pose.look);camera.fov=72;}
     }else if(phase==='menu'){
       const hero=routePoint(40,1.3);car.group.position.set(hero.x,hero.y+.05,hero.z);car.group.rotation.set(0,routeYaw(40),0);
       const orbit=reduceMotion?0:Math.sin(totalTime*.055)*10;
-      desiredCamera.set(143+orbit,105,153);lookAt.set(-15,38,-2);
+      desiredCamera.set(47+orbit*.35,40,-34);lookAt.set(-86,47,8);
       camera.fov=camera.aspect<.7?76:camera.aspect<1.2?64:56;
     }else{
       const here=routePoint(s.progress,s.lateral),frame=routeFrame(s.progress),yaw=frame.yaw;
@@ -280,9 +282,9 @@ async function boot() {
   });
   function toggleSound(){muted=!muted;audio.setMuted(muted);safeWrite('sf-night-run-muted',String(muted));updateSoundButton();if(!muted&&(phase==='racing'||phase==='tour'&&!tour.paused))void audio.unlock();}
   function closeHelp(){modal('help',false);if(helpWasPaused){helpWasPaused=false;resume();}}
-  el('tour-start').onclick=()=>{phase='tour';tourBayStarted=null;skyCourse.reset();tour.jump(START_PROGRESS);tour.paused=false;el('tour-pause').textContent='PAUSE';clearInputs();cameraInitialized=false;void audio.unlock();syncPhase();};
-  el('tour-exit').onclick=menu;el('tour-race').onclick=start;el('tour-pause').onclick=()=>{if(tour.progress>=TRACK_LENGTH-1){tour.jump(START_PROGRESS);cameraInitialized=false;}tour.paused=!tour.paused;el('tour-pause').textContent=tour.paused?'RESUME':'PAUSE';if(tour.paused)audio.suspend();else void audio.unlock();};
-  document.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(button=>button.onclick=()=>{const stop=Number(button.dataset.stop);tourBayStarted=null;tour.jump(stop);if(stop>=TRACK_LENGTH-1){tour.paused=true;audio.suspend();}el('tour-pause').textContent=stop>=TRACK_LENGTH-1?'RUN AGAIN':tour.paused?'RESUME':'PAUSE';skyCourse.reset();cameraInitialized=false;});
+  el('tour-start').onclick=()=>{phase='tour';tourArt=false;tourBayStarted=null;skyCourse.reset();tour.jump(START_PROGRESS);tour.paused=false;el('tour-pause').textContent='PAUSE';clearInputs();cameraInitialized=false;void audio.unlock();syncPhase();};
+  el('tour-exit').onclick=menu;el('tour-race').onclick=start;el('tour-pause').onclick=()=>{tourArt=false;if(tour.progress>=TRACK_LENGTH-1){tour.jump(START_PROGRESS);cameraInitialized=false;}tour.paused=!tour.paused;el('tour-pause').textContent=tour.paused?'RESUME':'PAUSE';if(tour.paused)audio.suspend();else void audio.unlock();};
+  document.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(button=>button.onclick=()=>{const stop=Number(button.dataset.stop);tourBayStarted=null;tour.jump(stop);tourArt=button.dataset.scene==='westin';if(tourArt){tour.paused=true;audio.suspend();}if(stop>=TRACK_LENGTH-1){tour.paused=true;audio.suspend();}el('tour-pause').textContent=stop>=TRACK_LENGTH-1?'RUN AGAIN':tour.paused?'RESUME':'PAUSE';skyCourse.reset();cameraInitialized=false;});
   let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit-(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
   el('start').onclick=start;el('again').onclick=start;el('restart').onclick=start;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
   el('home').onclick=menu;el('pause-home').onclick=menu;el('result-home').onclick=menu;el('sound').onclick=toggleSound;
@@ -293,7 +295,7 @@ async function boot() {
   el('quality').onclick=()=>{if(lowQuality){lowQuality=false;cinematicQuality=false;}else if(cinematicQuality){cinematicQuality=false;lowQuality=true;}else{cinematicQuality=true;}applyQuality();};
   el('fullscreen').onclick=()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});else void document.documentElement.requestFullscreen?.().catch(()=>{el('fullscreen').textContent='USE YOUR BROWSER’S FULLSCREEN';});};
   document.addEventListener('fullscreenchange',()=>el('fullscreen').textContent=document.fullscreenElement?'EXIT FULLSCREEN ↙':'FULLSCREEN ↗');
-  updateSoundButton();applyQuality();syncPhase();updateCamera(1);atmosphere.bakeCityReflections(car.group);composer.render();
+  updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);atmosphere.bakeCityReflections(car.group);composer.render();
   el('loading').classList.add('faded');setTimeout(()=>el('loading').classList.add('hidden'),650);
 
   // Read-only diagnostics are handy when comparing browsers and performance settings.
@@ -301,12 +303,12 @@ async function boot() {
   function frame(now:number){
     requestAnimationFrame(frame);
     const dt=Math.min((now-lastTime)/1000,.25);lastTime=now;totalTime+=dt;uiClock+=dt;
-    performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);performanceFrames=0;performanceTime=0;}
+    performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
     const input=readInput();let raceDt=dt;if(phase==='tour'){
       const beforeTour=tour.progress,wasTourPaused=tour.paused;tour.update(dt);if(tour.progress<beforeTour){cameraInitialized=false;tourBayStarted=null;}
       if(tour.progress>=TRACK_LENGTH-1&&tour.paused){el('tour-pause').textContent='RUN AGAIN';if(!wasTourPaused){audio.suspend();tourBayStarted=totalTime;finishCameraStart.copy(camera.position);finishLookStart.copy(smoothedLook);}}
       if(!tour.paused){audio.update(tour.speed,.40,false,false,tour.glide);updateCitySound(tour.progress,tour.lateral);}
-      el('tour-place').textContent=tour.progress>=TRACK_LENGTH-1?'FERRY BUILDING & THE BAY':districtAt(tour.progress).name;
+      el('tour-place').textContent=tourArt?'THE WESTIN ST. FRANCIS':tour.progress>=TRACK_LENGTH-1?'FERRY BUILDING & THE BAY':districtAt(tour.progress).name;
     }
     if(phase==='countdown'){
       countdownLeft-=dt;updateCountdown();audio.update(0,input.throttle*.25,false,false);
@@ -335,11 +337,11 @@ async function boot() {
     el('flight-time').innerHTML=`${flight.airTime.toFixed(1)}<small>SECONDS OF MAGIC</small>`;
     app.classList.toggle('flying',showingFlight);
     const cityProgress=phase==='menu'?35:phase==='tour'?tour.progress:sim.state.progress;
-    canvas.dataset.phase=phase;canvas.dataset.wheelFold=String(car.group.userData.wheelFoldDegrees??0);
+    canvas.dataset.heroAssets=String(!!landmarks.group.getObjectByName('Westin St. Francis / Blender landmark')?.userData.loaded);canvas.dataset.phase=phase;canvas.dataset.wheelFold=String(car.group.userData.wheelFoldDegrees??0);
     if(phase==='tour'){canvas.dataset.progress=tour.progress.toFixed(1);canvas.dataset.airborne=String(tour.airborne);canvas.dataset.altitude=tour.altitude.toFixed(1);canvas.dataset.glide=tour.glide.toFixed(2);}
     const hits=skyCourse.update(totalTime,cityProgress,car.group.position,phase==='racing');
     if(hits){collectedRings+=hits;sim.state.boost=Math.min(1,sim.state.boost+.14*hits);audio.cue('checkpoint');announce('SUN RING',`${collectedRings} COLLECTED · +BOOST`,1);}
-    world.update(totalTime,cityProgress);landmarks.update(totalTime,cityProgress);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress);
+    world.update(totalTime,cityProgress);landmarks.update(totalTime,cityProgress,camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}
     heroFill.position.set(car.group.position.x-4,car.group.position.y+6,car.group.position.z-7);
     renderer.info.reset();composer.render();

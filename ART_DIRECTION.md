@@ -26,12 +26,16 @@ Speed of at least 24 m/s (about 54 mph) triggers a launch. Steering remains acti
 
 Market Street opens onto the Ferry Building on a pier over animated turquoise water, with the silver Bay Bridge spanning the background. A smooth camera reveal and compact results keep that composition visible. Ferries and sailboats give the bay movement. The automatic tour also ends here, and its **The Bay** button previews the finish.
 
-## Asset status and next investment
+## Implemented Union Square art pass
 
-The current city, landmark and vehicle geometry is procedural. No Blender-authored replacements have been imported for this version. Existing texture and sky sources retain their documented credits.
+The first Blender stretch is in the game: gray rusticated Westin masonry, deep window openings, bronze entries, copper cornices and separate rear towers; the Dewey Monument with a modeled Victory, bronze globe, wreath and trident; mature date palms; and a museum-reference Powell combination cable car. The square also has metre-scale paving, shallow steps with handrails, benches and park fixtures.
 
-Keep the route, collision layout and gameplay in code. Use Blender next for the shapes procedural construction handles least convincingly: the Westin's detailed architectural silhouette, the Dewey Victory sculpture, and the Dragon Gate's roof, carvings and guardian lions. Approve each model from actual driving and menu cameras before replacing another landmark. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) specifies the authoring and export plan.
+Every asset was compared with public photographic or museum references, modeled originally, exported to GLB, and inspected under the game lighting. Proportions remain adapted to the compressed course. This is a substantially more specific interpretation, not photogrammetry or a survey. The Westin is gray stone rather than generic warm sandstone; bright color comes from sky, copper, palms, flags, café umbrellas, storefronts and the car.
+
+Window reflections are captured in the relevant district. Shadows cover the plaza as a coherent space; normal maps, bevels and contact shading support close material depth. The distant Westin sheds geometry and uses smaller textures; twelve palms share six instanced draws. The **The Westin** postcard stop frames the building across the plaza, and the opening composition places it behind the monument and mature palms.
+
+Next, carry this standard into the surrounding frontages and Dragon Gate, then parked vehicles, people and Grant's shop interiors. Keep the route and collisions in code and evaluate every asset from a moving driver's camera. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) describes the source and export contract.
 
 ## Preserved versions
 
-`pre-city-loop` (`d47bae0`) preserves the previous linear course and waterfront finish. `whimsical-sf-v1` (`e147015`) preserves the first hover-flight interpretation. `pre-whimsical-sf` (`8e7c7af`) preserves the original sunny driving prototype. Keep all three tags; compare in separate checkouts rather than discarding the current work.
+`pre-art-direction-v2` (`3f03057`) preserves the full city loop immediately before this Blender art pass. `pre-city-loop` (`d47bae0`) preserves the previous linear course and waterfront finish. `whimsical-sf-v1` (`e147015`) preserves the first hover-flight interpretation. `pre-whimsical-sf` (`8e7c7af`) preserves the original sunny driving prototype. Keep all recovery tags; compare in separate checkouts rather than discarding the current work.

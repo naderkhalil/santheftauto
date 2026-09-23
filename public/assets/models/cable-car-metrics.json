@@ -1,0 +1,11 @@
+{
+  "triangles": 27628,
+  "drawCalls": 7,
+  "dimensionsMetres": [
+    2.25,
+    3.0,
+    7.2
+  ],
+  "front": "+Z",
+  "up": "+Y"
+}

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createCableCarAsset } from './street-assets';
 import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_POLYLINE, ROUTE_STOPS, TRACK_LENGTH, groundHeight, routePoint, routeProgressAt, routeSlope, routeYaw, sampleRoute, type Obstacle } from './route';
 
 /** A compact street grid, with the square and Grant left to their authored sets. */
@@ -164,12 +165,15 @@ export function createCityLoop(scene: THREE.Scene) {
 
   // Cars and one Powell cable car remain physical obstacles, in route coordinates.
   const obstacles:Obstacle[]=[];
+  const streetAssets:ReturnType<typeof createCableCarAsset>[]=[];
   function parked(s:number,lateral:number,cable=false){
     const p=routePoint(s,lateral),yaw=routeYaw(s),root=new THREE.Group();root.position.set(p.x,p.y+.16,p.z);root.rotation.set(-Math.atan(routeSlope(s)),yaw,0,'YXZ');group.add(root);
-    const part=(w:number,h:number,d:number,m:THREE.Material,x:number,y:number,z:number)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=true;root.add(mesh);};
+    const visual=new THREE.Group();root.add(visual);
+    const part=(w:number,h:number,d:number,m:THREE.Material,x:number,y:number,z:number)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);mesh.position.set(x,y,z);mesh.castShadow=true;visual.add(mesh);};
     const w=cable?2.25:1.85,length=cable?7.2:4.2;part(w,cable?.85:.65,length,cable?mat('#aa4734'):mat('#7897a5'),0,.64,0);part(w*.85,cable?1.45:.62,length*.57,glass,0,cable?1.77:1.17,0);part(w+.13,.16,length*.91,cream,0,cable?2.65:1.51,0);
     if(cable){for(const x of [-1,1])for(let z=-2.9;z<=2.9;z+=.97)part(.08,1.6,.08,gold,x,1.72,z);part(w+.2,.2,length+.3,dark,0,2.74,0);}
-    for(const side of [-1,1])for(const z of [-length*.33,length*.33]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.18,12),dark);wheel.rotation.z=Math.PI/2;wheel.position.set(side*w/2,.35,z);root.add(wheel);}
+    for(const side of [-1,1])for(const z of [-length*.33,length*.33]){const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.18,12),dark);wheel.rotation.z=Math.PI/2;wheel.position.set(side*w/2,.35,z);visual.add(wheel);}
+    if(cable)streetAssets.push(createCableCarAsset(root,visual));
     obstacles.push({progress:s,lateral,width:w,length,kind:cable?'cablecar':'car'});
   }
   parked(routeProgressAt(-75,139),-3.4,true);parked(routeProgressAt(175,385),4.6);parked(routeProgressAt(350,700),-4.7);parked(routeProgressAt(590,450),4.6);
@@ -194,7 +198,30 @@ export function createCityLoop(scene: THREE.Scene) {
   box(stone,654,1.6,480,53,1,600);
   for(let z=160;z<785;z+=17){pole(metal,680,2.8,z,.08,3);if(Math.abs(z-250)>30)beam(metal,new THREE.Vector3(680,3.2,z),new THREE.Vector3(680,3.2,z+17),.055);}
   const meshes:THREE.Mesh[]=[];
-  for(const [material,geometries] of batches){const geometry=mergeGeometries(geometries,false);geometries.forEach(g=>g.dispose());if(!geometry)continue;const mesh=new THREE.Mesh(geometry,material);mesh.castShadow=material!==sideRoad;mesh.receiveShadow=true;group.add(mesh);meshes.push(mesh);}
+  // Whole-city material merges force millions of offscreen window triangles into
+  // both the camera and shadow passes. Keep the same geometry, but let each
+  // roughly one-block patch be culled independently by the relevant frustum.
+  const cellSize=144,center=new THREE.Vector3();
+  const cells=new Map<string,Map<THREE.Material,THREE.BufferGeometry[]>>();
+  for(const [material,geometries] of batches)for(const geometry of geometries){
+    geometry.computeBoundingBox();geometry.boundingBox!.getCenter(center);
+    const key=`${Math.floor(center.x/cellSize)},${Math.floor(center.z/cellSize)}`;
+    let cell=cells.get(key);if(!cell){cell=new Map();cells.set(key,cell);}
+    let pieces=cell.get(material);if(!pieces){pieces=[];cell.set(material,pieces);}
+    pieces.push(geometry);
+  }
+  group.userData.cullingCellSize=cellSize;group.userData.cullingCells=cells.size;
+  for(const [cell,materials] of cells)for(const [material,geometries] of materials){
+    const geometry=mergeGeometries(geometries,false);geometries.forEach(g=>g.dispose());
+    if(!geometry)continue;
+    geometry.computeBoundingBox();geometry.computeBoundingSphere();
+    const mesh=new THREE.Mesh(geometry,material);
+    mesh.name=`City block [${cell}] / ${(material as THREE.MeshStandardMaterial).color.getHexString()}`;
+    mesh.castShadow=material!==sideRoad;mesh.receiveShadow=true;
+    group.add(mesh);meshes.push(mesh);
+  }
+  group.userData.cullingBatches=meshes.length;
+  batches.clear();cells.clear();
   cube.dispose();cyl.dispose();sphere.dispose();
-  return {group,obstacles,update(_time:number,_progress:number){},setQuality(low:boolean){meshes.forEach(m=>m.castShadow=!low);}};
+  return {group,obstacles,ready:Promise.all(streetAssets.map(asset=>asset.ready)),update(_time:number,_progress:number){},setQuality(low:boolean){meshes.forEach(m=>m.castShadow=!low&&m.material!==sideRoad);streetAssets.forEach(asset=>asset.setQuality(low));}};
 }

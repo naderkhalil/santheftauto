@@ -4,7 +4,7 @@ import { sampleRoute } from './route';
 
 /** Clear Pacific afternoon: blue skylight, warm raking sun and distant coastal air. */
 export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
-  scene.fog = new THREE.FogExp2('#83c6eb', .00072);
+  scene.fog = new THREE.FogExp2('#8ccbea', .00056);
   const sunlightDirection = new THREE.Vector3(.570, .682, -.461).normalize();
   const skyMaterial = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
@@ -54,20 +54,22 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   });
   const sky=new THREE.Mesh(new THREE.SphereGeometry(3500,32,20),skyMaterial);
   sky.name='Pacific blue sky';sky.renderOrder=-1000;sky.frustumCulled=false;scene.add(sky);
-  const hemisphere=new THREE.HemisphereLight('#84bcff','#f1b187',1.15);scene.add(hemisphere);
+  const hemisphere=new THREE.HemisphereLight('#84bcff','#e9bd92',.82);scene.add(hemisphere);
   const sun=new THREE.DirectionalLight('#fff0cb',3.6);sun.castShadow=true;
-  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.mapSize.set(4096,4096);
   sun.shadow.camera.left=-61;sun.shadow.camera.right=61;sun.shadow.camera.top=78;sun.shadow.camera.bottom=-56;
-  sun.shadow.camera.near=1;sun.shadow.camera.far=390;sun.shadow.normalBias=.028;sun.shadow.bias=-.00012;sun.shadow.radius=1.3;
+  sun.shadow.camera.near=1;sun.shadow.camera.far=620;sun.shadow.normalBias=.035;sun.shadow.bias=-.00012;sun.shadow.radius=1.8;
   scene.add(sun,sun.target);
-  const coolFill=new THREE.DirectionalLight('#90dbff',.45);coolFill.position.set(-100,130,-120);scene.add(coolFill);
+  const coolFill=new THREE.DirectionalLight('#90c9ff',.32);coolFill.position.set(-100,130,-120);scene.add(coolFill);
 
   const pmrem=new THREE.PMREMGenerator(renderer);
   const environmentScene=new THREE.Scene();
   const environmentSky=sky.clone();environmentSky.material=skyMaterial;environmentSky.position.set(0,0,0);environmentScene.add(environmentSky);
   let skyEnvironment=pmrem.fromScene(environmentScene,.015,.1,4000);
   scene.environment=skyEnvironment.texture;scene.environmentIntensity=.65;
-  let cityEnvironment:THREE.WebGLRenderTarget|undefined;
+  const cityEnvironments:THREE.WebGLRenderTarget[]=[];
+  let environmentRegion=-1;
+  let shadowExtent=0;
   const captureTarget=new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
   const captureCamera=new THREE.CubeCamera(.3,1800,captureTarget);scene.add(captureCamera);
   let captured=false;
@@ -83,22 +85,56 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   }
   function bakeCityReflections(exclude?:THREE.Object3D){
     const previousPosition=sky.position.clone();sky.position.set(0,0,0);
-    const p=sampleRoute(790);captureCamera.position.set(p.x,p.y+3.7,p.z);
     const visible=exclude?.visible;if(exclude)exclude.visible=false;
-    captureCamera.update(renderer,scene);
+    for(const environment of cityEnvironments)environment.dispose();cityEnvironments.length=0;
+    // Capture actual opposing architecture at three distinct locations. The
+    // Westin's glass reflects the square, rather than an unrelated uphill block.
+    const viewpoints=[new THREE.Vector3(-61,29,0),new THREE.Vector3(175,84,400),new THREE.Vector3(660,11,250)];
+    for(const viewpoint of viewpoints){
+      scene.environment=skyEnvironment.texture;captureCamera.position.copy(viewpoint);
+      captureCamera.update(renderer,scene);cityEnvironments.push(pmrem.fromCubemap(captureTarget.texture));
+    }
+    const seen=new Set<THREE.Material>();
+    scene.traverse(object=>{
+      if(!(object instanceof THREE.Mesh)||object===exclude||object.parent===exclude)return;
+      const materials=Array.isArray(object.material)?object.material:[object.material];
+      for(const material of materials){
+        if(!(material instanceof THREE.MeshStandardMaterial)||seen.has(material))continue;
+        seen.add(material);
+        if(/westin|Union Square|Dewey|date.palm/i.test(material.name))material.envMap=cityEnvironments[0].texture;
+        else if(/Chinatown/i.test(material.name))material.envMap=cityEnvironments[1].texture;
+        material.needsUpdate=true;
+      }
+    });
     if(exclude)exclude.visible=visible!;sky.position.copy(previousPosition);
-    cityEnvironment?.dispose();cityEnvironment=pmrem.fromCubemap(captureTarget.texture);
-    scene.environment=cityEnvironment.texture;scene.environmentIntensity=.65;captured=true;
+    scene.environment=cityEnvironments[0].texture;scene.environmentIntensity=.58;environmentRegion=0;captured=true;
   }
   return {
     loadPhotographicSky,
     bakeCityReflections,
     update(time:number,progress:number){
       sky.position.copy(camera.position);skyMaterial.uniforms.time.value=time;
-      const p=sampleRoute(progress);sun.target.position.set(p.x,p.y+10,p.z);
-      sun.position.copy(sun.target.position).addScaledVector(sunlightDirection,210);
+      const p=sampleRoute(progress);
+      const inSquare=p.x<90&&p.x>-180&&p.z<100&&p.z>-100;
+      const extent=inSquare?146:74;
+      if(extent!==shadowExtent){
+        shadowExtent=extent;sun.shadow.camera.left=-extent;sun.shadow.camera.right=extent;
+        sun.shadow.camera.top=extent;sun.shadow.camera.bottom=-extent;
+        sun.shadow.camera.updateProjectionMatrix();
+      }
+      const target=inSquare?new THREE.Vector3(-12,48,0):new THREE.Vector3(p.x,p.y+20,p.z);
+      // Stabilize the moving map to its texel grid to keep fine cornices calm.
+      const texel=2*extent/sun.shadow.mapSize.x;
+      target.x=Math.round(target.x/texel)*texel;target.z=Math.round(target.z/texel)*texel;
+      sun.target.position.copy(target);sun.position.copy(target).addScaledVector(sunlightDirection,300);
+      const region=p.x>560?2:p.z>180?1:0;
+      if(captured&&region!==environmentRegion){scene.environment=cityEnvironments[region].texture;environmentRegion=region;}
     },
-    setQuality(low:boolean){sun.castShadow=!low;coolFill.intensity=low?.32:.45;},
+    setQuality(low:boolean,cinematic=false){
+      sun.castShadow=!low;coolFill.intensity=low?.24:.32;
+      const size=low?1024:cinematic?4096:3072;
+      if(sun.shadow.mapSize.x!==size){sun.shadow.mapSize.set(size,size);sun.shadow.map?.dispose();sun.shadow.map=null;}
+    },
     get captured(){return captured;},
   };
 }

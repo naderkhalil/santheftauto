@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { createWestin } from './westin';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createPlazaAssets } from './plaza-assets';
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
@@ -8,7 +10,7 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
  */
 export function createUnionSquare(scene: THREE.Scene) {
   const group = new THREE.Group(); group.name = 'Union Square · plaza, Dewey Monument, Westin, Macy’s and Apple'; scene.add(group);
-  const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  let batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const ground = 22;
   const material = (name: string, color: string, roughness = .78, metalness = 0) => {
     const m = new THREE.MeshStandardMaterial({ color, roughness, metalness }); m.name = `Union Square / ${name}`; return m;
@@ -75,12 +77,42 @@ export function createUnionSquare(scene: THREE.Scene) {
     add(new THREE.PlaneGeometry(w, h), mat, x, y, z, yaw);
   }
 
+  // Sandblasted granite slabs have consistent real-world dimensions. Their
+  // narrow joints and gently worn edges remain legible from Powell's sidewalk.
+  const pavingColor = texture(1024, 1024, ctx => {
+    ctx.fillStyle = '#a6a397'; ctx.fillRect(0, 0, 1024, 1024);
+    let seed = 31903;
+    const random = () => { seed = Math.imul(seed, 1664525) + 1013904223 | 0; return (seed >>> 0) / 4294967296; };
+    for (let row = 0; row < 8; row++) for (let col = 0; col < 4; col++) {
+      const shade = 74 + random() * 7;
+      ctx.fillStyle = `hsl(${39 + random() * 7} 9% ${shade}%)`; ctx.fillRect(col * 256 + 1.3, row * 128 + 1.3, 253.4, 125.4);
+      for (let grain = 0; grain < 1200; grain++) {
+        const alpha = random() * .16; ctx.fillStyle = random() > .5 ? `rgba(255,254,236,${alpha})` : `rgba(63,67,64,${alpha})`;
+        ctx.fillRect(col * 256 + random() * 252 + 2, row * 128 + random() * 124 + 2, 1 + random(), 1 + random());
+      }
+    }
+  });
+  const pavingRelief = texture(1024, 1024, ctx => {
+    ctx.fillStyle = '#444'; ctx.fillRect(0, 0, 1024, 1024);
+    for (let row = 0; row < 8; row++) for (let col = 0; col < 4; col++) {
+      ctx.fillStyle = '#999'; ctx.fillRect(col * 256 + 1.5, row * 128 + 1.5, 253, 125);
+      ctx.fillStyle = '#aaa'; ctx.fillRect(col * 256 + 3, row * 128 + 3, 250, 122);
+    }
+  });
+  pavingRelief.colorSpace = THREE.NoColorSpace;
+  const paving = (width: number, depth: number) => {
+    const map = pavingColor.clone(), bumpMap = pavingRelief.clone();
+    for (const t of [map, bumpMap]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(width / 7.2, depth / 7.2); t.anisotropy = 12; t.needsUpdate = true; }
+    const mat = new THREE.MeshStandardMaterial({ color: '#ffffff', map, bumpMap, bumpScale: .022, roughness: .81, envMapIntensity: .36 });
+    mat.name = 'Union Square / dressed rectangular granite pavers'; return mat;
+  };
+
   // Low modern terraces, the enormous pale paved center and four lawn panels
   // are the square's silhouette. The park is open enough to see across at speed.
   box(120, .34, 100, m.riser, 0, ground + .17, 0);
-  box(118.5, .12, 98.5, m.granite, 0, ground + .40, 0);
+  box(118.5, .12, 98.5, paving(118.5, 98.5), 0, ground + .40, 0);
   box(84, .8, 67, m.riser, 0, ground + .77, 0);
-  box(83.6, .12, 66.6, m.light, 0, ground + 1.23, 0);
+  box(83.6, .12, 66.6, paving(83.6, 66.6), 0, ground + 1.23, 0);
   // Broad, shallow steps on all four sides: visually and physically gentle.
   for (let step = 0; step < 5; step++) {
     const h = .16 * (5 - step), d = .74;
@@ -89,11 +121,27 @@ export function createUnionSquare(scene: THREE.Scene) {
       box(d, h, 47, m.light, side * (42.4 + step * d), ground + .45 + h / 2, 0);
     }
   }
-  // Granite paving bands create convincing pedestrian scale from overhead.
-  for (let x = -40; x <= 40; x += 4) box(.026, .012, 65, m.seam, x, ground + 1.3, 0);
-  for (let z = -32; z <= 32; z += 4) box(82, .012, .026, m.seam, 0, ground + 1.3, z);
-  for (const z of [-28, 28]) box(82, .014, .32, m.granite, 0, ground + 1.305, z);
-  for (const x of [-34, 34]) box(.32, .014, 66, m.granite, x, ground + 1.305, 0);
+  // The square's darker granite bands run through a field of light pavers.
+  for (const z of [-28, 28]) box(82, .014, .34, m.seam, 0, ground + 1.305, z);
+  for (const x of [-34, 34]) box(.34, .014, 66, m.seam, x, ground + 1.305, 0);
+  for (const z of [-8, 8]) box(82, .014, .15, m.granite, 0, ground + 1.307, z);
+  const stainless = material('brushed stainless handrails', '#b9c5c0', .34, .82);
+  // Paired slender rails follow the stairs down, including rounded end returns.
+  for (const sign of [-1, 1]) for (const x of [-14, 14]) {
+    const top = V(x, ground + 2.30, sign * 33.2), bottom = V(x, ground + 1.49, sign * 37.5);
+    rod(top, bottom, .045, stainless);
+    for (const t of [0, .5, 1]) {
+      const p = top.clone().lerp(bottom, t); rod(p, p.clone().add(V(0, -.95, 0)), .037, stainless);
+      cylinder(.12, .045, stainless, p.x, p.y - .945, p.z, .12, 12);
+    }
+    rod(top.clone().add(V(0, 0, -sign * .36)), top, .045, stainless);
+    rod(bottom, bottom.clone().add(V(0, 0, sign * .36)), .045, stainless);
+  }
+  for (const sign of [-1, 1]) for (const z of [-9, 9]) {
+    const top = V(sign * 41.6, ground + 2.30, z), bottom = V(sign * 46.1, ground + 1.49, z);
+    rod(top, bottom, .045, stainless);
+    for (const t of [0, .5, 1]) { const p = top.clone().lerp(bottom, t); rod(p, p.clone().add(V(0, -.95, 0)), .037, stainless); }
+  }
   // Flat lawn beds sit within raised granite retaining edges; corner paths and
   // café terraces remain clear, as in the real public square.
   for (const x of [-50.6, 50.6]) for (const z of [-21, 21]) {
@@ -112,6 +160,17 @@ export function createUnionSquare(scene: THREE.Scene) {
     sign('UNION SQUARE', 'SAN FRANCISCO', 10.4, 1.24, side * 43, ground + 1.24, side * 47.04, side === 1 ? 0 : Math.PI, '#676e61', '#fff5df');
   }
 
+  // Separately batched development fallbacks are retired only after GLBs load.
+  const architectureBatches = batches;
+  const monumentFallback = new THREE.Group(); monumentFallback.name = 'Dewey / procedural fallback'; group.add(monumentFallback);
+  const palmFallback = new THREE.Group(); palmFallback.name = 'Date palms / procedural fallback'; group.add(palmFallback);
+  const finishFallback = (target: THREE.Group) => {
+    for (const [mat, geometries] of batches) {
+      const geometry = mergeGeometries(geometries, false)!; geometries.forEach(g => g.dispose());
+      const mesh = new THREE.Mesh(geometry, mat); mesh.castShadow = true; mesh.receiveShadow = true; target.add(mesh);
+    }
+  };
+  batches = new Map();
   // Dewey Monument: tall granite shaft, Corinthian capital and the small
   // bronze Victory holding a wreath and trident, above a layered square plinth.
   const plaza = ground + 1.30;
@@ -141,6 +200,9 @@ export function createUnionSquare(scene: THREE.Scene) {
   rod(V(1.25, statueY + .28, .11), V(1.25, statueY + 4.48, .11), .047, m.gold);
   for (const dx of [-.23, 0, .23]) rod(V(1.25, statueY + 4.06, .11), V(1.25 + dx, statueY + 4.70 - Math.abs(dx) * .7, .11), .046, m.gold);
 
+  finishFallback(monumentFallback);
+  batches = new Map();
+
   function palm(x: number, z: number, height: number, phase: number) {
     const y = ground + 1.53, top = y + height;
     cylinder(.39, height, m.bark, x, y + height / 2, z, .24, 9);
@@ -167,6 +229,11 @@ export function createUnionSquare(scene: THREE.Scene) {
   }
   for (const x of [-50.6, 50.6]) for (const z of [-28, -13, 13, 28]) palm(x, z, 12.5 + (Math.abs(z) === 28 ? 2.0 : 0), x * .04 + z * .03);
   for (const x of [-29, 29]) for (const z of [-42.4, 42.4]) palm(x, z, 13.2, x * .05);
+
+  finishFallback(palmFallback);
+  batches = architectureBatches;
+  const plazaArt = createPlazaAssets(group, monumentFallback, palmFallback);
+  const plazaReady = plazaArt.ready;
 
   // The corner hearts are sculptural objects, with a painted SF palette.
   const heartMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .5, metalness: .08 }); heartMat.name = 'Union Square / painted heart sculptures';
@@ -209,6 +276,18 @@ export function createUnionSquare(scene: THREE.Scene) {
     box(9.5, .11, 1.1, m.timber, x, ground + 1.3, 41.20);
   }
 
+  // Fluted park litter bins and small ground uplights set a human scale.
+  for (const x of [-38.8, 38.8]) for (const z of [-40.3, 40.3]) {
+    cylinder(.39, 1.03, m.dark, x, ground + .99, z, .39, 16);
+    for (let rib = 0; rib < 18; rib++) { const a = rib * Math.PI / 9; box(.04, .89, .06, m.metal, x + Math.cos(a) * .395, ground + .99, z + Math.sin(a) * .395, -a); }
+    cylinder(.445, .07, m.metal, x, ground + 1.55, z, .445, 24);
+    cylinder(.29, .016, m.dark, x, ground + 1.590, z, .29, 20);
+  }
+  for (const x of [-50.6, 50.6]) for (const z of [-28, -13, 13, 28]) {
+    cylinder(.18, .034, stainless, x + .95, ground + 1.605, z, .18, 16);
+    cylinder(.145, .012, m.dark, x + .95, ground + 1.628, z, .145, 16);
+  }
+
   // A facade's local x runs left-to-right, local +z faces the street.
   function facade(originX: number, originZ: number, yaw: number) {
     const position = (x: number, y: number, z: number) => V(originX + Math.cos(yaw) * x + Math.sin(yaw) * z, ground + y, originZ - Math.sin(yaw) * x + Math.cos(yaw) * z);
@@ -235,6 +314,7 @@ export function createUnionSquare(scene: THREE.Scene) {
 
   // WESTIN ST. FRANCIS, on Powell. Three projecting historic wings leave two
   // recessed courts; its contemporary concrete towers sit behind the old hotel.
+  const westinBatchStarts = new Map([...batches].map(([mat, geometries]) => [mat, geometries.length]));
   const westin = facade(-93, -1.5, Math.PI / 2);
   westin.b(91, 42, 28, m.sandstone, 0, 21, -19);
   for (const wing of [-32, 0, 32]) {
@@ -277,6 +357,15 @@ export function createUnionSquare(scene: THREE.Scene) {
     for (let bay = -12; bay <= 12; bay += 4) for (let floor = 0; floor < 11; floor++) end.window(bay, 4.2 + floor * 3.45, 1.75, 2.4, .08);
     for (const y of [8.5, 32.5, 39.2, 41.5]) end.b(33, .27, .60, m.limestone, 0, y, .15);
   }
+
+  const westinFallback = new THREE.Group();westinFallback.name='Westin / procedural fallback';group.add(westinFallback);
+  for (const [mat, geometries] of batches) {
+    const parts=geometries.splice(westinBatchStarts.get(mat)??0);
+    if(!parts.length)continue;
+    const merged=mergeGeometries(parts,false)!;parts.forEach(part=>part.dispose());
+    const mesh=new THREE.Mesh(merged,mat);mesh.castShadow=true;mesh.receiveShadow=true;westinFallback.add(mesh);
+  }
+  const westinAsset=createWestin(group,westinFallback);
 
   // MACY'S south across Geary: broad light masonry, huge display windows,
   // red star wordmark and deep horizontal shadow lines, never a fake tower.
@@ -387,6 +476,7 @@ export function createUnionSquare(scene: THREE.Scene) {
   // Static detail is merged by material; no individual window/tree/table draws.
   let triangles = 0;
   for (const [mat, geometries] of batches) {
+    if(!geometries.length)continue;
     const merged = mergeGeometries(geometries, false)!; geometries.forEach(geometry => geometry.dispose());
     merged.computeBoundingSphere(); triangles += merged.getAttribute('position').count / 3;
     const mesh = new THREE.Mesh(merged, mat); mesh.name = mat.name; mesh.castShadow = mat !== appleGlass && mat !== logoMaterial; mesh.receiveShadow = true; group.add(mesh);
@@ -394,8 +484,13 @@ export function createUnionSquare(scene: THREE.Scene) {
   group.userData.drawCalls = group.children.length; group.userData.triangles = triangles;
   return {
     group,
-    update(_time: number, _progress: number) { /* Architecture and the plaza remain fixed in the world. */ },
+    ready:Promise.all([westinAsset.ready, plazaReady]),
+    update(_time: number, _progress: number, camera?:THREE.Camera) { if(camera)westinAsset.update(camera); },
     setQuality(low: boolean) {
+      westinAsset.setQuality(low);
+      plazaArt.setQuality(low);
+      for(const fallback of [monumentFallback, palmFallback]) fallback.traverse(child => { if(child instanceof THREE.Mesh) child.castShadow = !low; });
+      westinFallback.traverse(child=>{if(child instanceof THREE.Mesh)child.castShadow=!low;});
       for (const child of group.children) if (child instanceof THREE.Mesh) child.castShadow = !low && child.material !== appleGlass && child.material !== logoMaterial;
     },
   };

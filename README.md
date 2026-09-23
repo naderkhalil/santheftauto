@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around.
+Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around. **The Westin** pauses across the square for a close architectural view; **Resume** returns to driving.
 
 ## Controls
 
@@ -41,11 +41,11 @@ City-loop times use the separate local-storage key `whimsical-sf-city-loop-best-
 
 ## Stack and assets
 
-TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. The current city, landmarks, vehicle, furnishings and bridge are procedural geometry; labels and many material details are generated locally. **No Blender-authored models have been imported for this version.**
+TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. The Westin St. Francis, Dewey Monument, twelve date palms and Powell cable car are now authored in Blender and loaded as local GLB assets. The Westin has a separate distant model with Draco compression; the palms are instanced. Other city buildings, the player car, Chinatown and the waterfront remain procedural geometry. Labels and many material details are generated locally.
 
 The asphalt maps and photographic sky use CC0 source assets. Additional source assets from earlier prototypes remain in the repository; see [asset credits](public/assets/CREDITS.md) and the adjacent source notes. Google Fonts is optional; system fallbacks keep the game playable once local assets are available.
 
-[BLENDER_ASSETS.md](BLENDER_ASSETS.md) describes the next art pass: reference-led hero models exported as efficient GLB assets, while the route and gameplay stay in code.
+[BLENDER_ASSETS.md](BLENDER_ASSETS.md) documents the implemented asset pipeline, editable source files, exact placements and measured asset budgets. The art pass adds local reflections, broader plaza shadows and contact shading, while retaining the route and driving simulation.
 
 ## Verify
 
@@ -56,7 +56,7 @@ npm run build
 
 Tests cover route geometry and driving behavior, including frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs.
 
-The `#world` canvas exposes read-only data attributes for frame rate, draw calls, progress, altitude, airborne state and hover deployment. `window.sfNightRun` provides read-only diagnostic snapshots.
+The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state and hover deployment. `window.sfNightRun` provides read-only diagnostic snapshots.
 
 ## Recovery checkpoints
 
@@ -64,6 +64,7 @@ Preserve these existing tags:
 
 | Tag | Commit | Version |
 | --- | --- | --- |
+| `pre-art-direction-v2` | `3f03057` | Connected city loop before the Blender art pass |
 | `pre-city-loop` | `d47bae0` | Previous linear course, smooth hill glides and Ferry Building/Bay Bridge finish |
 | `whimsical-sf-v1` | `e147015` | First exaggerated-hill and hover-wheel version |
 | `pre-whimsical-sf` | `8e7c7af` | Original sunny street-racing prototype |

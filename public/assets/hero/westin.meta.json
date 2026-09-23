@@ -1,0 +1,20 @@
+{
+  "asset": "westin.glb",
+  "triangles": 236697,
+  "meshes": 13,
+  "materials": 12,
+  "compression": "Draco; local decoder required",
+  "historicBounds": [
+    -45.8,
+    -4.8,
+    0,
+    45.8,
+    36,
+    52.5
+  ],
+  "axis": "Blender Z up; local front -Y; glTF front +Z",
+  "reference": "https://commons.wikimedia.org/wiki/File:Westin_st_francis_san_francisco.jpg",
+  "lodTriangles": 62536,
+  "bytes": 5276760,
+  "lodBytes": 874880
+}
