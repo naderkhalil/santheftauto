@@ -1,4 +1,4 @@
-import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeCurvature, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeCurvature, routeSlope, routeYaw, sampleGlidePath, sampleRoute } from './route.ts';
 import type { LaunchZone, Obstacle } from './route.ts';
 
 export type DriveInput = { throttle: number; brake: number; steer: number; drift: boolean; boost: boolean };
@@ -6,6 +6,8 @@ export type DriveState = {
   progress: number;
   lateral: number;
   speed: number;
+  /** Travel direction in semantic world coordinates; on ground, steering turns it. */
+  heading: number;
   elapsed: number;
   boost: number;
   driftAngle: number;
@@ -30,14 +32,16 @@ const CAR_HALF_WIDTH = .95;
 const CAR_HALF_LENGTH = 2.1;
 const EDGE = ROAD_HALF_WIDTH - CAR_HALF_WIDTH;
 const MIN_LAUNCH_SPEED = 24;
-/** Gentle corner weight; the road guides heading while the driver chooses a lane. */
-export const CORNER_DRIFT = .012;
+/** Speed-sensitive steering: tight at low speed, wider when approaching too fast. */
+export function steeringCurvature(speed: number, drift = false): number {
+  return Math.min(.105, 2.15 / Math.max(speed, 1)) * (drift ? 1.25 : 1);
+}
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const inputNumber = (value: number, min: number, max: number) => Number.isFinite(value) ? clamp(value, min, max) : 0;
 
 function initialState(): DriveState {
   return {
-    progress: START_PROGRESS, lateral: 0, speed: 0, elapsed: 0, boost: 1,
+    progress: START_PROGRESS, lateral: 0, speed: 0, heading: routeYaw(START_PROGRESS), elapsed: 0, boost: 1,
     driftAngle: 0, y: sampleRoute(START_PROGRESS).y, verticalVelocity: 0,
     airborne: false, glide: 0, altitude: 0, airTime: 0, totalAirTime: 0, launches: 0, finished: false, checkpoint: 0, collisions: 0, distanceDrifted: 0,
   };
@@ -65,11 +69,13 @@ function intersectsObstacle(fromProgress: number, fromLateral: number, toProgres
   return true;
 }
 
-/** Forward-only arcade handling. All distances are metres and speeds are metres/second. */
+/** Manual arcade handling. Route coordinates locate the road, not steer the car. */
 export class DrivingSimulation {
   state: DriveState = initialState();
   private obstacles: Obstacle[];
   private lateralVelocity = 0;
+  private steering = 0;
+  private wallBlocked = false;
   private edgeCooldown = 0;
   private activeLaunch: LaunchZone | undefined;
   private liftBias = 0;
@@ -91,6 +97,8 @@ export class DrivingSimulation {
   reset() {
     this.state = initialState();
     this.lateralVelocity = 0;
+    this.steering = 0;
+    this.wallBlocked = false;
     this.edgeCooldown = 0;
     this.activeLaunch = undefined;
     this.liftBias = 0;
@@ -140,24 +148,43 @@ export class DrivingSimulation {
     const engine = (boosting ? 28 : 19) * input.throttle;
     const rollingResistance = s.speed > 0 ? .6 + .015 * s.speed : 0;
     const drag = .003 * s.speed * s.speed;
+    // Engine braking is noticeable when the pedal is released. On a flat road
+    // a short burst of throttle coasts to a stop instead of touring the city.
+    const coastDrag = s.airborne ? 0 : (1 - input.throttle) * (2.2 + .10 * s.speed);
     const driftDrag = input.drift && !s.airborne ? 3.8 + .045 * s.speed : 0;
     const downhill = s.speed > .5 && !s.airborne ? -routeSlope(s.progress) * 4 : 0;
-    s.speed += (engine - rollingResistance - drag - input.brake * 34 - driftDrag + downhill) * dt;
+    s.speed += (engine - rollingResistance - drag - coastDrag - input.brake * 34 - driftDrag + downhill) * dt;
     if (s.speed > terminalSpeed) s.speed = Math.max(terminalSpeed, s.speed - 24 * dt);
     // Lift keeps forward motion even if the driver releases the accelerator in flight.
     s.speed = clamp(s.speed, s.airborne ? 18 : 0, 60);
 
-    const routeBend = routeCurvature(s.progress);
-    const targetLateralVelocity = input.steer * s.speed * (s.airborne ? .17 : .19) * (input.drift && !s.airborne ? 1.38 : 1)
-      - (s.airborne ? 0 : routeBend * s.speed * s.speed * CORNER_DRIFT);
-    const grip = s.airborne ? 4.2 : input.drift ? 3.3 : 9;
-    this.lateralVelocity += (targetLateralVelocity - this.lateralVelocity) * (1 - Math.exp(-grip * dt));
-    this.lateralVelocity = clamp(this.lateralVelocity, -16, 16);
-    if (s.speed < .1 && !s.airborne) this.lateralVelocity = 0;
+    this.steering += (input.steer - this.steering) * (1 - Math.exp(-10 * dt));
+    let forwardSpeed: number;
+    if (s.airborne) {
+      // Preserve the established hover controls on the straight flight corridors.
+      // Heading follows the actual lateral glide; flight cannot stop in mid-air.
+      const targetLateralVelocity = input.steer * s.speed * .17;
+      this.lateralVelocity += (targetLateralVelocity - this.lateralVelocity) * (1 - Math.exp(-4.2 * dt));
+      this.lateralVelocity = clamp(this.lateralVelocity, -s.speed * .5, s.speed * .5);
+      forwardSpeed = Math.sqrt(Math.max(0, s.speed * s.speed - this.lateralVelocity * this.lateralVelocity));
+      s.heading = routeYaw(s.progress) + Math.atan2(this.lateralVelocity, forwardSpeed);
+      this.wallBlocked = false;
+    } else {
+      // At a blocked curb, gas plus steering can turn the nose away at a crawl.
+      // The curb never supplies a new heading or pushes progress around a bend.
+      const yawSpeed = this.wallBlocked ? Math.max(s.speed, input.throttle * (1 - input.brake) * 8) : s.speed;
+      s.heading += yawSpeed * this.steering * steeringCurvature(yawSpeed, input.drift) * dt;
+      const relative = s.heading - routeYaw(s.progress);
+      if (this.wallBlocked && Math.sin(relative) * Math.sign(s.lateral) > 0) s.speed = 0;
+      else this.wallBlocked = false;
+      this.lateralVelocity = s.speed * Math.sin(relative);
+      // Frenet coordinates convert the driver's world velocity into road
+      // progress. The offset-radius term keeps an unsteered car travelling
+      // straight in world space as the road curves underneath it.
+      forwardSpeed = s.speed * Math.cos(relative) / (1 - routeCurvature(s.progress) * s.lateral);
+    }
     s.lateral += this.lateralVelocity * dt;
-    // Lateral sliding costs a small amount of forward progress.
-    const forwardSpeed = s.speed * (1 - Math.min(.12, Math.abs(this.lateralVelocity) * .006));
-    s.progress += forwardSpeed * dt;
+    s.progress = Math.max(0, s.progress + forwardSpeed * dt);
 
     if (Math.abs(s.lateral) > EDGE) {
       const side = Math.sign(s.lateral);
@@ -168,7 +195,11 @@ export class DrivingSimulation {
         events.push('crash');
         this.edgeCooldown = .8;
       }
-      this.lateralVelocity = s.airborne ? 0 : -side * Math.abs(this.lateralVelocity) * .22;
+      if (!s.airborne && this.lateralVelocity * side > 0) {
+        s.speed = 0;
+        this.wallBlocked = true;
+      }
+      this.lateralVelocity = 0;
     }
 
     for (let i = 0; i < this.obstacles.length; i++) {
@@ -187,7 +218,8 @@ export class DrivingSimulation {
       events.push('crash');
     }
 
-    const slipAngle = Math.atan2(this.lateralVelocity, Math.max(7, s.speed)) * (input.drift ? 1.7 : .9);
+    const slipAngle = s.airborne ? Math.atan2(this.lateralVelocity, Math.max(7, s.speed))
+      : this.steering * clamp(s.speed / 30, 0, 1) * (input.drift ? .28 : .025);
     s.driftAngle += (slipAngle - s.driftAngle) * (1 - Math.exp(-8 * dt));
     if (input.drift && s.speed > 10 && Math.abs(this.lateralVelocity) > 1.4 && !s.airborne) s.distanceDrifted += s.speed * dt;
 
@@ -232,7 +264,7 @@ export class DrivingSimulation {
         s.airborne = false;
         s.glide = 0;
         s.airTime = 0;
-        s.verticalVelocity = routeSlope(s.progress) * s.speed;
+        s.verticalVelocity = routeSlope(s.progress) * forwardSpeed;
         s.boost = Math.min(1, s.boost + .12);
         this.activeLaunch = undefined;
         events.push('land');
@@ -240,7 +272,7 @@ export class DrivingSimulation {
     } else {
       s.y = ground;
       s.glide = 0;
-      s.verticalVelocity = routeSlope(s.progress) * s.speed;
+      s.verticalVelocity = routeSlope(s.progress) * forwardSpeed;
     }
     s.altitude = Math.max(0, s.y - ground);
 

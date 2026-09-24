@@ -13,7 +13,7 @@ Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for 
 
 ## Controls
 
-- W / Up: accelerate
+- Hold W / Up: accelerate
 - A, D / Left, Right: steer on the street and in the sky
 - S / Down: brake; dive in flight
 - Shift: boost; gain lift in flight
@@ -23,7 +23,7 @@ Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for 
 - Escape: pause
 - M: mute
 
-The course guides the car around street corners; steering chooses your line within the road. Brake or drift through tight turns. Hover deploys automatically at a hill launch above 54 mph. Nine gold sun rings replenish boost, and wheels return upright before landing. Touch and standard gamepad controls are supported. **How to Play** includes auto-accelerate, three graphics settings, fullscreen, and best-time reset.
+Hold the accelerator to build speed. Releasing it lets the car coast and slow down; brake before corners, then steer through the turn. The car keeps its heading until you steer. Hold drift with steering for tighter turns. Hover deploys automatically at a hill launch above 54 mph. Nine gold sun rings replenish boost, and wheels return upright before landing. Touch and standard gamepad controls are supported. **How to Play** includes optional auto-accelerate, three graphics settings, fullscreen, and best-time reset. Auto-accelerate holds the gas; you still steer and brake. Only **Watch a Run** drives the course for you.
 
 ## Course
 
@@ -43,7 +43,7 @@ The street connections and landmark relationships establish a more recognizable 
 
 At the finish, the camera reveals the Ferry Building on its pier, animated turquoise water and the silver Bay Bridge behind it. Compact results preserve the waterfront view.
 
-City-loop times use the separate local-storage key `whimsical-sf-city-loop-best-v1`. Previous-course records are preserved rather than compared with this longer course. Reset Best affects the current course only.
+Manual-driving times use the separate local-storage key `whimsical-sf-manual-driving-best-v2`. Records from the former guided handling are preserved under their old key rather than compared with manual steering. Reset Best affects the current course only.
 
 ## Stack and assets
 
@@ -60,9 +60,9 @@ npm test
 npm run build
 ```
 
-Tests cover route geometry and driving behavior, including frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap. Camera-projection tests protect landmark order, the clockwise square lap and left/right driving controls in all four street headings.
+Tests cover route geometry and driving behavior, including coasting to a stop, manual cornering, curb recovery, frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap. Camera-projection tests protect landmark order, the clockwise square lap and left/right driving controls in all four street headings.
 
-The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state and hover deployment. `window.sfNightRun` provides read-only diagnostic snapshots.
+The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. `window.sfNightRun` provides read-only diagnostic snapshots.
 
 ## Recovery checkpoints
 

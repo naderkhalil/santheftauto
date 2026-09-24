@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { cityToRender, createCityRoot, renderToCity, setCameraFromCity, steeringFromControls } from './coordinates.ts';
 import { DrivingSimulation } from './driving.ts';
-import { routePoint, routeProgressAt, sampleRoute } from './route.ts';
+import { routePoint, routeProgressAt, routeYaw, sampleRoute } from './route.ts';
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 const projectCity = (p: THREE.Vector3, camera: THREE.Camera) => cityToRender(p).project(camera);
@@ -44,6 +44,7 @@ test('right and left controls move toward their screen side in every street head
     const sim = new DrivingSimulation([]);
     sim.state.progress = routeProgressAt(x, z);
     sim.state.y = sampleRoute(sim.state.progress).y;
+    sim.state.heading = routeYaw(sim.state.progress);
     sim.state.speed = 25;
     for (let frame = 0; frame < 15; frame++) sim.update(1 / 60, {
       throttle: 1, brake: 0, steer: input.steer, drift: false, boost: false,

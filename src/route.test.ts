@@ -98,10 +98,10 @@ test('tour navigates the entire turning route at 30, 60 and 120 Hz and stops at 
   for (const hz of [30, 60, 120]) {
     const tour = new CityTour([]);
     let sawFlight = false;
-    for (let i = 0; i < hz * 80 && !tour.paused; i++) {
+    for (let i = 0; i < hz * 120 && !tour.paused; i++) {
       tour.update(1 / hz);
       sawFlight ||= tour.airborne;
-      assert.ok(Math.abs(tour.lateral) < .35, 'autopilot should compensate for corner weight');
+      assert.ok(Math.abs(tour.lateral) < .35, 'demo driver should follow the centre line through corners');
       const pose = tour.getPose(), frame = routeFrame(tour.progress);
       near(pose.car.x, routePoint(tour.progress, tour.lateral).x);
       near(pose.car.z, routePoint(tour.progress, tour.lateral).z);

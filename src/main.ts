@@ -59,7 +59,7 @@ app.innerHTML = `
 <div class="race-message faded" id="message" aria-live="polite" aria-hidden="true"><strong></strong><span></span></div>
 <div class="race-flash" id="flash"></div><div class="tour-ui hidden" id="tour-ui"><div class="tour-caption"><span id="tour-mode">POSTCARD MODE / AUTOPILOT</span><strong id="tour-place">UNION SQUARE</strong><small>Drag to look around</small></div><div class="tour-stops" style="overflow-x:auto;white-space:nowrap"><button data-stop="35" data-scene="square">UNION SQUARE</button><button data-stop="${routeProgressAt(-75,-15)}" data-scene="westin">THE WESTIN</button><button data-stop="${routeProgressAt(45,65)}" data-scene="post" aria-label="POST STREET">POST ST</button><button data-stop="${ROUTE_STOPS.powell}">POWELL ST</button><button data-stop="${ROUTE_STOPS.grant-8}">GRANT AVE</button><button data-stop="${TRACK_LENGTH}">THE BAY</button></div><div class="tour-actions"><button id="tour-pause">PAUSE</button><button id="tour-race">LET’S RACE ↗</button><button id="tour-exit" aria-label="Exit scenic drive">×</button></div></div>
 <div class="touch-controls"><div class="touch-group"><button class="touch-button" data-control="left" aria-label="Steer left">‹</button><button class="touch-button" data-control="right" aria-label="Steer right">›</button><button class="touch-button small" data-control="drift" aria-label="Handbrake drift">DRIFT</button></div><div class="touch-group"><button class="touch-button small" data-control="boost" aria-label="Boost">N₂O</button><button class="touch-button small" data-control="brake" aria-label="Brake">BRAKE</button><button class="touch-button gas" data-control="gas" aria-label="Accelerate">GAS</button></div></div>
-<div class="modal-layer hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="panel"><button class="panel-close" id="close-help" aria-label="Close instructions">×</button><div class="panel-eyebrow">A LITTLE LOCAL KNOWLEDGE</div><h2 id="help-title">THE HILLS<br>HAVE WINGS.</h2><p>Lap Union Square, climb Powell, and enter Chinatown through the Dragon Gate on Grant Avenue. The route guides you around street corners: steer within your lane, brake or drift to take a tighter line. Build speed up the three hills, then launch. Your wheels fold flat automatically: steer through the sky, collect sun rings, and touch down with a boost refill.</p><div class="control-list"><div class="control-item"><div class="keys"><kbd>W</kbd><kbd>↑</kbd></div>Accelerate</div><div class="control-item"><div class="keys"><kbd>S</kbd><kbd>↓</kbd></div>Brake</div><div class="control-item"><div class="keys"><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></div>Steer · on road & in air</div><div class="control-item"><div class="keys"><kbd>SPACE</kbd></div>Hold to drift</div><div class="control-item"><div class="keys"><kbd>SHIFT</kbd></div>Boost · recharges</div><div class="control-item"><div class="keys"><kbd>R</kbd><kbd>ESC</kbd><kbd>C</kbd></div>Restart · pause · camera</div></div><p class="help-caption">Controller: left stick to steer, RT to accelerate, LT to brake, A to boost, X to drift, Menu to pause. Touch controls appear on touchscreens. Wheels deploy automatically above 54 mph at a launch. Brake to dive; boost to gain lift. Watch a Run demonstrates the course; drag to look around.</p><div class="settings-row"><button id="quality">GRAPHICS: HIGH</button><span>/</span><button id="fullscreen">FULLSCREEN ↗</button></div><div class="settings-row" style="margin-top:12px;padding-top:12px"><button id="auto-throttle" aria-pressed="false">AUTO ACCELERATE: OFF</button><span>/</span><button id="reset-best">RESET BEST</button></div><button class="primary" id="help-play">LET’S DRIVE <span class="arrow">↗</span></button></div></div>
+<div class="modal-layer hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="panel"><button class="panel-close" id="close-help" aria-label="Close instructions">×</button><div class="panel-eyebrow">A LITTLE LOCAL KNOWLEDGE</div><h2 id="help-title">THE HILLS<br>HAVE WINGS.</h2><p>Lap Union Square, climb Powell, and enter Chinatown through the Dragon Gate on Grant Avenue. Hold the accelerator to build speed, ease off or brake before corners, and steer all the way through each turn. Build speed up the three hills, then launch. Your wheels fold flat automatically: steer through the sky, collect sun rings, and touch down with a boost refill.</p><div class="control-list"><div class="control-item"><div class="keys"><kbd>W</kbd><kbd>↑</kbd></div>Hold to accelerate</div><div class="control-item"><div class="keys"><kbd>S</kbd><kbd>↓</kbd></div>Brake</div><div class="control-item"><div class="keys"><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></div>Steer · on road & in air</div><div class="control-item"><div class="keys"><kbd>SPACE</kbd></div>Hold to drift</div><div class="control-item"><div class="keys"><kbd>SHIFT</kbd></div>Boost · recharges</div><div class="control-item"><div class="keys"><kbd>R</kbd><kbd>ESC</kbd><kbd>C</kbd></div>Restart · pause · camera</div></div><p class="help-caption">Controller: left stick to steer, RT to accelerate, LT to brake, A to boost, X to drift, Menu to pause. Touch controls appear on touchscreens. Wheels deploy automatically above 54 mph at a launch. Brake to dive; boost to gain lift. Auto Accelerate holds the gas for you; you still steer and brake. Watch a Run demonstrates the course; drag to look around.</p><div class="settings-row"><button id="quality">GRAPHICS: HIGH</button><span>/</span><button id="fullscreen">FULLSCREEN ↗</button></div><div class="settings-row" style="margin-top:12px;padding-top:12px"><button id="auto-throttle" aria-pressed="false">AUTO ACCELERATE: OFF</button><span>/</span><button id="reset-best">RESET BEST</button></div><button class="primary" id="help-play">LET’S DRIVE <span class="arrow">↗</span></button></div></div>
 <div class="modal-layer hidden" id="pause-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="panel"><div class="panel-eyebrow">TAKE A BREATHER</div><h2 id="pause-title">CITY ON<br>STANDBY.</h2><p>Your run is paused. The clock can wait.</p><button class="primary" id="resume">BACK TO THE RUN <span class="arrow">↗</span></button><button class="secondary" id="restart">RESTART RACE</button><button class="secondary" id="pause-home">MAIN MENU</button></div></div>
 <div class="bay-caption" id="bay-caption" aria-hidden="true"><small>YOU MADE IT TO THE WATER</small><strong>San Francisco Bay.</strong><span>FERRY BUILDING &nbsp; / &nbsp; BAY BRIDGE</span></div><div class="modal-layer hidden" id="results" role="dialog" aria-modal="true" aria-labelledby="result-title"><div class="panel"><div class="panel-eyebrow" id="result-eyebrow">POWELL STREET / COMPLETE</div><h2 id="result-title">THAT’S<br>A RUN.</h2><div class="result-main"><div><div class="label" style="margin-bottom:8px">YOUR FINISH TIME</div><div class="result-time" id="result-time">00:00.00</div></div><div class="result-medal" id="result-medal">FINISHER</div></div><div class="result-stats"><div><span class="label">TOP SPEED</span><strong id="result-speed">0 MPH</strong></div><div><span class="label">TIME IN THE SKY</span><strong id="result-drift">0 M</strong></div><div><span class="label">CONTACTS</span><strong id="result-hits">0</strong></div></div><p id="result-copy">There’s always a cleaner line. Go find it.</p><button class="primary" id="again">ONE MORE RUN <span class="arrow">↗</span></button><button class="secondary" id="result-home">BACK TO THE CITY</button></div></div>
 <div class="loading" id="loading"><span class="brand-mark">SF</span><p>BENDING THE CITY</p><div class="loading-line"></div></div>`;
@@ -171,7 +171,7 @@ async function boot() {
   let tourArt:TourScene|null=null;
   const tourSceneNames:Record<TourScene,string>={square:'UNION SQUARE',westin:'THE WESTIN ST. FRANCIS',post:'POST STREET'};
   let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0;
-  let topSpeed=0, best=Number(safeRead('whimsical-sf-city-loop-best-v1'))||0, muted=safeRead('sf-night-run-muted')==='true';
+  let topSpeed=0, best=Number(safeRead('whimsical-sf-manual-driving-best-v2'))||0, muted=safeRead('sf-night-run-muted')==='true';
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
   let cinematicQuality=safeRead('sf-night-run-quality')==='cinematic';
   let lowQuality=safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
@@ -222,7 +222,7 @@ async function boot() {
   function finish(){
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
     const s=sim.state, isBest=!best||s.elapsed<best;
-    if(isBest){best=s.elapsed;safeWrite('whimsical-sf-city-loop-best-v1',String(best));}
+    if(isBest){best=s.elapsed;safeWrite('whimsical-sf-manual-driving-best-v2',String(best));}
     el('result-eyebrow').textContent=isBest?'NEW PERSONAL BEST / CITY LOOP':'SAN FRANCISCO / CITY LOOP';
     el('result-time').textContent=formatTime(s.elapsed);el('result-speed').textContent=`${Math.round(topSpeed*2.23694)} MPH`;el('result-drift').textContent=`${s.totalAirTime.toFixed(1)} SEC`;el('result-hits').textContent=String(s.collisions);
     el('result-medal').textContent=s.elapsed<63?'GOLD':s.elapsed<76?'SILVER':s.elapsed<95?'BRONZE':'FINISHER';
@@ -236,10 +236,12 @@ async function boot() {
     const right=keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right');
     let steer=steeringFromControls(left,right);
     let drift=keys.has('Space')||touch.has('drift'),boost=keys.has('ShiftLeft')||keys.has('ShiftRight')||touch.has('boost');
-    const pads=navigator.getGamepads?.();const pad=pads?Array.from(pads).find(p=>p?.connected):undefined;
+    // Ignore unrecognized controller mappings and resting trigger noise.
+    const pads=navigator.getGamepads?.();const pad=pads?Array.from(pads).find(p=>p?.connected&&p.mapping==='standard'):undefined;
     if(pad){
       steer=steeringFromControls(left,right,pad.axes[0]||0);
-      throttle=Math.max(throttle,pad.buttons[7]?.value||0);brake=Math.max(brake,pad.buttons[6]?.value||0);drift=drift||!!pad.buttons[2]?.pressed;boost=boost||!!pad.buttons[0]?.pressed;
+      const trigger=(index:number)=>{const value=pad.buttons[index]?.value??0;return Number.isFinite(value)?THREE.MathUtils.clamp((value-.08)/.92,0,1):0;};
+      throttle=Math.max(throttle,trigger(7));brake=Math.max(brake,trigger(6));drift=drift||!!pad.buttons[2]?.pressed;boost=boost||!!pad.buttons[0]?.pressed;
       const down=!!pad.buttons[9]?.pressed;if(down&&!gamepadPauseDown){if(phase==='racing'||phase==='countdown')pause();else if(phase==='paused')resume();else if(phase==='menu'||phase==='finished')start();}gamepadPauseDown=down;
     }else{gamepadPauseDown=false;}
     if(autoThrottle&&brake>.1)throttle=0;
@@ -258,7 +260,7 @@ async function boot() {
   function updateCamera(dt:number){
     const s=sim.state;
     if(phase==='finished'){
-      const here=routePoint(s.progress,s.lateral);car.group.position.set(here.x,s.y+.03,here.z);car.group.rotation.set(-Math.atan(routeSlope(s.progress)),routeYaw(s.progress),0);
+      const here=routePoint(s.progress,s.lateral);car.group.position.set(here.x,s.y+.03,here.z);car.group.rotation.set(-Math.atan(routeSlope(s.progress)),s.heading,0);
       const u=reduceMotion?1:THREE.MathUtils.clamp((totalTime-finishedAt)/4.2,0,1),ease=u*u*u*(u*(u*6-15)+10);
       desiredCamera.copy(finishCameraStart).lerp(bayCamera,ease);desiredCamera.y+=Math.sin(u*Math.PI)*7;lookAt.copy(finishLookStart).lerp(bayLook,ease);
       camera.fov=THREE.MathUtils.damp(camera.fov,camera.aspect<.65?82:camera.aspect<1?65:58,3,dt);
@@ -288,13 +290,15 @@ async function boot() {
       desiredCamera.set(35+orbit*.28,42,-45);lookAt.set(-86,47,-36);
       camera.fov=camera.aspect<.7?76:camera.aspect<1.2?64:56;
     }else{
-      const here=routePoint(s.progress,s.lateral),frame=routeFrame(s.progress),yaw=frame.yaw;
+      const here=routePoint(s.progress,s.lateral),frame=routeFrame(s.progress),yaw=s.heading;
       car.group.position.set(here.x,s.y+.03,here.z);
-      const ahead=routePoint(s.progress+23,s.lateral*.68),view=flightView(s,frame.slope,ahead.y);
+      const forwardX=Math.sin(yaw),forwardZ=Math.cos(yaw);
+      const ahead={x:here.x+forwardX*23,z:here.z+forwardZ*23};
+      const view=flightView(s,frame.slope*Math.cos(yaw-frame.yaw),groundHeight(ahead.x,ahead.z));
       car.group.rotation.order='YXZ';car.group.rotation.x=THREE.MathUtils.damp(car.group.rotation.x,view.pitch,10,dt);car.group.rotation.y=yaw+s.driftAngle;car.group.rotation.z=THREE.MathUtils.damp(car.group.rotation.z,view.bank,7,dt);
       const chaseDistance=cameraMode===1?6.3:9.4,chaseHeight=cameraMode===1?2.25:4.2;
-      const back=routePoint(s.progress-chaseDistance,s.lateral*.9);
-      desiredCamera.set(back.x,Math.max(s.y+chaseHeight,back.y+chaseHeight),back.z);
+      const back={x:here.x-forwardX*chaseDistance,z:here.z-forwardZ*chaseDistance};
+      desiredCamera.set(back.x,Math.max(s.y+chaseHeight,groundHeight(back.x,back.z)+chaseHeight),back.z);
       lookAt.set(ahead.x,view.lookHeight,ahead.z);
       if(shake>.001&&!reduceMotion){desiredCamera.x+=(Math.random()-.5)*shake;desiredCamera.y+=(Math.random()-.5)*shake*.65;shake*=Math.exp(-8*dt);}
       const targetFov=(cameraMode===1?70:68)+(reduceMotion?0:s.speed*.12+view.weight*3);camera.fov=THREE.MathUtils.damp(camera.fov,targetFov,3,dt);
@@ -331,12 +335,13 @@ async function boot() {
   window.addEventListener('keyup',event=>keys.delete(event.code));
   function pauseWhenAway(){clearInputs();if(phase==='racing'||phase==='countdown')pause();if(phase==='tour'){tour.paused=true;audio.suspend();el('tour-pause').textContent='RESUME';}}
   window.addEventListener('blur',pauseWhenAway);
+  window.addEventListener('gamepaddisconnected',pauseWhenAway);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseWhenAway();});
   window.addEventListener('resize',resize);
   canvas.tabIndex=-1;
   document.querySelectorAll<HTMLButtonElement>('[data-control]').forEach(button=>{
     const control=button.dataset.control!;
-    button.addEventListener('pointerdown',event=>{event.preventDefault();button.setPointerCapture(event.pointerId);touch.add(control);button.classList.add('pressed');});
+    button.addEventListener('pointerdown',event=>{if(phase!=='racing'&&phase!=='countdown')return;if(event.button!==0)return;event.preventDefault();button.setPointerCapture(event.pointerId);touch.add(control);button.classList.add('pressed');});
     const release=()=>{touch.delete(control);button.classList.remove('pressed');};button.addEventListener('pointerup',release);button.addEventListener('pointercancel',release);button.addEventListener('lostpointercapture',release);
   });
   function toggleSound(){muted=!muted;audio.setMuted(muted);safeWrite('sf-night-run-muted',String(muted));updateSoundButton();if(!muted&&(phase==='racing'||phase==='tour'&&!tour.paused))void audio.unlock();}
@@ -350,7 +355,7 @@ async function boot() {
   el('how').onclick=()=>{helpWasPaused=phase==='racing'||phase==='countdown';if(helpWasPaused)pause();modal('help',true);};el('close-help').onclick=closeHelp;el('help-play').onclick=start;
   function updateAssist(){el('auto-throttle').textContent=`AUTO ACCELERATE: ${autoThrottle?'ON':'OFF'}`;el('auto-throttle').setAttribute('aria-pressed',String(autoThrottle));}
   el('auto-throttle').onclick=()=>{autoThrottle=!autoThrottle;safeWrite('sf-night-run-auto-throttle',String(autoThrottle));updateAssist();};updateAssist();
-  el('reset-best').onclick=()=>{best=0;safeWrite('whimsical-sf-city-loop-best-v1','0');el('best').textContent='—';el('reset-best').textContent='BEST CLEARED';};
+  el('reset-best').onclick=()=>{best=0;safeWrite('whimsical-sf-manual-driving-best-v2','0');el('best').textContent='—';el('reset-best').textContent='BEST CLEARED';};
   el('quality').onclick=()=>{if(lowQuality){lowQuality=false;cinematicQuality=false;}else if(cinematicQuality){cinematicQuality=false;lowQuality=true;}else{cinematicQuality=true;}applyQuality();};
   el('fullscreen').onclick=()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});else void document.documentElement.requestFullscreen?.().catch(()=>{el('fullscreen').textContent='USE YOUR BROWSER’S FULLSCREEN';});};
   document.addEventListener('fullscreenchange',()=>el('fullscreen').textContent=document.fullscreenElement?'EXIT FULLSCREEN ↙':'FULLSCREEN ↗');
@@ -363,7 +368,10 @@ async function boot() {
     requestAnimationFrame(frame);
     const dt=Math.min((now-lastTime)/1000,.25);lastTime=now;totalTime+=dt;uiClock+=dt;
     performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
-    const input=readInput();let raceDt=dt;if(phase==='tour'){
+    const input=readInput();
+    canvas.dataset.throttle=String(input.throttle);canvas.dataset.steer=String(input.steer);
+    canvas.dataset.speed=sim.state.speed.toFixed(2);canvas.dataset.heading=sim.state.heading.toFixed(4);
+    let raceDt=dt;if(phase==='tour'){
       const beforeTour=tour.progress,wasTourPaused=tour.paused;tour.update(dt);if(tour.progress<beforeTour){cameraInitialized=false;tourBayStarted=null;}
       if(tour.progress>=TRACK_LENGTH-1&&tour.paused){el('tour-pause').textContent='RUN AGAIN';if(!wasTourPaused){audio.suspend();tourBayStarted=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);}}
       if(!tour.paused){audio.update(tour.speed,.40,false,false,tour.glide);updateCitySound(tour.progress,tour.lateral);}
@@ -388,7 +396,7 @@ async function boot() {
     el('drift-hint').textContent=sim.state.airborne?'A / D TO GLIDE · BRAKE TO DIVE':'DRIFTING';el('drift-hint').setAttribute('aria-hidden',String(!el('drift-hint').classList.contains('active')));
     document.querySelector('.speed-vignette')!.classList.toggle('active',phase==='racing'&&sim.boosting);
     if(phase!=='paused')updateCamera(dt);
-    if(phase!=='paused'){car.update(dt,{speed:phase==='menu'?0:phase==='tour'?(tour.paused?0:tour.speed):sim.state.speed,steer:input.steer,braking:input.brake>.1,boosting:phase==='racing'&&sim.boosting,time:totalTime,glide:phase==='menu'?0:phase==='tour'?tour.glide:sim.state.glide,airborne:phase==='menu'?false:(phase==='tour'?tour.airborne:sim.state.airborne),altitude:phase==='tour'?tour.altitude:sim.state.altitude,landing:landingPulse});updateSpray(dt,input);}
+    if(phase!=='paused'){car.update(dt,{speed:phase==='menu'?0:phase==='tour'?(tour.paused?0:tour.speed):sim.state.speed,steer:phase==='tour'?tour.steer:input.steer,braking:input.brake>.1,boosting:phase==='racing'&&sim.boosting,time:totalTime,glide:phase==='menu'?0:phase==='tour'?tour.glide:sim.state.glide,airborne:phase==='menu'?false:(phase==='tour'?tour.airborne:sim.state.airborne),altitude:phase==='tour'?tour.altitude:sim.state.altitude,landing:landingPulse});updateSpray(dt,input);}
     landingPulse*=Math.exp(-7*dt);
     const flight=phase==='tour'?tour:sim.state;
     const showingFlight=(phase==='racing'||phase==='tour')&&flight.airborne&&flight.glide>.2;

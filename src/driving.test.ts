@@ -2,13 +2,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DrivingSimulation } from './driving.ts';
 import type { DriveInput, RaceEvent } from './driving.ts';
-import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, glideSlope, routeSlope, sampleGlidePath, sampleRoute } from './route.ts';
+import { DemoAutopilot } from './autopilot.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, ROUTE_STOPS, glideSlope, routeSlope, routeYaw, sampleGlidePath, sampleRoute } from './route.ts';
 
 const throttle: DriveInput = { throttle: 1, brake: 0, steer: 0, drift: false, boost: false };
 const neutral: DriveInput = { ...throttle, throttle: 0 };
 function drive(sim: DrivingSimulation, seconds: number, input: DriveInput = throttle, hz = 120) {
   const events: RaceEvent[] = [];
   for (let frame = 0; frame < Math.round(seconds * hz); frame++) events.push(...sim.update(1 / hz, input));
+  return events;
+}
+
+function place(sim:DrivingSimulation,progress:number,speed=44){
+  Object.assign(sim.state,{progress,heading:routeYaw(progress),y:sampleRoute(progress).y,speed,verticalVelocity:routeSlope(progress)*speed});
+}
+function driveUntil(sim:DrivingSimulation,done:()=>boolean,input:DriveInput=throttle,seconds=30){
+  const events:RaceEvent[]=[];
+  for(let i=0;i<seconds*120&&!done();i++)events.push(...sim.update(1/120,input));
+  assert.ok(done(),`driving condition not reached within ${seconds}s at ${sim.state.progress.toFixed(2)}m`);
   return events;
 }
 
@@ -43,6 +54,8 @@ test('30, 60 and 120 Hz produce matching routes, handling and timers', () => {
 test('boost is faster, depletes, recharges, and can be triggered again', () => {
   const fast = new DrivingSimulation();
   const normal = new DrivingSimulation();
+  place(fast, ROUTE_STOPS.embarcadero, 0);
+  place(normal, ROUTE_STOPS.embarcadero, 0);
   drive(fast, 3.9, { ...throttle, boost: true });
   drive(normal, 3.9);
   assert.ok(fast.state.speed > normal.state.speed + 8);
@@ -57,14 +70,16 @@ test('boost is faster, depletes, recharges, and can be triggered again', () => {
   assert.ok(fast.state.boost >= 0 && fast.state.boost <= 1);
 });
 
-test('a long update crosses checkpoints in order and finishes exactly once', () => {
+test('an explicitly driven run crosses checkpoints in order and finishes exactly once', () => {
   const sim = new DrivingSimulation();
-  const events = sim.update(60, throttle);
+  const driver = new DemoAutopilot();
+  const events:RaceEvent[]=[];
+  for(let i=0;i<120*120&&!sim.state.finished;i++)events.push(...sim.update(1/120,driver.input(sim.state)));
   assert.equal(sim.state.checkpoint, CHECKPOINTS.length);
   assert.equal(sim.state.finished, true);
   assert.equal(sim.state.progress, TRACK_LENGTH);
   assert.deepEqual(events.filter(event => event === 'checkpoint' || event === 'finish'), ['checkpoint', 'checkpoint', 'checkpoint', 'checkpoint', 'finish']);
-  assert.ok(sim.state.elapsed > 20 && sim.state.elapsed < 60);
+  assert.ok(sim.state.elapsed > 20 && sim.state.elapsed < 120);
   const finished = { ...sim.state };
   assert.deepEqual(sim.update(60, throttle), []);
   assert.deepEqual(sim.state, finished);
@@ -89,8 +104,7 @@ test('boost effects reflect actual power after depletion, release, braking, rese
   sim.update(1 / 120, boost);
   sim.reset();
   assert.equal(sim.boosting, false);
-  sim.state.progress = TRACK_LENGTH - .1;
-  sim.state.speed = 40;
+  place(sim, TRACK_LENGTH-.1, 40);
   sim.update(.1, boost);
   assert.equal(sim.state.finished, true);
   assert.equal(sim.boosting, false);
@@ -104,7 +118,7 @@ test('obstacle collision is swept, costs speed, and allows recovery', () => {
   assert.equal(sim.state.collisions, 1);
   assert.ok(sim.state.speed < 30);
   assert.ok(Math.abs(sim.state.lateral) > 1.9);
-  drive(sim, 4);
+  drive(sim, 2.8);
   assert.ok(sim.state.progress > 100);
   assert.ok(sim.state.speed > 35);
   assert.equal(sim.state.collisions, 1);
@@ -112,23 +126,26 @@ test('obstacle collision is swept, costs speed, and allows recovery', () => {
 
 test('passing an obstacle in an adjacent lane does not collide', () => {
   const sim = new DrivingSimulation([{ progress: 35, lateral: -5, width: 2, length: 4, kind: 'car' }]);
-  assert.ok(!drive(sim, 5).includes('crash'));
+  assert.ok(!drive(sim, 3).includes('crash'));
   assert.equal(sim.state.collisions, 0);
 });
 
 test('grounded curb impacts stay inside the road and the driver can steer away', () => {
   const sim = new DrivingSimulation();
   drive(sim, 1);
-  const events = drive(sim, 2, { ...throttle, steer: 1 });
+  const events = driveUntil(sim,()=>sim.state.collisions>0,{...throttle,steer:1},2);
   assert.ok(events.includes('crash'));
   assert.ok(Math.abs(sim.state.lateral) <= ROAD_HALF_WIDTH - .95);
-  drive(sim, 1, { ...throttle, steer: -1 });
-  assert.ok(sim.state.lateral < 7);
+  // A held wheel can leave the nose facing into the curb; recovery requires
+  // steering back far enough to point into the street before gas moves it.
+  driveUntil(sim,()=>sim.state.lateral<ROAD_HALF_WIDTH-1.5&&sim.state.speed>0,{...throttle,steer:-1},2.5);
+  assert.ok(sim.state.lateral < ROAD_HALF_WIDTH-1.5);
   assert.ok(sim.state.speed > 0);
 });
 
 test('brakes stop the car, and steering cannot move a stopped car sideways', () => {
   const sim = new DrivingSimulation();
+  place(sim, ROUTE_STOPS.embarcadero, 0);
   drive(sim, 4);
   assert.ok(sim.state.speed > 40);
   drive(sim, 2, { ...neutral, brake: 1 });
@@ -143,11 +160,12 @@ test('brakes stop the car, and steering cannot move a stopped car sideways', () 
 test('all three hills launch, sustain hover and land with wheels restored during a complete run', () => {
   for (const boosted of [false, true]) {
     const sim = new DrivingSimulation();
+    const driver=new DemoAutopilot();
     const sequence: RaceEvent[] = [];
     let maximumAltitude = 0;
     let fullyDeployed = false;
-    for (let i = 0; i < 7200 && !sim.state.finished; i++) {
-      const events = sim.update(1 / 120, { ...throttle, boost: boosted && i < 480 });
+    for (let i = 0; i < 14400 && !sim.state.finished; i++) {
+      const events = sim.update(1 / 120, { ...driver.input(sim.state), boost: boosted && i < 480 });
       sequence.push(...events.filter(event => event === 'launch' || event === 'land'));
       maximumAltitude = Math.max(maximumAltitude, sim.state.altitude);
       fullyDeployed ||= sim.state.glide > .98;
@@ -173,7 +191,8 @@ test('all three hills launch, sustain hover and land with wheels restored during
 test('hover retracts before landing and the flight corridor joins the road smoothly', () => {
   const sim = new DrivingSimulation();
   let nearLandingGlide = 1;
-  while (sim.state.progress < LAUNCH_ZONES[0].end - 4) sim.update(1 / 120, throttle);
+  place(sim, LAUNCH_ZONES[0].progress-.02);
+  driveUntil(sim,()=>sim.state.progress>=LAUNCH_ZONES[0].end-4);
   nearLandingGlide = sim.state.glide;
   assert.ok(sim.state.airborne);
   assert.ok(nearLandingGlide < .2, `wheels are ${nearLandingGlide} deployed just before touchdown`);
@@ -187,10 +206,8 @@ test('hover retracts before landing and the flight corridor joins the road smoot
 
 test('air steering is responsive, soft boundaries do not count as curb crashes, and braking cannot strand a glider', () => {
   const sim = new DrivingSimulation();
-  sim.state.progress = LAUNCH_ZONES[2].progress - .02;
-  sim.state.speed = 44;
-  sim.state.y = sampleRoute(sim.state.progress).y;
-  while (!sim.state.airborne) sim.update(1 / 120, throttle);
+  place(sim, LAUNCH_ZONES[2].progress-.02);
+  driveUntil(sim,()=>sim.state.airborne);
   const initialLateral = sim.state.lateral;
   drive(sim, .5, { ...throttle, steer: 1 });
   assert.ok(sim.state.lateral > initialLateral + 1);
@@ -211,11 +228,12 @@ test('boost gains lift, braking dives, and both return smoothly to the same land
   const first = LAUNCH_ZONES[0];
   for (const control of modes) {
     const sim = new DrivingSimulation();
-    while (!sim.state.airborne) sim.update(1 / 120, throttle);
-    while (sim.state.progress < (first.progress + first.end) / 2) sim.update(1 / 120, control);
+    place(sim, first.progress-.02);
+    driveUntil(sim,()=>sim.state.airborne);
+    driveUntil(sim,()=>sim.state.progress>=(first.progress+first.end)/2,control);
     midflightOffsets.push(sim.state.y - sampleGlidePath(sim.state.progress, first));
     let landingEvents: RaceEvent[] = [];
-    while (sim.state.airborne) {
+    for(let i=0;i<3600&&sim.state.airborne;i++){
       landingEvents = sim.update(1 / 120, control);
       assert.ok(sim.state.y >= sampleRoute(sim.state.progress).y);
       assert.ok(Number.isFinite(sim.state.verticalVelocity));
@@ -231,18 +249,14 @@ test('boost gains lift, braking dives, and both return smoothly to the same land
 
 test('slow driving stays grounded and gliders clear obstacles beneath their flight corridor', () => {
   const slow = new DrivingSimulation();
-  slow.state.progress = LAUNCH_ZONES[0].progress - .05;
-  slow.state.y = sampleRoute(slow.state.progress).y;
-  slow.state.speed = 12;
+  place(slow, LAUNCH_ZONES[0].progress-.05, 12);
   assert.ok(!slow.update(.2, neutral).includes('launch'));
   assert.equal(slow.state.airborne, false);
   assert.equal(slow.state.launches, 0);
   const first = LAUNCH_ZONES[0];
   const flight = new DrivingSimulation([{ progress: (first.progress + first.end) / 2, lateral: 0, width: 6, length: 8, kind: 'cablecar' }]);
-  flight.state.progress = first.progress - 30;
-  flight.state.speed = 44;
-  flight.state.y = sampleRoute(flight.state.progress).y;
-  const flightEvents = drive(flight, 10);
+  place(flight, first.progress-30);
+  const flightEvents = driveUntil(flight,()=>flight.state.progress>=first.end);
   assert.ok(flightEvents.includes('launch'));
   assert.ok(flightEvents.includes('land'));
   assert.ok(!flightEvents.includes('crash'));
@@ -262,9 +276,7 @@ test('invalid time and controls cannot poison the simulation', () => {
 test('all takeoffs preserve uphill momentum instead of adding a vertical kick', () => {
   for(const zone of LAUNCH_ZONES)for(const speed of [25,44,58]){
     const sim=new DrivingSimulation();
-    sim.state.progress=zone.progress-3;sim.state.speed=speed;
-    sim.state.y=sampleRoute(sim.state.progress).y;
-    sim.state.verticalVelocity=routeSlope(sim.state.progress)*speed;
+    place(sim,zone.progress-3,speed);
     let launched=false;
     for(let i=0;i<120&&!launched;i++){
       const before={...sim.state},dt=1/120;
@@ -301,7 +313,8 @@ test('every flight clears the crest and has matching entry and exit tangents', (
 
 test('wheel unfolding follows road clearance and eases into sustained glide', () => {
   const sim=new DrivingSimulation();
-  while(!sim.state.airborne)sim.update(1/120,throttle);
+  place(sim,LAUNCH_ZONES[0].progress-.02);
+  driveUntil(sim,()=>sim.state.airborne);
   drive(sim,.1);
   assert.ok(sim.state.glide<.025,'keep the wheels upright for the initial weightless release');
   drive(sim,.35);
