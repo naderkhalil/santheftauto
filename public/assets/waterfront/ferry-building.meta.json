@@ -1,0 +1,38 @@
+{
+  "asset": "ferry-building.glb",
+  "source": "art/source/ferry-building.blend",
+  "generator": "tools/blender/build_ferry_building.py",
+  "triangles": 313258,
+  "meshes": 142,
+  "materials": 16,
+  "lodTriangles": 90844,
+  "bytes": 6333928,
+  "lodBytes": 1453596,
+  "blenderBounds": [
+    [
+      -28.0,
+      -96.36000061035156,
+      0.0
+    ],
+    [
+      64.31449890136719,
+      96.36000061035156,
+      75.0
+    ]
+  ],
+  "axis": "Blender +X east, +Y north, +Z up; street front -X. glTF +X east, +Y up, -Z north. No reflection required.",
+  "runtimePlacement": {
+    "canonicalPosition": [
+      730,
+      2.3,
+      -250
+    ],
+    "rotationY": 0
+  },
+  "compression": "Draco (local decoder)",
+  "references": [
+    "https://www.ferrybuildingmarketplace.com/history/",
+    "https://en.wikipedia.org/wiki/San_Francisco_Ferry_Building"
+  ],
+  "modelingNotes": "Original reference-informed model, adapted to compressed game map; real proportions and silhouette, not a survey. All source geometry and original baked materials authored in Blender. 190m hall; 75m tower; clock dials on all four sides; real recessed arcade apertures; roof monitor; rear terminal canopy."
+}

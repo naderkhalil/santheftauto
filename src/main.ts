@@ -21,7 +21,7 @@ import { CityTour } from './tour';
 import { createSkyCourse } from './skycourse';
 import { flightView } from './flight-view';
 import { createWaterfront } from './waterfront';
-import { createBayBridge } from './baybridge';
+import { WATERFRONT, waterfrontFinishView } from './waterfront-layout';
 import { createCityRoot, setCameraFromCity, steeringFromControls } from './coordinates';
 import { cityMapSvg } from './city-map';
 import { createPlayground, playgroundMapSvg, playgroundMapPoint } from './playground-scene';
@@ -77,7 +77,7 @@ app.innerHTML = `
 <div class="flight-hud" id="flight-hud" aria-hidden="true"><span class="flight-icon">✧</span><div><small id="flight-mode">HOVER DRIVE</small><strong id="flight-height">0 <em>M UP</em></strong></div><div class="flight-time" id="flight-time">0.0<small>SECONDS OF MAGIC</small></div></div><div class="drift-hint" id="drift-hint">DRIFTING</div>
 <div class="countdown hidden" id="countdown" aria-live="polite"></div>
 <div class="race-message faded" id="message" aria-live="polite" aria-hidden="true"><strong></strong><span></span></div>
-<div class="race-flash" id="flash"></div><div class="tour-ui hidden" id="tour-ui"><div class="tour-caption"><span id="tour-mode">POSTCARD MODE / AUTOPILOT</span><strong id="tour-place">UNION SQUARE</strong><small>Drag to look around</small></div><div class="tour-stops" style="overflow-x:auto;white-space:nowrap"><button data-stop="35" data-scene="square">UNION SQUARE</button><button data-stop="${routeProgressAt(-75,-15)}" data-scene="westin">THE WESTIN</button><button data-stop="${routeProgressAt(45,65)}" data-scene="post" aria-label="POST STREET">POST ST</button><button data-stop="${ROUTE_STOPS.powell}">POWELL ST</button><button data-stop="${routeProgressAt(-75,276)}" data-pause="true">BUSH ST</button><button data-stop="${ROUTE_STOPS.grant-8}">GRANT AVE</button><button data-stop="${routeProgressAt(350,700)}" data-pause="true">WASHINGTON ST</button><button data-stop="${TRACK_LENGTH}">THE BAY</button></div><div class="tour-actions"><button id="tour-pause">PAUSE</button><button id="tour-race">LET’S RACE ↗</button><button id="tour-exit" aria-label="Exit scenic drive">×</button></div></div>
+<div class="race-flash" id="flash"></div><div class="tour-ui hidden" id="tour-ui"><div class="tour-caption"><span id="tour-mode">POSTCARD MODE / AUTOPILOT</span><strong id="tour-place">UNION SQUARE</strong><small>Drag to look around</small></div><div class="tour-stops" style="overflow-x:auto;white-space:nowrap"><button data-stop="35" data-scene="square">UNION SQUARE</button><button data-stop="${routeProgressAt(-75,-15)}" data-scene="westin">THE WESTIN</button><button data-stop="${routeProgressAt(45,65)}" data-scene="post" aria-label="POST STREET">POST ST</button><button data-stop="${ROUTE_STOPS.powell}">POWELL ST</button><button data-stop="${routeProgressAt(-75,276)}" data-pause="true">BUSH ST</button><button data-stop="${ROUTE_STOPS.grant-8}">GRANT AVE</button><button data-stop="${routeProgressAt(350,700)}" data-pause="true">WASHINGTON ST</button><button data-stop="${routeProgressAt(570,700)}" data-pause="true">EMBARCADERO</button><button data-stop="${TRACK_LENGTH}">THE BAY</button></div><div class="tour-actions"><button id="tour-pause">PAUSE</button><button id="tour-race">LET’S RACE ↗</button><button id="tour-exit" aria-label="Exit scenic drive">×</button></div></div>
 <div class="touch-controls"><div class="touch-group"><button class="touch-button" data-control="left" aria-label="Steer left">‹</button><button class="touch-button" data-control="right" aria-label="Steer right">›</button><button class="touch-button small" data-control="drift" aria-label="Handbrake drift">DRIFT</button></div><div class="touch-group"><button class="touch-button small" data-control="boost" aria-label="Boost">N₂O</button><button class="touch-button small" data-control="brake" aria-label="Brake">BRAKE</button><button class="touch-button gas" data-control="gas" aria-label="Accelerate">GAS</button></div></div>
 <div class="modal-layer hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="panel"><button class="panel-close" id="close-help" aria-label="Close instructions">×</button><div class="panel-eyebrow">A LITTLE LOCAL KNOWLEDGE</div><h2 id="help-title">THE HILLS<br>HAVE WINGS.</h2><p>Lap Union Square, climb Powell, and enter Chinatown through the Dragon Gate on Grant Avenue. Hold the accelerator to build speed, ease off or brake before corners, and steer all the way through each turn. Union Square is open: drive onto its plaza and terraces, then rejoin the streets. Follow the street gates in order during a race. Build speed up the three hills, then launch. Your wheels fold flat automatically: steer through the sky, collect sun rings, and touch down with a boost refill.</p><div class="control-list"><div class="control-item"><div class="keys"><kbd>W</kbd><kbd>↑</kbd></div>Hold to accelerate</div><div class="control-item"><div class="keys"><kbd>S</kbd><kbd>↓</kbd></div>Brake · hold to reverse in the square</div><div class="control-item"><div class="keys"><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></div>Steer · on road & in air</div><div class="control-item"><div class="keys"><kbd>SPACE</kbd></div>Hold to drift</div><div class="control-item"><div class="keys"><kbd>SHIFT</kbd></div>Boost · recharges</div><div class="control-item"><div class="keys"><kbd>R</kbd><kbd>ESC</kbd><kbd>C</kbd></div>Restart · pause · camera</div></div><p class="help-caption">Controller: left stick to steer, RT to accelerate, LT to brake, A to boost, X to drift, Menu to pause. Touch controls appear on touchscreens. Wheels deploy automatically above 54 mph at a launch. Brake to dive; boost to gain lift. Hold S or the brake pedal to reverse in the square. Q returns you to the street. Explore Union Square starts an untimed drive with five hidden postcards. Auto Accelerate holds the gas during races; free drive uses manual acceleration. Watch a Run demonstrates the course; drag to look around.</p><div class="settings-row"><button id="quality">GRAPHICS: HIGH</button><span>/</span><button id="fullscreen">FULLSCREEN ↗</button></div><div class="settings-row" style="margin-top:12px;padding-top:12px"><button id="auto-throttle" aria-pressed="false">AUTO ACCELERATE: OFF</button><span>/</span><button id="reset-best">RESET BEST</button></div><button class="primary" id="help-play">LET’S DRIVE <span class="arrow">↗</span></button></div></div>
 <div class="modal-layer hidden" id="pause-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="panel"><div class="panel-eyebrow">TAKE A BREATHER</div><h2 id="pause-title">CITY ON<br>STANDBY.</h2><p>Your run is paused. The clock can wait.</p><button class="primary" id="resume">BACK TO THE RUN <span class="arrow">↗</span></button><button class="secondary" id="restart">RESTART RACE</button><button class="secondary" id="pause-home">MAIN MENU</button></div></div>
@@ -117,9 +117,9 @@ async function boot() {
   const landmarks=createUnionSquare(cityRoot),chinatown=createChinatown(cityRoot);
   // This new kit already uses the physical world axes and readable lettering.
   const squareStreetDetails=createSquareStreetDetails(scene);
-  const bayStage=new THREE.Group();bayStage.rotation.y=Math.PI/2;bayStage.position.set(-750,0,250);cityRoot.add(bayStage);
-  const waterfront=createWaterfront(bayStage);createBayBridge(bayStage);
-  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready,squareStreetDetails.ready]);
+  const waterfront=createWaterfront(scene);
+  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready,squareStreetDetails.ready,waterfront.ready]);
+  canvas.dataset.waterfrontAssets='blender';
   const car = createCar(); cityRoot.add(car.group);
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
   const sim = new DrivingSimulation(world.obstacles,{exploration:true});
@@ -198,7 +198,7 @@ async function boot() {
   let lowQuality=safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
   let landingPulse=0, collectedRings=0, presentedLaunches=0, finishedAt=0, tourBayStarted:number|null=null, knockedProps=0;
   const finishCameraStart=new THREE.Vector3(),finishLookStart=new THREE.Vector3();
-  const bayCamera=new THREE.Vector3(640,45,250),bayLook=new THREE.Vector3(845,25,250);
+  const bayCamera=new THREE.Vector3().copy(WATERFRONT.finishCamera),bayLook=new THREE.Vector3().copy(WATERFRONT.finishLook);
   let lastDistrict='', gamepadPauseDown=false, shake=0, helpWasPaused=false, goUntil=0, finishReveal=0;
   const keys=new Set<string>(), touch=new Set<string>();
   const desiredCamera=new THREE.Vector3(), cityCameraPosition=new THREE.Vector3(), lookAt=new THREE.Vector3(), smoothedLook=new THREE.Vector3();
@@ -323,19 +323,19 @@ async function boot() {
     if(district.name!==lastDistrict){if(lastDistrict&&phase==='racing')announce(district.name,district.street,2);lastDistrict=district.name;}
   }
   function updateCamera(dt:number){
-    const s=sim.state;
+    const s=sim.state,waterfrontView=waterfrontFinishView(camera.aspect);bayCamera.copy(waterfrontView.eye);
     if(phase==='finished'){
       const here=sim.position;car.group.position.set(here.x,s.y+.03,here.z);car.group.rotation.set(-Math.atan(routeSlope(s.progress)),s.heading,0);
       const u=reduceMotion?1:THREE.MathUtils.clamp((totalTime-finishedAt)/4.2,0,1),ease=u*u*u*(u*(u*6-15)+10);
       desiredCamera.copy(finishCameraStart).lerp(bayCamera,ease);desiredCamera.y+=Math.sin(u*Math.PI)*7;lookAt.copy(finishLookStart).lerp(bayLook,ease);
-      camera.fov=THREE.MathUtils.damp(camera.fov,camera.aspect<.65?82:camera.aspect<1?65:58,3,dt);
+      camera.fov=THREE.MathUtils.damp(camera.fov,waterfrontView.fov,3,dt);
     }else if(phase==='tour'){
       const pose=tour.getPose();car.group.position.copy(pose.car);car.group.rotation.copy(pose.rotation);
       if(tour.progress>=TRACK_LENGTH-1){
         const u=tourBayStarted===null||reduceMotion?1:THREE.MathUtils.clamp((totalTime-tourBayStarted)/4.2,0,1),ease=u*u*u*(u*(u*6-15)+10);
         desiredCamera.copy(finishCameraStart).lerp(bayCamera,ease);desiredCamera.y+=Math.sin(u*Math.PI)*7;
         lookAt.copy(finishLookStart).lerp(bayLook,ease);lookAt.z-=Math.sin(tour.orbit)*90*ease;
-        camera.fov=THREE.MathUtils.damp(camera.fov,camera.aspect<.65?82:camera.aspect<1?65:58,3,dt);
+        camera.fov=THREE.MathUtils.damp(camera.fov,waterfrontView.fov,3,dt);
       }
       else if(tourArt==='westin'){
         desiredCamera.set(-18+Math.sin(tour.orbit)*22,31,-25+Math.cos(tour.orbit)*4);lookAt.set(-104,43,0);camera.fov=camera.aspect<.7?76:62;
@@ -505,7 +505,7 @@ async function boot() {
     const postcards=playground.update(totalTime,sim.position,phase==='racing'&&sim.exploring);
     if(postcards){audio.cue('checkpoint');sim.state.boost=Math.min(1,sim.state.boost+.2);announce(playground.collected===playground.total?'SQUARE EXPLORER':'POSTCARD FOUND',playground.collected===playground.total?'ALL FIVE FOUND · THE CITY IS YOURS':`${playground.collected} OF ${playground.total} · KEEP EXPLORING`,2);}
     if(hits){collectedRings+=hits;sim.state.boost=Math.min(1,sim.state.boost+.14*hits);audio.cue('checkpoint');announce('SUN RING',`${collectedRings} COLLECTED · +BOOST`,1);}
-    world.update(totalTime,cityProgress,camera);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress);
+    world.update(totalTime,cityProgress,camera);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress,camera);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}
     heroFill.position.set(car.group.position.x-4,car.group.position.y+6,car.group.position.z-7);
     renderer.info.reset();composer.render();

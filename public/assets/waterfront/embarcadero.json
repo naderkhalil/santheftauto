@@ -1,0 +1,279 @@
+{
+  "coordinateSystem": "Blender X east, Y north, Z up; glTF X east, Y up, Z south. Load world origin, no Z reflection.",
+  "triangles": 213012,
+  "lodTriangles": 95892,
+  "closeBytes": 2318316,
+  "lodBytes": 1263180,
+  "compression": "Draco level6, positions17bit, normals10bit, UV12bit",
+  "meshes": 314,
+  "materials": 16,
+  "ground": "2.24m at Market, 5.24m north of 400; level Ferry apron x>=682,north140..355",
+  "semanticBounds": {
+    "west": 603.3,
+    "east": 938.05,
+    "south": -770,
+    "north": 1130
+  },
+  "source": "art/source/embarcadero.blend",
+  "piers": [
+    {
+      "number": 1,
+      "north": 740,
+      "frontEast": 654,
+      "width": 82
+    },
+    {
+      "number": 1.5,
+      "north": 805,
+      "frontEast": 654,
+      "width": 30
+    },
+    {
+      "number": 3,
+      "north": 875,
+      "frontEast": 654,
+      "width": 70
+    },
+    {
+      "number": 5,
+      "north": 965,
+      "frontEast": 654,
+      "width": 66
+    },
+    {
+      "number": 7,
+      "north": 1070,
+      "startEast": 687,
+      "endEast": 938,
+      "width": 11.4
+    }
+  ],
+  "palmAnchors": [
+    {
+      "x": 626,
+      "north": 134,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": 168,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": 202,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": 298,
+      "height": 2.964992
+    },
+    {
+      "x": 626,
+      "north": 332,
+      "height": 3.949390222222222
+    },
+    {
+      "x": 626,
+      "north": 366,
+      "height": 4.847473777777778
+    },
+    {
+      "x": 626,
+      "north": 404,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 438,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 472,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 506,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 534,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 568,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 602,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 636,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 674,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 708,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 742,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 776,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 804,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 838,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 872,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 906,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 924,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 958,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 992,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 1026,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 1044,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 1078,
+      "height": 5.24
+    },
+    {
+      "x": 626,
+      "north": 1112,
+      "height": 5.24
+    }
+  ],
+  "southernPalmAnchors": [
+    {
+      "x": 626,
+      "north": -756,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -696,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -626,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -566,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -496,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -436,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -366,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -306,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -236,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -176,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -106,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": -46,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": 24,
+      "height": 2.24
+    },
+    {
+      "x": 626,
+      "north": 84,
+      "height": 2.24
+    }
+  ],
+  "clearCorridors": [
+    {
+      "minEast": 590,
+      "maxEast": 685,
+      "minNorth": 242.3,
+      "maxNorth": 257.7
+    }
+  ],
+  "authorship": "Original geometry created in Blender; compressed historic pier sequence, not a surveyed city model."
+}

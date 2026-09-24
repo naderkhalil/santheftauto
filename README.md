@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Bush St**, **Grant Ave**, **Washington St**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Bush St** and **Washington St** pause at the uphill corner and bayward outlook. **Resume** returns to driving.
+Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Bush St**, **Grant Ave**, **Washington St**, **Embarcadero**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Bush St** and **Washington St** pause at the uphill corner and bayward outlook. **Embarcadero** pauses at the waterfront approach, and **The Bay** frames the Ferry Building and bridge. **Resume** returns to driving.
 
 **Explore Union Square** starts an untimed drive on the square's southern promenade. Drive onto the plaza, climb its stairs and ramps, and explore the surrounding streets. This mode uses manual acceleration even when Auto Accelerate is enabled for races.
 
@@ -58,30 +58,37 @@ Powell's cable-car rails lead uphill to Bush and the Dragon Gate. Grant Avenue n
 
 The street connections and landmark relationships establish a more recognizable city. Block lengths, building dimensions, turns and hill profiles are compressed or exaggerated for play; this is not a survey-accurate reconstruction. Three flight sections remain, on Powell, Grant and Washington.
 
-At the finish, the camera reveals the Ferry Building on its pier, animated turquoise water and the silver Bay Bridge behind it. Compact results preserve the waterfront view.
+The waterfront is built from original Blender assets. Market faces the Ferry Building's long arcaded wings and 75 m clock tower, with a layered pale crown and four modeled clock faces. A jointed granite PortWalk, seawall, bikeway, maritime lamps and 43 date palms complete the shoreline. The paving and planting continue south of Market toward the bridge, giving the wide finish view a complete waterfront edge. Piers 1, 1½, 3 and 5 sit north of Washington, followed by Pier 7's open timber promenade near Broadway. The stretch between Washington and Market remains a furnished north Ferry Plaza and PortWalk; its game distance is stretched, so the named piers have not been moved into that gap. [Waterfront references and placement notes](art/references/waterfront.md) record the geographic interpretation.
+
+At the finish, the camera reveals the Ferry Building above animated turquoise water, with the silver Bay Bridge crossing south of it toward Yerba Buena Island. The bridge has four open steel towers, two suspension spans, a central anchorage and two road decks. Compact results preserve the view; portrait framing pulls back to retain the tower and wings. Bay movement, ferries and sailboats remain realtime Three.js effects.
 
 Races with the open square and ordered street gates use the separate local-storage key `whimsical-sf-playground-race-best-v3`. Earlier manual-driving records remain under `whimsical-sf-manual-driving-best-v2`, and records from the former guided handling remain under their older key. Reset Best affects the current course only.
 
 ## Stack and assets
 
-TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. Local Blender GLBs supply the Westin, Post frontage and surrounding hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms, Powell cable car and a street furniture kit. The three architectural groups have separate distant models with Draco compression. Seven palms and four CC0 jacarandas use instancing; the stepped plaza and its remaining furnishings use authored Three.js geometry. The wider city, player car, Chinatown and waterfront still use procedural geometry. Labels and many material details are generated locally.
+TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. Local Blender GLBs supply the Westin, Post frontage and surrounding hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms, Powell cable car, street furniture, Ferry Building, Embarcadero piers and Bay Bridge. Major architectural groups have separate distant models with Draco compression. Plaza and waterfront palms and four CC0 jacarandas use instancing; the stepped plaza and its remaining furnishings use authored Three.js geometry. The wider city, player car, Chinatown, bay water and vessels still use procedural geometry or shaders. Labels and many material details are generated locally.
 
 The asphalt maps and photographic sky use CC0 source assets. Additional source assets from earlier prototypes remain in the repository; see [asset credits](public/assets/CREDITS.md) and the adjacent source notes. Google Fonts is optional; system fallbacks keep the game playable once local assets are available.
 
 [BLENDER_ASSETS.md](BLENDER_ASSETS.md) documents the implemented asset pipeline, editable source files, placements, coordinate conventions and measured asset budgets. Blender review renders in `art/reviews/` include the north frontage, Apple, Neiman's rotunda, Maiden Lane, complete rear elevations and the street furniture. Local reflections, plaza shadows and contact shading support the game view. Apple has a level lot, and parcel reservations prevent duplicate background buildings and streets; the racing route and flight heights are retained.
+
+Open [art/source/waterfront.blend](art/source/waterfront.blend) to inspect the complete editable waterfront, organized into Ferry Building, piers, bridge, palms and review context. Its separate source files and rebuild scripts are listed in [the Blender pipeline](BLENDER_ASSETS.md). [The assembled review](art/reviews/waterfront-master.png) is a Blender render; the browser renders the exported GLBs with its own lighting and animated water.
 
 ## Verify
 
 ```sh
 npm test
 npm run build
+node tools/validate-waterfront.mjs
 ```
 
 Tests cover route geometry and driving behavior, including coasting to a stop, manual cornering, curb recovery, frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap. Camera-projection tests protect landmark order, the clockwise square lap and left/right driving controls in all four street headings.
 
 Playground checks cover continuous terrace and stair surfaces, car-width access to all five postcards, solid obstacles and parked cars, reversing and recovery, small terrace drops, ordered race gates, return through the Powell corridor, and a complete race with all three glides. World driving is checked at 30, 60 and 120 Hz. Additional checks cover knockable furniture, prop reset, and sliding along boundaries without losing all forward momentum. City parcel checks protect continuous street frontage, facade separation, all street corridors and rounded route clearances, while preserving the authored square and Chinatown.
 
-The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. Additional attributes report world X/Y/Z, whether the car is in the playground, untimed free-drive mode and the postcard count. `window.sfNightRun` provides read-only diagnostic snapshots.
+Waterfront checks protect the Market approach, existing street elevations, pier order, planting clearance and finish framing at wide and narrow aspect ratios. The asset validator checks the five GLB containers, declared bounds, positive transforms, matching close/distant sections and reduced distant geometry. It does not independently decode Draco or establish browser performance.
+
+The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. Additional attributes report world X/Y/Z, whether the car is in the playground, untimed free-drive mode and the postcard count. `data-waterfront-assets="blender"` marks completed waterfront asset loading. `window.sfNightRun` provides read-only diagnostic snapshots.
 
 ## Recovery checkpoints
 

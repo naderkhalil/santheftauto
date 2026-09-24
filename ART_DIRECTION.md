@@ -28,7 +28,13 @@ Speed of at least 24 m/s (about 54 mph) triggers a launch. Steering remains acti
 
 ## The waterfront payoff
 
-Market Street opens onto the Ferry Building on a pier over animated turquoise water, with the silver Bay Bridge spanning the background. A smooth camera reveal and compact results keep that composition visible. Ferries and sailboats give the bay movement. The automatic tour also ends here, and its **The Bay** button previews the finish.
+Market Street faces the Ferry Building's west elevation: long pale warm-gray wings, smaller ground-floor arches below the large upper arcade, three central portals, a dark green-gray roof and a slender 75 m clock tower. Four modeled clock faces sit below an open belfry and layered pale lantern crown. These architectural proportions replace the earlier simplified tower. Rear terminal canopies and the north Gate B waiting area connect the building to its working harbor.
+
+Washington opens onto water and a furnished PortWalk. Piers 1, 1½, 3 and 5 belong north of that junction: low formal stucco bulkheads, arched entries, red tile roofs and long industrial transit sheds extending east. Pier 7 near Broadway is an open timber promenade with twin-globe lamps, benches and pilings. Keep that sequence even though this course stretches the distance from Market to Washington; the intervening space is north Ferry Plaza and promenade, not relocated numbered piers. Jointed granite, seawalls, a green bikeway and 43 date palms make the open shoreline feel intentional. The same paving, lamps, benches and planting continue south of Market toward the bridge so wide views have a complete shoreline. This southern continuation adds public-realm detail without inventing or relocating named landmarks.
+
+The Bay Bridge crosses south of the Ferry Building, extending east-northeast toward Yerba Buena and Treasure Island. Its four open steel towers, paired suspension spans, central concrete anchorage and double road deck should read as the silver western crossing. It appears beyond the Ferry Building from Market and leaves open water ahead of Washington. It must not become a wall directly across the descent.
+
+The architecture, pier infrastructure and bridge are actual Blender models, assembled in [art/source/waterfront.blend](art/source/waterfront.blend). [Reference notes](art/references/waterfront.md) record public sources and adapted geography; photographs are not shipped as textures. Realtime turquoise water, ripples, reflections, ferries and sailboats give the bay movement. Waterfront materials use the local reflection capture and restrained plaza bounce light. The **Embarcadero** tour stop previews the approach; **The Bay** previews the smooth finish reveal. Compact results and responsive camera framing keep the building's wings and crown visible.
 
 ## Implemented Union Square art pass
 
@@ -44,7 +50,7 @@ Window reflections are captured in the relevant district. Shadows cover the plaz
 
 The latest city-completion pass replaces the vacant Powell/Bush lots and isolated downtown blocks with 169 connected building parcels across 41 blocks. Ground-floor shops follow the hill, while horizontal upper floors carry varied masonry, window reveals, projecting bays, cornices and selected fire escapes. All four sides and roofs are finished for turns and aerial views. Seven-metre public sidewalks, small planted street trees, corner crossings and paved service alleys replace the exposed beige ground; cross streets share the scanned asphalt of the race. This is original procedural neighborhood infill; it does not claim surveyed building-by-building accuracy.
 
-The strongest individually authored fidelity remains around Union Square. The wider city, Dragon Gate, Grant storefronts, ordinary vehicles and people still have room for further art work. Keep the route and collisions in code and evaluate new assets from a moving driver's camera. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) describes the source and export contract.
+The strongest individually authored fidelity now anchors Union Square and the waterfront. The wider city, Dragon Gate, Grant storefronts, ordinary vehicles and people still have room for further art work. Keep the route and collisions in code and evaluate new assets from a moving driver's camera. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) describes the source and export contract.
 
 ## Preserved versions
 

@@ -107,7 +107,8 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
       for(const material of materials){
         if(!(material instanceof THREE.MeshStandardMaterial)||seen.has(material))continue;
         seen.add(material);
-        if(/westin|Union Square|Dewey|date.palm/i.test(material.name))material.envMap=cityEnvironments[0].texture;
+        if(/^Waterfront \//i.test(material.name))material.envMap=cityEnvironments[2].texture;
+        else if(/westin|Union Square|Dewey|date.palm/i.test(material.name))material.envMap=cityEnvironments[0].texture;
         else if(/Chinatown/i.test(material.name))material.envMap=cityEnvironments[1].texture;
         material.needsUpdate=true;
       }

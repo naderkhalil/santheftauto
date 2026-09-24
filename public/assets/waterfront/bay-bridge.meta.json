@@ -1,0 +1,61 @@
+{
+  "asset": "Western San Francisco\u2013Oakland Bay Bridge",
+  "coordinateSystem": "canonical right handed: X east, Y up, Z south",
+  "runtimeTranslation": [
+    0,
+    0,
+    0
+  ],
+  "runtimeRotation": [
+    0,
+    0,
+    0
+  ],
+  "runtimeScale": [
+    1,
+    1,
+    1
+  ],
+  "loadOutsideCityRoot": true,
+  "westAnchorageSemantic": [
+    710,
+    -680
+  ],
+  "eastEndSemantic": [
+    2570,
+    -252
+  ],
+  "towerCount": 4,
+  "towerTopElevation": 159,
+  "upperRoadElevation": 55,
+  "lowerRoadElevation": 46.2,
+  "centralAnchorageAlong": 955,
+  "triangles": 75660,
+  "meshes": 64,
+  "materials": 8,
+  "boundsBlender": {
+    "min": [
+      690.4140014648438,
+      -708.964599609375,
+      -5.800000190734863
+    ],
+    "max": [
+      3065.78564453125,
+      384.4691162109375,
+      159.0
+    ]
+  },
+  "boundsGLTF": {
+    "min": [
+      690.4140014648438,
+      -5.800000190734863,
+      -384.4691162109375
+    ],
+    "max": [
+      3065.78564453125,
+      159.0,
+      708.964599609375
+    ]
+  },
+  "sources": "Original Blender geometry. Double-deck and four-tower western crossing observed in waterfront reference photographs; compressed dimensions and geography documented in art/references/waterfront.md. No third-party textures or meshes."
+}

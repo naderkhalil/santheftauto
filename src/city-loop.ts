@@ -4,6 +4,7 @@ import { createCableCarAsset } from './street-assets';
 import { CITY_AUTHORED_RESERVES, CITY_INFILL_PARCELS, ownsCityInfill } from './city-infill-layout';
 import { createCityInfill } from './city-infill';
 import { createInfillStreets } from './city-infill-streets';
+import { waterfrontOwnsGround, WATERFRONT } from './waterfront-layout';
 import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_POLYLINE, ROUTE_STOPS, TRACK_LENGTH, groundHeight, intersectsSquareParcel, routePoint, routeProgressAt, routeSlope, routeYaw, sampleRoute, type Obstacle } from './route';
 
 /** A compact street grid, with the square and Grant left to their authored sets. */
@@ -55,7 +56,7 @@ export function createCityLoop(scene: THREE.Object3D) {
   // Terrain sits below street surfaces; building foundations meet the local slope.
   const terrain=new THREE.PlaneGeometry(1480,1900,148,190);terrain.rotateX(-Math.PI/2);terrain.translate(-55,0,180);
   const verts=terrain.attributes.position;
-  for(let i=0;i<verts.count;i++)verts.setY(i,groundHeight(verts.getX(i),verts.getZ(i))-.34);
+  for(let i=0;i<verts.count;i++){const x=verts.getX(i),z=verts.getZ(i);verts.setY(i,waterfrontOwnsGround(x,z)?WATERFRONT.seaLevel-.4:groundHeight(x,z)-.34);}
   terrain.computeVertexNormals();const land=new THREE.Mesh(terrain,mat('#b8b9a8'));land.receiveShadow=true;group.add(land);
   ribbon(-12.7,12.7,.05,curb,'continuous sidewalks');ribbon(-ROAD_HALF_WIDTH,ROAD_HALF_WIDTH,.13,asphalt,'powell-asphalt');
   ribbon(-7.6,-7.35,.20,cream,'west curb');ribbon(7.35,7.6,.20,cream,'east curb');
@@ -75,7 +76,7 @@ export function createCityLoop(scene: THREE.Object3D) {
         // Hyatt lobby or cross another authored parcel. Racing ribbons above
         // are independent and remain continuous through every intersection.
         const w=Math.abs(dx)*length/n+Math.abs(dz)*width,d=Math.abs(dz)*length/n+Math.abs(dx)*width;
-        if(intersectsSquareParcel(cx,cz,w,d))continue;
+        if(intersectsSquareParcel(cx,cz,w,d)||waterfrontOwnsGround(cx,cz))continue;
         // Grant's authored shop rows span the compressed background alleys.
         // End those alleys at the shops instead of painting through the set.
         if(CITY_AUTHORED_RESERVES.some(r=>cx+w/2>r.minX&&cx-w/2<r.maxX&&cz+d/2>r.minZ&&cz-d/2<r.maxZ))continue;
@@ -244,9 +245,7 @@ export function createCityLoop(scene: THREE.Object3D) {
     }
     for(let row=0;row<(finish?4:1);row++)for(let col=0;col<18;col++){const q=routePoint(s+row*.6,-7+(col+.5)*14/18);box((row+col)%2?dark:cream,q.x,q.y+.18,q.z,14/18,.018,.6,routeYaw(s));}
   });
-  // Promenade ends where the rotated waterfront begins, without a wall across Market.
-  box(stone,654,1.6,480,53,1,600);
-  for(let z=160;z<785;z+=17){pole(metal,680,2.8,z,.08,3);if(Math.abs(z-250)>30)beam(metal,new THREE.Vector3(680,3.2,z),new THREE.Vector3(680,3.2,z+17),.055);}
+  // The Blender Embarcadero now owns the quay and railings east of the road.
   const meshes:THREE.Mesh[]=[];
   // Whole-city material merges force millions of offscreen window triangles into
   // both the camera and shadow passes. Keep the same geometry, but let each
