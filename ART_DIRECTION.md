@@ -42,7 +42,9 @@ The architecture is modeled originally from public photographic, museum and geog
 
 Window reflections are captured in the relevant district. Shadows cover the plaza as a coherent space; normal maps, bevels and contact shading support close material depth. The Westin and both new frontage sets have distant models. Seven palms share six instanced draws; four jacarandas share the scanned tree's geometry and materials. The **The Westin** postcard stop frames the building across the plaza, and the opening composition places it behind the monument and mature palms.
 
-This work concentrates the fidelity around Union Square. The wider city, Dragon Gate, Grant storefronts, ordinary vehicles and people still need further art work. Keep the route and collisions in code and evaluate new assets from a moving driver's camera. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) describes the source and export contract.
+The latest city-completion pass replaces the vacant Powell/Bush lots and isolated downtown blocks with 169 connected building parcels across 41 blocks. Ground-floor shops follow the hill, while horizontal upper floors carry varied masonry, window reveals, projecting bays, cornices and selected fire escapes. All four sides and roofs are finished for turns and aerial views. Seven-metre public sidewalks, small planted street trees, corner crossings and paved service alleys replace the exposed beige ground; cross streets share the scanned asphalt of the race. This is original procedural neighborhood infill; it does not claim surveyed building-by-building accuracy.
+
+The strongest individually authored fidelity remains around Union Square. The wider city, Dragon Gate, Grant storefronts, ordinary vehicles and people still have room for further art work. Keep the route and collisions in code and evaluate new assets from a moving driver's camera. [BLENDER_ASSETS.md](BLENDER_ASSETS.md) describes the source and export contract.
 
 ## Preserved versions
 

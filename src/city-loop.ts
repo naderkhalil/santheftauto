@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createCableCarAsset } from './street-assets';
+import { CITY_AUTHORED_RESERVES, CITY_INFILL_PARCELS, ownsCityInfill } from './city-infill-layout';
+import { createCityInfill } from './city-infill';
+import { createInfillStreets } from './city-infill-streets';
 import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_POLYLINE, ROUTE_STOPS, TRACK_LENGTH, groundHeight, intersectsSquareParcel, routePoint, routeProgressAt, routeSlope, routeYaw, sampleRoute, type Obstacle } from './route';
 
 /** A compact street grid, with the square and Grant left to their authored sets. */
 export function createCityLoop(scene: THREE.Object3D) {
   const group = new THREE.Group(); group.name = 'Downtown San Francisco / connected city blocks'; scene.add(group);
+  const infill=createCityInfill(group,CITY_INFILL_PARCELS);
+  const infillStreets=createInfillStreets(group);
   const mats = new Map<string, THREE.MeshStandardMaterial>();
   const mat = (color: string, roughness = .8, metalness = 0) => {
     const key = `${color}/${roughness}/${metalness}`;
@@ -46,6 +51,7 @@ export function createCityLoop(scene: THREE.Object3D) {
     const mesh=new THREE.Mesh(geo,material);mesh.name=name;mesh.receiveShadow=true;group.add(mesh);
   }
   const asphalt=mat('#697079',.93),sideRoad=mat('#697076',.94);
+  asphalt.userData.cityAsphalt=true;sideRoad.userData.cityAsphalt=true;
   // Terrain sits below street surfaces; building foundations meet the local slope.
   const terrain=new THREE.PlaneGeometry(1480,1900,148,190);terrain.rotateX(-Math.PI/2);terrain.translate(-55,0,180);
   const verts=terrain.attributes.position;
@@ -57,21 +63,26 @@ export function createCityLoop(scene: THREE.Object3D) {
   const streetsX=[-75,75,175,300,410,500,590],streetsZ=[-65,65,185,300,400,500,600,700];
   // Cross streets establish the grid and give views into the rest of the city.
   function crossRoad(ax:number,az:number,bx:number,bz:number,width=14.8){
-    const length=Math.hypot(bx-ax,bz-az),dx=(bx-ax)/length,dz=(bz-az)/length;const points:number[]=[],ids:number[]=[];
+    const length=Math.hypot(bx-ax,bz-az),dx=(bx-ax)/length,dz=(bz-az)/length;const points:number[]=[],uv:number[]=[],ids:number[]=[];
     const n=Math.ceil(length/5);
     for(let i=0;i<=n;i++)for(const side of [-1,1]){
       const x=ax+(bx-ax)*i/n+dz*width/2*side,z=az+(bz-az)*i/n-dx*width/2*side;
       points.push(x,groundHeight(x,z)+.07,z);
+      uv.push(x/9,z/9);
       if(i<n&&side===-1){
         const middle=(i+.5)/n,cx=ax+(bx-ax)*middle,cz=az+(bz-az)*middle;
         // The compressed background grid must not paint Sutter through the
         // Hyatt lobby or cross another authored parcel. Racing ribbons above
         // are independent and remain continuous through every intersection.
-        if(intersectsSquareParcel(cx,cz,Math.abs(dx)*length/n+Math.abs(dz)*width,Math.abs(dz)*length/n+Math.abs(dx)*width))continue;
+        const w=Math.abs(dx)*length/n+Math.abs(dz)*width,d=Math.abs(dz)*length/n+Math.abs(dx)*width;
+        if(intersectsSquareParcel(cx,cz,w,d))continue;
+        // Grant's authored shop rows span the compressed background alleys.
+        // End those alleys at the shops instead of painting through the set.
+        if(CITY_AUTHORED_RESERVES.some(r=>cx+w/2>r.minX&&cx-w/2<r.maxX&&cz+d/2>r.minZ&&cz-d/2<r.maxZ))continue;
         const j=i*2;ids.push(j,j+2,j+1,j+1,j+2,j+3);
       }
     }
-    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setIndex(ids);g.computeVertexNormals();if(!batches.has(sideRoad))batches.set(sideRoad,[]);batches.get(sideRoad)!.push(g);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(ids);g.computeVertexNormals();if(!batches.has(sideRoad))batches.set(sideRoad,[]);batches.get(sideRoad)!.push(g);
   }
   for(const z of streetsZ)crossRoad(-260,z,635,z);
   for(const x of streetsX)crossRoad(x,-270,x,860);
@@ -113,7 +124,7 @@ export function createCityLoop(scene: THREE.Object3D) {
   // Narrow frontages, regular floor heights, recessed glazing and real rooflines.
   const palette=['#d9c7af','#c7b0a2','#d5d4bf','#c29b84','#bcbfc0','#e5d5be','#a9b7ad','#dbc59c'];
   function building(x:number,z:number,w:number,d:number,h:number,index:number,front:'east'|'west'|'north'|'south'='south'){
-    if(intersectsSquareParcel(x,z,w+1,d+1))return;
+    if(intersectsSquareParcel(x,z,w+1,d+1)||ownsCityInfill(x,z,w+1,d+1))return;
     const base=Math.min(groundHeight(x-w/2,z-d/2),groundHeight(x+w/2,z+d/2));
     const wall=mat(palette[index%palette.length]);box(wall,x,base+h/2,z,w,h,d);
     box(stone,x,base+3.2,z,w+.16,.65,d+.16);box(stone,x,base+h-.7,z,w+.5,.45,d+.5);box(roof,x,base+h+.1,z,w+.25,.65,d+.25);
@@ -262,5 +273,5 @@ export function createCityLoop(scene: THREE.Object3D) {
   group.userData.cullingBatches=meshes.length;
   batches.clear();cells.clear();
   cube.dispose();cyl.dispose();sphere.dispose();
-  return {group,obstacles,ready:Promise.all(streetAssets.map(asset=>asset.ready)),update(_time:number,_progress:number){},setQuality(low:boolean){meshes.forEach(m=>m.castShadow=!low&&m.material!==sideRoad);streetAssets.forEach(asset=>asset.setQuality(low));}};
+  return {group,obstacles,ready:Promise.all(streetAssets.map(asset=>asset.ready)),update(_time:number,_progress:number,camera?:THREE.Camera){infill.update(camera);},setQuality(low:boolean){meshes.forEach(m=>m.castShadow=!low&&m.material!==sideRoad);streetAssets.forEach(asset=>asset.setQuality(low));infill.setQuality(low);infillStreets.setQuality(low);}};
 }

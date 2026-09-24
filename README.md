@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Resume** returns to driving.
+Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Bush St**, **Grant Ave**, **Washington St**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Bush St** and **Washington St** pause at the uphill corner and bayward outlook. **Resume** returns to driving.
 
 **Explore Union Square** starts an untimed drive on the square's southern promenade. Drive onto the plaza, climb its stairs and ramps, and explore the surrounding streets. This mode uses manual acceleration even when Auto Accelerate is enabled for races.
 
@@ -52,6 +52,8 @@ Apple faces south across Post, west of Stockton, with its public garden and Gran
 
 The map now renders with the correct geographic handedness: Apple appears to the right of Saks when looking north, and Post's turn onto Stockton reads as a right turn. The earlier view mirrored those relationships despite correctly named map coordinates. Buildings extend around their sides and backs: the north hotels reach Sutter, Macy's reaches O'Farrell, and the Stockton parcels continue toward Grant around an open Maiden Lane. Detailed corner street signs, newspaper dispensers and bicycle racks add close street furniture.
 
+The blocks beyond Sutter now form connected street walls: 169 detailed building parcels across 41 blocks replace isolated center buildings and vacant strips around Powell/Bush, behind Grant and along the Washington descent. Narrow service alleys, paved sidewalks, corner crossings, tree wells, street signs and the same scanned asphalt on side streets complete the ground plane. Storefronts step with the hills; bay windows, cornices, fire escapes and rooftop equipment give turns and glides a finished view. These neighborhood buildings are original procedural architecture, not replicas of each real address.
+
 Powell's cable-car rails lead uphill to Bush and the Dragon Gate. Grant Avenue narrows into Chinatown's masonry storefronts, balconies, lanterns and green tiled roofs. Washington descends toward the bay; the Embarcadero connects to the Market Street finish.
 
 The street connections and landmark relationships establish a more recognizable city. Block lengths, building dimensions, turns and hill profiles are compressed or exaggerated for play; this is not a survey-accurate reconstruction. Three flight sections remain, on Powell, Grant and Washington.
@@ -77,7 +79,7 @@ npm run build
 
 Tests cover route geometry and driving behavior, including coasting to a stop, manual cornering, curb recovery, frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap. Camera-projection tests protect landmark order, the clockwise square lap and left/right driving controls in all four street headings.
 
-Playground checks cover continuous terrace and stair surfaces, car-width access to all five postcards, solid obstacles and parked cars, reversing and recovery, small terrace drops, ordered race gates, return through the Powell corridor, and a complete race with all three glides. World driving is checked at 30, 60 and 120 Hz. Additional checks cover knockable furniture, prop reset, and sliding along boundaries without losing all forward momentum.
+Playground checks cover continuous terrace and stair surfaces, car-width access to all five postcards, solid obstacles and parked cars, reversing and recovery, small terrace drops, ordered race gates, return through the Powell corridor, and a complete race with all three glides. World driving is checked at 30, 60 and 120 Hz. Additional checks cover knockable furniture, prop reset, and sliding along boundaries without losing all forward momentum. City parcel checks protect continuous street frontage, facade separation, all street corridors and rounded route clearances, while preserving the authored square and Chinatown.
 
 The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. Additional attributes report world X/Y/Z, whether the car is in the playground, untimed free-drive mode and the postcard count. `window.sfNightRun` provides read-only diagnostic snapshots.
 
