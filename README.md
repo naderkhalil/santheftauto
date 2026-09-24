@@ -11,6 +11,8 @@ npm run dev
 
 Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Resume** returns to driving.
 
+The menu's **Explore the City** postcard opens an illustrated downtown map with the course highlighted among San Francisco's neighborhoods, streets, waterfront piers and Bay Bridge. It uses local SVG artwork and simplified geography, with no map service required.
+
 ## Controls
 
 - Hold W / Up: accelerate

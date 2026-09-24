@@ -23,6 +23,7 @@ import { flightView } from './flight-view';
 import { createWaterfront } from './waterfront';
 import { createBayBridge } from './baybridge';
 import { createCityRoot, setCameraFromCity, steeringFromControls } from './coordinates';
+import { cityMapSvg } from './city-map';
 import './style.css';
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
@@ -46,7 +47,22 @@ app.innerHTML = `
   <div class="intro-actions"><button class="primary" id="start">TAKE FLIGHT <span class="arrow">↗</span></button><button class="text-button" id="how">HOW TO PLAY</button></div>
   <div class="keyboard-note"><button class="text-button" id="tour-start">WATCH A RUN ↗</button><span></span> LET THE CITY SWEEP YOU AWAY.</div>
 </main>
-<footer class="intro-bottom" id="intro-bottom"><div class="route-card"><span class="route-index">01</span><div class="route-text"><small>POSTCARD 01</small><strong>THE CITY LOOP</strong><em>2.3 KM &nbsp; / &nbsp; UNION SQUARE / POWELL / GRANT</em></div><svg class="route-arrow" viewBox="0 0 30 38" fill="none"><path d="M7 2v10l16 7v9l-9 7" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="3" r="3" fill="currentColor"/><path d="m8 34 6 1 1-6" stroke="currentColor" stroke-width="2"/></svg></div><div class="location-label"><strong><i>↗</i> SAN FRANCISCO, REIMAGINED</strong><span>UNION SQUARE → CHINATOWN → THE BAY</span></div></footer>
+<footer class="intro-bottom" id="intro-bottom">
+  <button class="route-card" id="open-city-map" aria-label="Open San Francisco city map and race route" aria-haspopup="dialog" aria-controls="city-map-dialog">
+    <span class="route-details"><span class="route-index">01</span><span class="route-text"><small>POSTCARD 01</small><strong>THE CITY LOOP</strong><em>2.3 KM &nbsp; / &nbsp; 3 HILL FLIGHTS</em></span><span class="route-map-prompt">EXPLORE THE CITY <span>↗</span></span></span>
+    <span class="route-map-preview">${cityMapSvg('postcard')}<span class="route-map-expand" aria-hidden="true">⤢</span></span>
+  </button>
+  <div class="location-label"><strong><i>↗</i> SAN FRANCISCO, REIMAGINED</strong><span>UNION SQUARE → CHINATOWN → THE BAY</span></div>
+</footer>
+<div class="modal-layer hidden city-map-dialog" id="city-map-dialog" role="dialog" aria-modal="true" aria-labelledby="city-map-title">
+  <section class="city-map-panel">
+    <header class="city-map-header"><div><small>POSTCARD 01 &nbsp; / &nbsp; THE CITY LOOP</small><h2 id="city-map-title">A little city. A big adventure.</h2></div><button id="close-city-map" aria-label="Close city map">×</button></header>
+    <div class="city-map-art">${cityMapSvg('expanded',true)}</div>
+    <div class="city-map-pan-hint">SWIPE TO EXPLORE THE MAP <span>↔</span></div>
+    <div class="city-map-itinerary" aria-label="Route highlights"><span><b>01</b> Union Square</span><i>→</i><span><b>02</b> Powell Street</span><i>→</i><span><b>03</b> Chinatown</span><i>→</i><span><b>04</b> The waterfront</span></div>
+    <footer class="city-map-footer"><div><strong><i></i> YOUR ROUTE THROUGH SAN FRANCISCO</strong><span>2.3 km of city streets. Three hills with wings.</span></div><button class="primary" id="city-map-play">TAKE FLIGHT <span class="arrow">↗</span></button></footer>
+  </section>
+</div>
 <div class="edition" id="edition">WHIMSICAL SF &nbsp; / &nbsp; VOL. 001</div>
 <div class="race-hud faded" id="hud">
   <div class="race-top"><div class="stat"><span class="label">YOUR TIME</span><span class="stat-value" id="timer">00:00.00</span></div><div class="stat"><span class="label">PERSONAL BEST</span><span class="stat-value" id="best">—</span></div><div class="stat"><span class="label">CHECKPOINT</span><span class="stat-value" id="checkpoint">0 <em>/ 4</em></span></div></div>
@@ -212,13 +228,13 @@ async function boot() {
   }
   function start(){
     clearInputs();tourArt=null;sim.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase='countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';
-    ['help','pause-panel','results'].forEach(id=>el(id).classList.add('hidden'));
+    ['help','pause-panel','results','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));
     el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.remove('hidden');el('drift-hint').classList.remove('active');
     void audio.unlock().then(()=>audio.cue('count'));updateCountdown();syncPhase();updateHud();canvas.focus();
   }
   function pause(){if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
-  function menu(){phase='menu';tourArt=null;skyCourse.reset();finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
+  function menu(){phase='menu';tourArt=null;skyCourse.reset();finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
     const s=sim.state, isBest=!best||s.elapsed<best;
@@ -318,8 +334,9 @@ async function boot() {
   window.addEventListener('keydown',event=>{
     if(controls.has(event.code)&&(phase==='racing'||phase==='countdown')){event.preventDefault();keys.add(event.code);}
     if(event.repeat)return;
-    if(event.code==='Enter'&&el('help').classList.contains('hidden')){if(phase==='menu'&&document.activeElement?.tagName!=='BUTTON')start();else if(phase==='finished'&&document.activeElement?.tagName!=='BUTTON')start();}
+    if(event.code==='Enter'&&el('help').classList.contains('hidden')&&el('city-map-dialog').classList.contains('hidden')){if(phase==='menu'&&document.activeElement?.tagName!=='BUTTON')start();else if(phase==='finished'&&document.activeElement?.tagName!=='BUTTON')start();}
     if(event.code==='Escape'){
+      if(!el('city-map-dialog').classList.contains('hidden')){modal('city-map-dialog',false);return;}
       if(!el('help').classList.contains('hidden')){closeHelp();return;}
       if(phase==='tour')menu();else if(phase==='paused')resume();else if(phase==='racing'||phase==='countdown')pause();
     }
@@ -353,6 +370,10 @@ async function boot() {
   el('start').onclick=start;el('again').onclick=start;el('restart').onclick=start;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
   el('home').onclick=menu;el('pause-home').onclick=menu;el('result-home').onclick=menu;el('sound').onclick=toggleSound;
   el('how').onclick=()=>{helpWasPaused=phase==='racing'||phase==='countdown';if(helpWasPaused)pause();modal('help',true);};el('close-help').onclick=closeHelp;el('help-play').onclick=start;
+  el('open-city-map').onclick=()=>modal('city-map-dialog',true);
+  el('close-city-map').onclick=()=>modal('city-map-dialog',false);
+  el('city-map-dialog').addEventListener('click',event=>{if(event.target===el('city-map-dialog'))modal('city-map-dialog',false);});
+  el('city-map-play').onclick=start;
   function updateAssist(){el('auto-throttle').textContent=`AUTO ACCELERATE: ${autoThrottle?'ON':'OFF'}`;el('auto-throttle').setAttribute('aria-pressed',String(autoThrottle));}
   el('auto-throttle').onclick=()=>{autoThrottle=!autoThrottle;safeWrite('sf-night-run-auto-throttle',String(autoThrottle));updateAssist();};updateAssist();
   el('reset-best').onclick=()=>{best=0;safeWrite('whimsical-sf-manual-driving-best-v2','0');el('best').textContent='—';el('reset-best').textContent='BEST CLEARED';};
