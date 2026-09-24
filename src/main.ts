@@ -196,7 +196,7 @@ async function boot() {
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
   let cinematicQuality=safeRead('sf-night-run-quality')==='cinematic';
   let lowQuality=safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
-  let landingPulse=0, collectedRings=0, presentedLaunches=0, finishedAt=0, tourBayStarted:number|null=null;
+  let landingPulse=0, collectedRings=0, presentedLaunches=0, finishedAt=0, tourBayStarted:number|null=null, knockedProps=0;
   const finishCameraStart=new THREE.Vector3(),finishLookStart=new THREE.Vector3();
   const bayCamera=new THREE.Vector3(640,45,250),bayLook=new THREE.Vector3(845,25,250);
   let lastDistrict='', gamepadPauseDown=false, shake=0, helpWasPaused=false, goUntil=0, finishReveal=0;
@@ -241,6 +241,7 @@ async function boot() {
     const p=sim.position,origin={x:p.x,y:p.y+1.6,z:p.z};
     let reach=1;
     for(const solid of PLAYGROUND_COLLIDERS){
+      if(solid.propId)continue;
       // Low furniture stays below the view; buildings and the monument shorten
       // the camera's arm before it can disappear through their walls.
       if(solid.maxY<origin.y+.35)continue;
@@ -264,13 +265,14 @@ async function boot() {
   function restartRun(){startRun(freeDrive);}
   function startRun(explore:boolean){
     clearInputs();freeDrive=explore;tourArt=null;sim.reset();if(explore)sim.explore();playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore?'racing':'countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';
+    landmarks.resetProps();knockedProps=0;
     ['help','pause-panel','results','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));
     el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.toggle('hidden',explore);el('drift-hint').classList.remove('active');
     void audio.unlock().then(()=>{if(!explore)audio.cue('count');});if(!explore)updateCountdown();syncPhase();updateHud();canvas.focus();
   }
   function pause(){if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
-  function menu(){phase='menu';tourArt=null;skyCourse.reset();finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
+  function menu(){phase='menu';tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
     const s=sim.state, isBest=!freeDrive&&(!best||s.elapsed<best);
@@ -453,6 +455,7 @@ async function boot() {
     canvas.dataset.throttle=String(input.throttle);canvas.dataset.steer=String(input.steer);
     canvas.dataset.speed=sim.state.speed.toFixed(2);canvas.dataset.heading=sim.state.heading.toFixed(4);
     canvas.dataset.worldX=sim.position.x.toFixed(2);canvas.dataset.worldZ=sim.position.z.toFixed(2);canvas.dataset.worldY=sim.position.y.toFixed(2);canvas.dataset.exploring=String(sim.exploring);canvas.dataset.freeDrive=String(freeDrive);canvas.dataset.postcards=String(playground.collected);
+    canvas.dataset.propsKnocked=String(knockedProps);canvas.dataset.propsMoving=String(landmarks.propStats.awake);canvas.dataset.propsSettled=String(landmarks.propStats.asleep);
     let raceDt=dt;if(phase==='tour'){
       const beforeTour=tour.progress,wasTourPaused=tour.paused;tour.update(dt);if(tour.progress<beforeTour){cameraInitialized=false;tourBayStarted=null;}
       if(tour.progress>=TRACK_LENGTH-1&&tour.paused){el('tour-pause').textContent='RUN AGAIN';if(!wasTourPaused){audio.suspend();tourBayStarted=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);}}
@@ -466,6 +469,12 @@ async function boot() {
     }
     if(phase==='racing'){
       const events=sim.update(raceDt,input);topSpeed=Math.max(topSpeed,Math.abs(sim.state.speed));
+      const propImpacts=sim.drainPropImpacts();
+      if(propImpacts.length){
+        landmarks.knockProps(propImpacts);knockedProps+=propImpacts.length;
+        const loudest=propImpacts.reduce((a,b)=>a.speed>b.speed?a:b);
+        audio.propImpact(loudest.speed,!loudest.id.startsWith('cafe-'));
+      }
       for(const event of events){if(event==='checkpoint'&&!sim.state.finished&&!freeDrive){audio.cue('checkpoint');announce('CHECKPOINT',`${sim.state.checkpoint} OF 4 · ${formatTime(sim.state.elapsed)}`,1.6);}if(event==='crash'){audio.cue('crash');shake=.5;flashUntil=totalTime+.16;}if(event==='land'){shake=.24;landingPulse=1;audio.cue('land');announce('STUCK THE LANDING','BOOST RECHARGED',1.3);}if(event==='finish')finish();}
       // An untimed wander can reach the waterfront without the race's gates.
       if(freeDrive&&phase==='racing'&&sim.state.progress>=TRACK_LENGTH)finish();
@@ -480,6 +489,7 @@ async function boot() {
     el('drift-hint').textContent=sim.state.airborne?'A / D TO GLIDE · BRAKE TO DIVE':'DRIFTING';el('drift-hint').setAttribute('aria-hidden',String(!el('drift-hint').classList.contains('active')));
     document.querySelector('.speed-vignette')!.classList.toggle('active',phase==='racing'&&sim.boosting);
     if(phase!=='paused')updateCamera(dt);
+    if(phase!=='paused')landmarks.updateProps(dt);
     if(phase!=='paused'){car.update(dt,{speed:phase==='menu'?0:phase==='tour'?(tour.paused?0:tour.speed):sim.state.speed,steer:phase==='tour'?tour.steer:input.steer,braking:input.brake>.1,boosting:phase==='racing'&&sim.boosting,time:totalTime,glide:phase==='menu'?0:phase==='tour'?tour.glide:sim.state.glide,airborne:phase==='menu'?false:(phase==='tour'?tour.airborne:sim.state.airborne),altitude:phase==='tour'?tour.altitude:sim.state.altitude,landing:landingPulse});updateSpray(dt,input);}
     landingPulse*=Math.exp(-7*dt);
     const flight=phase==='tour'?tour:sim.state;

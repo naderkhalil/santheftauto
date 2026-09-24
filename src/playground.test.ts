@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { groundHeight } from './route.ts';
 import { PLAYGROUND_COLLIDERS, containsPlayground, playgroundHeight } from './playground.ts';
+import { PLAZA_RAIL_SEGMENTS, PLAZA_CAFE_TABLES, PLAZA_CAFE_CHAIRS, PLAZA_KNOCKABLE_PROPS } from './playground-props.ts';
 
 const near = (actual: number, expected: number) => assert.ok(Math.abs(actual - expected) < .001, `${actual} should equal ${expected}`);
 function blocked(x: number, z: number, radius = 1) {
@@ -95,5 +96,53 @@ test('a car-width path reaches every plaza postcard from Post Street without cli
   }
   for (const [x, z] of [[0, -24], [24, 7], [-18, 16], [0, 31], [53, -36]]) {
     assert.ok(seen.has(`${x},${z}`), `postcard at ${x},${z} must be reachable from the street`);
+  }
+});
+
+test('knockable rail sections preserve every original post and form continuous authored rails', () => {
+  const expected = new Map([
+    ...[-31, -11, 11, 31].map(x => [`south-stair-rail-${x}`, 4] as const),
+    ...[-7, 7].map(x => [`north-entry-rail-${x}`, 4] as const),
+    ...[-16, 16].map(x => [`north-terrace-rail-${x}`, 2] as const),
+    ['west-ramp-rail', 14], ...[-6.7, 2.7].map(z => [`stockton-stair-rail-${z}`, 5] as const),
+  ]);
+  assert.equal(PLAZA_RAIL_SEGMENTS.length, 52);
+  assert.equal(PLAZA_RAIL_SEGMENTS.reduce((posts, segment) => posts + Number(segment.postAtA) + Number(segment.postAtB), 0), 63,
+    'splitting a rail must neither duplicate nor lose its original posts');
+  for (const [railId, count] of expected) {
+    const sections = PLAZA_RAIL_SEGMENTS.filter(segment => segment.railId === railId);
+    assert.equal(sections.length, count);
+    for (const [index, section] of sections.entries()) {
+      assert.equal(section.id, `${railId}/${index}`);
+      assert.equal(section.postAtB, index === sections.length - 1, 'shared posts belong to exactly one section');
+      if (index) assert.deepEqual(section.a, sections[index - 1].b, 'adjacent sections meet at the original post');
+    }
+  }
+});
+
+test('rendered prop identities match knockable collisions while structural fixtures stay solid', () => {
+  const props = new Map(PLAZA_KNOCKABLE_PROPS.map(prop => [prop.id, prop]));
+  assert.equal(props.size, 84, 'each small prop needs one unique impact/reset identity');
+  assert.equal(PLAZA_CAFE_TABLES.filter(table => table.parasol).length, 4, 'each umbrella belongs to its table');
+  for (const prop of props.values()) {
+    assert.ok(PLAYGROUND_COLLIDERS.some(collider => collider.propId === prop.id), `${prop.id} must have collision geometry`);
+  }
+  for (const collider of PLAYGROUND_COLLIDERS) {
+    if (collider.propId) assert.ok(props.has(collider.propId), `${collider.id} must knock an existing rendered prop`);
+    else assert.equal(/^(cafe-table-|cafe-chair-|south-stair-rail-|north-entry-rail-|north-terrace-rail-|west-ramp-rail|stockton-stair-rail-)/.test(collider.id), false,
+      `${collider.id} must not leave an invisible fixed collision after the prop moves`);
+  }
+  for (const prefix of ['station-escalator-', 'north-garden-', 'center-terrace-wall-', 'dewey-', 'cafe-pavilion-']) {
+    const solids = PLAYGROUND_COLLIDERS.filter(collider => collider.id.startsWith(prefix));
+    assert.ok(solids.length > 0);
+    assert.ok(solids.every(collider => !collider.propId), `${prefix} remains structural`);
+  }
+  for (const table of PLAZA_CAFE_TABLES) {
+    const chairs = PLAZA_CAFE_CHAIRS.filter(chair => chair.tableId === table.id);
+    assert.equal(chairs.length, 3);
+    for (const chair of chairs) {
+      near(Math.hypot(chair.x - table.x, chair.z - table.z), 1.33);
+      near(chair.y, table.y);
+    }
   }
 });

@@ -30,6 +30,7 @@ export type DriveState = {
   distanceDrifted: number;
 };
 export type RaceEvent = 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land';
+export type PropImpact = { id: string; x: number; y: number; z: number; vx: number; vz: number; speed: number };
 
 const STEP = 1 / 120;
 const CAR_HALF_WIDTH = .95;
@@ -58,7 +59,13 @@ export const SQUARE_RACE_GATES = [
   { x: -75, z: 0, progress: routeProgressAt(-75, 0), label: 'Powell Street · head north' },
 ] as const;
 
-type SolidBox = { id: string; minX: number; maxX: number; minZ: number; maxZ: number; minY: number; maxY: number };
+type SolidBox = { id: string; propId?: string; minX: number; maxX: number; minZ: number; maxZ: number; minY: number; maxY: number };
+const DISTRICT_WALLS: readonly SolidBox[] = [
+  { id: 'district-west', minX: PLAYGROUND_BOUNDS.minX - 1000, maxX: PLAYGROUND_BOUNDS.minX, minZ: -10000, maxZ: 10000, minY: -10000, maxY: 10000 },
+  { id: 'district-east', minX: PLAYGROUND_BOUNDS.maxX, maxX: PLAYGROUND_BOUNDS.maxX + 1000, minZ: -10000, maxZ: 10000, minY: -10000, maxY: 10000 },
+  { id: 'district-south', minX: -10000, maxX: 10000, minZ: PLAYGROUND_BOUNDS.minZ - 1000, maxZ: PLAYGROUND_BOUNDS.minZ, minY: -10000, maxY: 10000 },
+  { id: 'district-north', minX: -10000, maxX: 10000, minZ: PLAYGROUND_BOUNDS.maxZ, maxZ: PLAYGROUND_BOUNDS.maxZ + 1000, minY: -10000, maxY: 10000 },
+];
 
 /** Slab intersection supplies the first contact and its outward normal. */
 function sweepBox(x: number, z: number, dx: number, dz: number, box: SolidBox, extentX: number, extentZ: number) {
@@ -139,9 +146,14 @@ export class DrivingSimulation {
   private safeProgress = START_PROGRESS;
   private playgroundObstacles: SolidBox[] = [];
   private plazaHop = false;
+  private knockedProps = new Set<string>();
+  private propImpacts: PropImpact[] = [];
+  private scrapeNormals = new Set<string>();
 
   /** Whether boost was actually applied during the latest physics step. */
   get boosting(): boolean { return this.lastBoosting; }
+  /** Consume each lightweight prop's first impact once; recovery retains damage. */
+  drainPropImpacts(): PropImpact[] { return this.propImpacts.splice(0); }
   get exploring(): boolean { return this.explorationActive; }
   get position(): { x: number; y: number; z: number } {
     return this.explorationActive ? { x: this.worldX, y: this.state.y, z: this.worldZ } : { ...routePoint(this.state.progress, this.state.lateral), y: this.state.y };
@@ -187,6 +199,7 @@ export class DrivingSimulation {
     this.squareGate = 0;
     this.safeProgress = START_PROGRESS;
     this.plazaHop = false;
+    this.knockedProps.clear(); this.propImpacts.length = 0; this.scrapeNormals.clear();
   }
 
   /** Start the public-square playground without a race countdown. */
@@ -211,6 +224,7 @@ export class DrivingSimulation {
     this.lateralVelocity = 0; this.steering = 0; this.wallBlocked = false;
     this.activeLaunch = undefined; this.liftBias = 0; this.lastBoosting = false;
     this.plazaHop = false;
+    this.scrapeNormals.clear();
     for (const index of this.launchedZones) if (LAUNCH_ZONES[index].progress >= s.progress) this.launchedZones.delete(index);
   }
 
@@ -246,11 +260,27 @@ export class DrivingSimulation {
     let height = playgroundHeight(this.worldX, this.worldZ);
     // A low solid can support a car arriving from above. Its top cannot be
     // entered through the side, and it never raises the car from below.
-    for (const box of [...PLAYGROUND_COLLIDERS, ...this.playgroundObstacles]) {
+    const boxes: readonly SolidBox[] = [...PLAYGROUND_COLLIDERS, ...this.playgroundObstacles];
+    for (const box of boxes) {
+      if (box.propId) continue;
       if (this.state.y < box.maxY - .08 || box.maxY <= height) continue;
       if (this.worldX >= box.minX && this.worldX <= box.maxX && this.worldZ >= box.minZ && this.worldZ <= box.maxZ) height = box.maxY;
     }
     return height;
+  }
+
+  private collectPropContacts(x: number, z: number, dx: number, dz: number, seconds: number, extentX: number, extentZ: number) {
+    if (seconds < 1e-8 || Math.hypot(dx, dz) < 1e-8) return;
+    const boxes: readonly SolidBox[] = PLAYGROUND_COLLIDERS;
+    for (const box of boxes) {
+      if (!box.propId || this.knockedProps.has(box.propId)) continue;
+      if (this.state.y + 1.65 < box.minY || this.state.y >= box.maxY - .08) continue;
+      const hit = sweepBox(x, z, dx, dz, box, extentX, extentZ);
+      if (!hit) continue;
+      const vx = dx / seconds, vz = dz / seconds;
+      this.knockedProps.add(box.propId);
+      this.propImpacts.push({ id: box.propId, x: x + dx * hit.time, y: this.state.y + .4, z: z + dz * hit.time, vx, vz, speed: Math.hypot(vx, vz) });
+    }
   }
 
   private crossedGate(fromX: number, fromZ: number, toX: number, toZ: number, progress: number): boolean {
@@ -309,21 +339,38 @@ export class DrivingSimulation {
     const dx = Math.sin(s.heading) * s.speed * dt, dz = Math.cos(s.heading) * s.speed * dt;
     const ex = Math.abs(Math.sin(s.heading)) * CAR_HALF_LENGTH + Math.abs(Math.cos(s.heading)) * CAR_HALF_WIDTH;
     const ez = Math.abs(Math.cos(s.heading)) * CAR_HALF_LENGTH + Math.abs(Math.sin(s.heading)) * CAR_HALF_WIDTH;
-    let moveX = dx, moveZ = dz, collided = false;
-    const boxes = [...PLAYGROUND_COLLIDERS, ...this.playgroundObstacles];
+    let moveX = dx, moveZ = dz, moveSeconds = dt, collided = false, initialRetention = 1, maxNormalRatio = 0;
+    const contacts = new Set<string>();
+    const paths: { x: number; z: number; dx: number; dz: number; seconds: number }[] = [];
+    const boxes: readonly SolidBox[] = [...PLAYGROUND_COLLIDERS, ...this.playgroundObstacles, ...DISTRICT_WALLS];
     for (let pass = 0; pass < 3 && Math.hypot(moveX, moveZ) > 1e-8; pass++) {
       let contact: ReturnType<typeof sweepBox>;
       for (const box of boxes) {
+        if (box.propId) continue;
         if (s.y + 1.65 < box.minY || s.y >= box.maxY - .08) continue;
         const candidate = sweepBox(this.worldX, this.worldZ, moveX, moveZ, box, ex, ez);
         if (candidate && (!contact || candidate.time < contact.time)) contact = candidate;
       }
-      if (!contact) { this.worldX += moveX; this.worldZ += moveZ; break; }
+      if (!contact) {
+        paths.push({ x: this.worldX, z: this.worldZ, dx: moveX, dz: moveZ, seconds: moveSeconds });
+        this.worldX += moveX; this.worldZ += moveZ; break;
+      }
       collided = true;
+      const normalKey = `${contact.nx},${contact.nz}`;
+      contacts.add(normalKey);
+      const normalRatio = Math.max(0, -(dx * contact.nx + dz * contact.nz) / Math.max(Math.hypot(dx, dz), 1e-8));
+      const tangentRatio = Math.sqrt(Math.max(0, 1 - normalRatio * normalRatio));
+      maxNormalRatio = Math.max(maxNormalRatio, normalRatio);
+      // Shed the normal component once at first contact, rather than reducing
+      // speed once per rendered frame. Sustained scrapes retain momentum.
+      if (!this.scrapeNormals.has(normalKey)) initialRetention = Math.min(initialRetention, tangentRatio);
+      if (tangentRatio < .12) initialRetention = 0;
       const t = Math.max(0, contact.time - .001);
+      paths.push({ x: this.worldX, z: this.worldZ, dx: moveX * t, dz: moveZ * t, seconds: moveSeconds * t });
       this.worldX += moveX * t + contact.nx * (contact.penetration + .002);
       this.worldZ += moveZ * t + contact.nz * (contact.penetration + .002);
       moveX *= 1 - t; moveZ *= 1 - t;
+      moveSeconds *= 1 - t;
       const into = moveX * contact.nx + moveZ * contact.nz;
       if (into < 0) { moveX -= into * contact.nx; moveZ -= into * contact.nz; }
     }
@@ -334,14 +381,23 @@ export class DrivingSimulation {
     const ground = this.explorationSupportHeight();
     // Tall exposed terrace edges are solid. Stair/ramp envelopes stay well
     // below this per-step limit even at top speed.
-    if (ground - oldY > .55) { this.worldX = oldX; this.worldZ = oldZ; collided = true; }
+    if (ground - oldY > .55) {
+      this.worldX = oldX; this.worldZ = oldZ; collided = true;
+      initialRetention = 0; maxNormalRatio = 1; paths.length = 0;
+    }
     if (collided) {
-      if (this.edgeCooldown === 0 && Math.abs(s.speed) > 4) {
+      if (this.edgeCooldown === 0 && Math.abs(s.speed) * maxNormalRatio > 5 && initialRetention < 1) {
         s.collisions++; events.push('crash'); this.edgeCooldown = .7;
       }
-      s.speed = 0;
+      const retainedSpeed = Math.abs(s.speed) * initialRetention;
+      const scrapeDrag = (.35 + retainedSpeed * .10 * maxNormalRatio) * dt;
+      s.speed = Math.sign(s.speed) * Math.max(0, retainedSpeed - scrapeDrag);
     }
     this.wallBlocked = collided;
+    this.scrapeNormals = contacts;
+    // Only accepted portions of the sweep may disturb a prop. An object
+    // behind a solid wall cannot be hit by the attempted, blocked movement.
+    for (const path of paths) this.collectPropContacts(path.x, path.z, path.dx, path.dz, path.seconds, ex, ez);
     this.projectExplorationPosition();
     const support = this.explorationSupportHeight();
     if (!this.plazaHop && oldY - support > .42) {
@@ -389,6 +445,7 @@ export class DrivingSimulation {
     const oldProgress = s.progress;
     const oldLateral = s.lateral;
     const oldPosition = routePoint(oldProgress, oldLateral);
+    const wasScraping = this.wallBlocked;
     this.edgeCooldown = Math.max(0, this.edgeCooldown - dt);
     if (!input.boost) this.boostLocked = false;
     const boosting = input.boost && !this.boostLocked && s.boost > 0 && input.throttle > 0 && input.brake < .2;
@@ -431,8 +488,7 @@ export class DrivingSimulation {
       const yawSpeed = this.wallBlocked ? Math.max(s.speed, input.throttle * (1 - input.brake) * 8) : s.speed;
       s.heading += yawSpeed * this.steering * steeringCurvature(yawSpeed, input.drift) * dt;
       const relative = s.heading - routeYaw(s.progress);
-      if (this.wallBlocked && Math.sin(relative) * Math.sign(s.lateral) > 0) s.speed = 0;
-      else this.wallBlocked = false;
+      if (Math.abs(s.lateral) < EDGE - .02 || Math.sin(relative) * Math.sign(s.lateral) <= 0) this.wallBlocked = false;
       this.lateralVelocity = s.speed * Math.sin(relative);
       // Frenet coordinates convert the driver's world velocity into road
       // progress. The offset-radius term keeps an unsteered car travelling
@@ -445,14 +501,19 @@ export class DrivingSimulation {
     if (Math.abs(s.lateral) > EDGE) {
       const side = Math.sign(s.lateral);
       s.lateral = side * EDGE;
-      if (!s.airborne && this.edgeCooldown === 0 && s.speed > 8 && this.lateralVelocity * side > 1) {
-        s.speed *= .68;
+      if (!s.airborne && this.edgeCooldown === 0 && !wasScraping && this.lateralVelocity * side > 5) {
         s.collisions++;
         events.push('crash');
         this.edgeCooldown = .8;
       }
       if (!s.airborne && this.lateralVelocity * side > 0) {
-        s.speed = 0;
+        const normalRatio = clamp(Math.abs(this.lateralVelocity) / Math.max(s.speed, 1e-8), 0, 1);
+        const tangentRatio = Math.sqrt(Math.max(0, 1 - normalRatio * normalRatio));
+        if (tangentRatio < .12) s.speed = 0;
+        else {
+          if (!wasScraping) s.speed *= tangentRatio;
+          s.speed = Math.max(0, s.speed - (.35 + s.speed * .10 * normalRatio) * dt);
+        }
         this.wallBlocked = true;
       }
       this.lateralVelocity = 0;

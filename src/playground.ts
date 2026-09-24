@@ -1,5 +1,6 @@
 import { groundHeight, intersectsSquareParcel, routePoint, routeYaw, sampleRoute, TRACK_LENGTH, ROUTE_POLYLINE, routeProgressAt } from './route.ts';
 import { PLAZA_LEVELS, PLAZA_PALMS, PLAZA_TREES } from './plaza-layout.ts';
+import { PLAZA_RAIL_SEGMENTS, PLAZA_CAFE_TABLES, PLAZA_CAFE_CHAIRS } from './playground-props.ts';
 
 /** Collision/source coordinates are semantic: X east, Y up, Z north.
  * Keep these measured solids and surfaces beside the corresponding authoring
@@ -86,15 +87,17 @@ export function playgroundHeight(x: number, z: number): number {
 
 export type PlaygroundCollider = Readonly<{
   id: string; minX: number; maxX: number; minZ: number; maxZ: number; minY: number; maxY: number;
+  /** All collision pieces with this ID belong to one knockable rendered prop. */
+  propId?: string;
 }>;
 const colliders: PlaygroundCollider[] = [];
-function bounds(id: string, minX: number, maxX: number, minZ: number, maxZ: number, minY: number, maxY: number) {
-  colliders.push({ id, minX, maxX, minZ, maxZ, minY, maxY });
+function bounds(id: string, minX: number, maxX: number, minZ: number, maxZ: number, minY: number, maxY: number, propId?: string) {
+  colliders.push({ id, minX, maxX, minZ, maxZ, minY, maxY, ...(propId ? { propId } : {}) });
 }
-function solid(id: string, x: number, z: number, w: number, d: number, bottom: number, h: number) {
-  bounds(id, x - w / 2, x + w / 2, z - d / 2, z + d / 2, bottom, bottom + h);
+function solid(id: string, x: number, z: number, w: number, d: number, bottom: number, h: number, propId?: string) {
+  bounds(id, x - w / 2, x + w / 2, z - d / 2, z + d / 2, bottom, bottom + h, propId);
 }
-function rail(id: string, ax: number, az: number, ay: number, bx: number, bz: number, by: number) {
+function rail(id: string, ax: number, az: number, ay: number, bx: number, bz: number, by: number, propId?: string) {
   // Short sections retain the incline's actual height instead of an invisible
   // full-height rectangle covering the entire stair and its landing.
   const count = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 1.2));
@@ -104,7 +107,7 @@ function rail(id: string, ax: number, az: number, ay: number, bx: number, bz: nu
     const z0 = az + (bz - az) * a, z1 = az + (bz - az) * b;
     const y0 = ay + (by - ay) * a, y1 = ay + (by - ay) * b;
     bounds(`${id}/${i}`, Math.min(x0, x1) - .045, Math.max(x0, x1) + .045,
-      Math.min(z0, z1) - .045, Math.max(z0, z1) + .045, Math.min(y0, y1), Math.max(y0, y1) + .982);
+      Math.min(z0, z1) - .045, Math.max(z0, z1) + .045, Math.min(y0, y1), Math.max(y0, y1) + .982, propId);
   }
 }
 
@@ -184,11 +187,9 @@ for (const x of [-53, 53]) for (const z of [-44, 46]) {
 for (const x of [-41, 41]) for (const z of [-40, 45]) solid(`litter-bin-${x}-${z}`, x, z, .89, .89, perimeter, 1.1);
 for (const x of [-11, 11]) solid(`flagpole-${x}`, x, 31, .24, .24, north, 7.5);
 
-for (const x of [-31, -11, 11, 31]) rail(`south-stair-rail-${x}`, x, -37.3, perimeter, x, -28.4, center);
-for (const x of [-7, 7]) rail(`north-entry-rail-${x}`, x, 44, perimeter, x, 35.1, north);
-for (const x of [-16, 16]) rail(`north-terrace-rail-${x}`, x, 23.4, center, x, 26.6, north);
-rail('west-ramp-rail', -58.3, -42, perimeter, -58.3, 26, center);
-for (const z of [-6.7, 2.7]) rail(`stockton-stair-rail-${z}`, 58.9, z, perimeter, 44.7, z, center);
+for (const segment of PLAZA_RAIL_SEGMENTS) {
+  rail(segment.id, segment.a.x, segment.a.z, segment.a.y, segment.b.x, segment.b.z, segment.b.y, segment.id);
+}
 
 for (const [x, z] of [[48.95, 13], [-48.6, -13]]) {
   solid(`cafe-pavilion-${x}`, x, z, 8.5, 12.4, center, 2.72);
@@ -196,13 +197,8 @@ for (const [x, z] of [[48.95, 13], [-48.6, -13]]) {
   solid(`cafe-counter-${x}`, x + (x < 0 ? 1 : -1) * 4.7, z, 1.02, 11.3, center + .92, .12);
   solid(`cafe-roof-${x}`, x, z, 10.2, 13.8, center + 2.76, .18);
 }
-for (const z of [-20, 18]) for (const x of z === 18 ? [-35, -28, 28, 35] : [-36, -29, 29, 36]) {
-  solid(`cafe-table-${x}-${z}`, x, z, 1.7, 1.7, center, .90);
-  for (let i = 0; i < 3; i++) {
-    const angle = i * Math.PI * 2 / 3;
-    solid(`cafe-chair-${x}-${z}-${i}`, x + Math.sin(angle) * 1.33, z + Math.cos(angle) * 1.33, .81, .81, center, 1.04);
-  }
-}
+for (const table of PLAZA_CAFE_TABLES) solid(table.id, table.x, table.z, 1.7, 1.7, table.y, .90, table.id);
+for (const chair of PLAZA_CAFE_CHAIRS) solid(chair.id, chair.x, chair.z, .81, .81, chair.y, 1.04, chair.id);
 
 // Station has a walk-in portal, not one solid reservation across the apron.
 // The throat is the physical end of that small alcove; no subway interior is

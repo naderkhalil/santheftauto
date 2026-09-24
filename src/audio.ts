@@ -9,6 +9,7 @@ export class GameAudio {
   private tires?: GainNode;
   private muted = false;
   private ready = false;
+  private lastPropSound = -Infinity;
 
   async unlock(): Promise<void> {
     try {
@@ -86,6 +87,26 @@ export class GameAudio {
       osc.connect(envelope); envelope.connect(this.master!); osc.start(start); osc.stop(start + duration + .02);
       osc.onended = () => { osc.disconnect(); envelope.disconnect(); };
     });
+  }
+
+  /** Light furniture rattles away without the heavy crash cue. */
+  propImpact(speed: number, metal: boolean): void {
+    if (!this.ready || !this.context || !this.master || this.muted || !Number.isFinite(speed)) return;
+    const ctx = this.context, t = ctx.currentTime;
+    if (t - this.lastPropSound < .09) return;
+    this.lastPropSound = t;
+    const strength = Math.min(.14, .035 + Math.abs(speed) * .003);
+    for (const [index, ratio] of (metal ? [1, 2.71, 4.13] : [1, 1.47]).entries()) {
+      const osc = ctx.createOscillator(), envelope = ctx.createGain();
+      const start = t + index * .017, duration = metal ? .26 : .12;
+      osc.type = 'triangle'; osc.frequency.setValueAtTime((metal ? 290 : 155) * ratio, start);
+      osc.frequency.exponentialRampToValueAtTime((metal ? 265 : 72) * ratio, start + duration);
+      envelope.gain.setValueAtTime(.0001, start);
+      envelope.gain.exponentialRampToValueAtTime(strength / (index + 1), start + .005);
+      envelope.gain.exponentialRampToValueAtTime(.0001, start + duration);
+      osc.connect(envelope); envelope.connect(this.master); osc.start(start); osc.stop(start + duration + .01);
+      osc.onended = () => { osc.disconnect(); envelope.disconnect(); };
+    }
   }
 
   /** A short, positional two-strike brass bell for passing a cable car. */

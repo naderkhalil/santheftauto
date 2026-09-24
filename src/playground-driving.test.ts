@@ -4,7 +4,7 @@ import { DrivingSimulation } from './driving.ts';
 import type { DriveInput } from './driving.ts';
 import { DemoAutopilot } from './autopilot.ts';
 import { playgroundHeight } from './playground.ts';
-import { CHECKPOINTS, START_PROGRESS, TRACK_LENGTH, sampleRoute } from './route.ts';
+import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_STOPS, START_PROGRESS, TRACK_LENGTH, routeProgressAt, routeYaw, sampleRoute } from './route.ts';
 
 const gas: DriveInput = { throttle: 1, brake: 0, steer: 0, drift: false, boost: false };
 const neutral: DriveInput = { ...gas, throttle: 0 };
@@ -173,5 +173,129 @@ test('world driving, stair contact, reversing and steering are deterministic at3
   });
   for (const result of results.slice(1)) for (const key of ['x', 'y', 'z', 'speed', 'heading', 'surfacePitch', 'elapsed'] as const) {
     assert.ok(Math.abs(result[key] - results[0][key]) < 1e-7, `${key} changed with frame rate`);
+  }
+});
+
+test('outdoor rail sections and cafe furniture scatter without braking the car or scoring a crash', () => {
+  const sim = new DrivingSimulation([], { exploration: true }); sim.explore();
+  sim.state.heading = Math.PI / 2;
+  until(sim, () => sim.position.x >= 11, gas);
+  sim.state.speed = 0; sim.state.heading = 0;
+  until(sim, () => sim.position.z >= 18, gas);
+  const rails = sim.drainPropImpacts();
+  assert.equal(rails.filter(hit => hit.id.startsWith('south-stair-rail-11/')).length, 4,
+    'each visible span should scatter once even though it owns several collision pieces');
+  assert.ok(sim.state.speed > 40);
+  assert.equal(sim.state.collisions, 0);
+  assert.deepEqual(sim.drainPropImpacts(), []);
+  sim.state.speed = 0; sim.state.heading = Math.PI / 2;
+  until(sim, () => sim.position.x >= 38, gas);
+  const furniture = sim.drainPropImpacts();
+  assert.ok(furniture.some(hit => hit.id === 'cafe-table-28-18'));
+  assert.ok(furniture.some(hit => hit.id.startsWith('cafe-chair-28-18-')));
+  assert.ok(sim.state.speed > 28, 'furniture should not act as a brake');
+  assert.equal(sim.state.collisions, 0);
+  assert.equal(new Set(furniture.map(hit => hit.id)).size, furniture.length);
+});
+
+test('reversing into furniture delivers the actual backward travel impulse', () => {
+  const sim = new DrivingSimulation([], { exploration: true }); sim.explore();
+  sim.state.heading = Math.PI / 2;
+  until(sim, () => sim.position.x >= 20, gas);
+  sim.state.speed = 0; sim.state.heading = 0;
+  until(sim, () => sim.position.z >= 18, gas);
+  sim.drainPropImpacts();
+  sim.state.speed = 0; sim.state.heading = -Math.PI / 2;
+  until(sim, () => sim.position.x >= 31, reverse);
+  const hit = sim.drainPropImpacts().find(hit => hit.id === 'cafe-table-28-18');
+  assert.ok(hit);
+  assert.ok(sim.state.speed < 0);
+  assert.ok(hit.vx > 8, 'the car faces west but its reverse impulse travels east');
+  assert.ok(Math.abs(hit.vz) < 1e-8);
+  assert.ok(hit.speed > 8 && hit.speed <= 10);
+  assert.equal(sim.state.collisions, 0);
+});
+
+test('recovery preserves displaced props and a new run restores them', () => {
+  const sim = new DrivingSimulation([], { exploration: true }); sim.explore();
+  sim.state.heading = Math.PI / 2;
+  until(sim, () => sim.position.x >= 11, gas);
+  sim.state.speed = 0; sim.state.heading = 0;
+  until(sim, () => sim.position.z >= -18, gas);
+  const first = sim.drainPropImpacts().map(hit => hit.id);
+  assert.equal(first.length, 4);
+  const driveFromStartToRail = () => {
+    const driver = new DemoAutopilot(), geary = routeProgressAt(11, -65);
+    for (let i = 0; i < 120 * 25 && sim.state.progress < geary; i++) sim.update(1 / 120, driver.input(sim.state));
+    assert.ok(sim.state.progress >= geary);
+    sim.state.speed = 0; sim.state.heading = 0;
+    until(sim, () => sim.position.z >= -18, gas);
+  };
+  sim.recover(); driveFromStartToRail();
+  assert.equal(sim.drainPropImpacts().filter(hit => first.includes(hit.id)).length, 0);
+  sim.reset(); driveFromStartToRail();
+  assert.equal(sim.drainPropImpacts().filter(hit => first.includes(hit.id)).length, 4);
+  sim.reset();
+  assert.deepEqual(sim.drainPropImpacts(), []);
+});
+
+test('props behind a solid terrace wall cannot be knocked by attempted blocked movement', () => {
+  const sim = new DrivingSimulation([], { exploration: true });
+  until(sim, () => sim.position.x >= 28, gas);
+  sim.state.speed = 0;
+  sim.state.heading = Math.PI;
+  advance(sim, 5, gas);
+  assert.ok(sim.position.z > 43, 'the raised north garden and its retaining face remain solid');
+  assert.equal(sim.state.speed, 0);
+  assert.equal(sim.drainPropImpacts().some(hit => hit.id.startsWith('cafe-table-') || hit.id.startsWith('cafe-chair-')), false);
+});
+
+test('glancing along a building retains tangential speed without turning the car', () => {
+  const sim = new DrivingSimulation([], { exploration: true });
+  sim.state.heading = Math.PI / 2 - .55;
+  until(sim, () => sim.state.collisions > 0, gas);
+  const p = sim.position, heading = sim.state.heading, speed = sim.state.speed;
+  advance(sim, .5, gas);
+  assert.ok(sim.position.x > p.x + 10, 'the car should slide down the facade, not stick to it');
+  assert.ok(sim.state.speed > speed && sim.state.speed > 25);
+  assert.ok(sim.position.z < 79.1, 'the whole car must stay outside the building');
+  assert.equal(sim.state.heading, heading, 'contact must not supply steering');
+  assert.equal(sim.state.collisions, 1, 'one sustained scrape should not repeat the impact');
+});
+
+test('the district boundary permits sliding and steering away without a reset', () => {
+  const sim = new DrivingSimulation([], { exploration: true });
+  until(sim, () => sim.position.x >= 183, gas);
+  sim.state.heading = .2; sim.state.speed = 25;
+  advance(sim, 2, gas);
+  assert.ok(sim.position.z > 130, 'the boundary should preserve northbound momentum');
+  assert.ok(sim.position.x < 185.66);
+  assert.ok(sim.state.speed > 40);
+  assert.equal(sim.state.heading, .2);
+  const x = sim.position.x;
+  advance(sim, .4, { ...gas, steer: -1 });
+  assert.ok(sim.position.x < x - 1.5, 'a small deliberate turn should leave the boundary');
+  assert.ok(sim.state.speed > 35);
+});
+
+test('road-edge scrapes outside the square stay responsive and frame-rate independent', () => {
+  const states = [30, 60, 120].map(hz => {
+    const sim = new DrivingSimulation();
+    sim.state.progress = ROUTE_STOPS.embarcadero;
+    sim.state.lateral = ROAD_HALF_WIDTH - 1;
+    sim.state.heading = routeYaw(sim.state.progress) + .22;
+    sim.state.y = sampleRoute(sim.state.progress).y;
+    sim.state.speed = 30;
+    advance(sim, 1, gas, hz);
+    assert.ok(sim.state.progress > ROUTE_STOPS.embarcadero + 30);
+    assert.ok(sim.state.speed > 35);
+    assert.equal(sim.state.heading, routeYaw(ROUTE_STOPS.embarcadero) + .22);
+    const atSpeed = { ...sim.state };
+    advance(sim, 14, neutral, hz);
+    assert.equal(sim.state.speed, 0, 'releasing gas must still stop a scraping car');
+    return atSpeed;
+  });
+  for (const state of states.slice(1)) for (const key of ['speed', 'progress', 'lateral', 'heading'] as const) {
+    assert.ok(Math.abs(state[key] - states[0][key]) < 1e-8, `${key} changed with frame rate`);
   }
 });

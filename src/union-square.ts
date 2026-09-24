@@ -6,6 +6,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createPlazaAssets } from './plaza-assets';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { PLAZA_LEVELS, PLAZA_PALMS } from './plaza-layout';
+import { PLAZA_RAIL_SEGMENTS, PLAZA_CAFE_TABLES, PLAZA_CAFE_CHAIRS } from './playground-props.ts';
+import { createKnockableProps, type PropImpact } from './knockable-props.ts';
 
 const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 
@@ -14,6 +16,10 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
  */
 export function createUnionSquare(scene: THREE.Object3D) {
   const group = new THREE.Group(); group.name = 'Union Square · plaza, Dewey Monument, Westin, Macy’s and Apple'; scene.add(group);
+  const propRoot = new THREE.Group(); propRoot.name = 'Union Square / movable outdoor furniture'; group.add(propRoot);
+  const knockableProps = createKnockableProps();
+  type PropBinding = { mesh: THREE.BatchedMesh; instance: number };
+  const propParts: { geometry: THREE.BufferGeometry; material: THREE.Material; pivot: THREE.Group; bindings: PropBinding[] }[] = [];
   let batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const ground = 22;
   const material = (name: string, color: string, roughness = .78, metalness = 0) => {
@@ -69,6 +75,28 @@ export function createUnionSquare(scene: THREE.Object3D) {
   function rod(a: THREE.Vector3, b: THREE.Vector3, r: number, mat: THREE.Material) {
     const dir = b.clone().sub(a), p = a.clone().add(b).multiplyScalar(.5);
     add(new THREE.CylinderGeometry(r, r, dir.length(), 6), mat, p.x, p.y, p.z, 0, new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), dir.normalize())));
+  }
+  // Reuse the authored geometry helpers, then give each small piece its own
+  // centered transform. Material batches below retain those independent pivots.
+  function movable(id: string, kind: 'rail' | 'table' | 'chair', build: () => void) {
+    const staticBatches = batches; batches = new Map(); build();
+    const parts = batches; batches = staticBatches;
+    const bounds = new THREE.Box3(), mergedParts: { material: THREE.Material; geometry: THREE.BufferGeometry }[] = [];
+    for (const [material, geometries] of parts) {
+      const geometry = mergeGeometries(geometries, false)!;
+      geometries.forEach(part => part.dispose()); geometry.computeBoundingBox(); bounds.union(geometry.boundingBox!);
+      mergedParts.push({ material, geometry });
+    }
+    const center = bounds.getCenter(new THREE.Vector3());
+    const pivot = new THREE.Group(); pivot.name = id; pivot.position.copy(center); pivot.updateMatrix(); propRoot.add(pivot);
+    const bindings: PropBinding[] = [];
+    for (const { material, geometry } of mergedParts) {
+      geometry.translate(-center.x, -center.y, -center.z);
+      propParts.push({ geometry, material, pivot, bindings });
+    }
+    knockableProps.add(id, pivot, bounds.getSize(new THREE.Vector3()).multiplyScalar(.5), kind, () => {
+      for (const binding of bindings) binding.mesh.setMatrixAt(binding.instance, pivot.matrix);
+    });
   }
   function sign(text: string, sub: string, w: number, h: number, x: number, y: number, z: number, yaw: number, background = '#263e36', foreground = '#f6e8cb', serif = true) {
     const map = texture(2048, 256, ctx => {
@@ -234,20 +262,16 @@ export function createUnionSquare(scene: THREE.Object3D) {
   }
   // A continuous upper and lower rail, slender posts and wall mounts make
   // the level changes convincing in the moving camera.
-  function handrail(a:THREE.Vector3,b:THREE.Vector3,postCount=4) {
+  for(const rail of PLAZA_RAIL_SEGMENTS) movable(rail.id,'rail',()=>{
+    const a=V(rail.a.x,rail.a.y,rail.a.z),b=V(rail.b.x,rail.b.y,rail.b.z);
     rod(a.clone().add(V(0,.94,0)),b.clone().add(V(0,.94,0)),.042,stainless);
     rod(a.clone().add(V(0,.65,0)),b.clone().add(V(0,.65,0)),.03,stainless);
-    for(let i=0;i<postCount;i++) {
-      const p=a.clone().lerp(b,i/(postCount-1));
+    for(const p of rail.postAtB?[a,b]:[a]) {
       rod(p,p.clone().add(V(0,.94,0)),.034,stainless);
       cylinder(.11,.035,stainless,p.x,p.y+.018,p.z,.11,10);
     }
-  }
-  for(const x of [-31,-11,11,31])handrail(V(x,perimeter,-37.3),V(x,plaza,-28.4),5);
-  for(const x of [-7.0,7.0])handrail(V(x,perimeter,44),V(x,north,35.1),5);
-  for(const x of [-16,16])handrail(V(x,plaza,23.4),V(x,north,26.6),3);
+  });
   for(const sx of [-1,1]) {
-    if(sx<0)handrail(V(sx*58.3,perimeter,-42),V(sx*58.3,plaza,26),15);
     box(12.2,1.08,.68,m.riser,sx*43.2,perimeter+.54,sx*47);
     sign('UNION SQUARE','SAN FRANCISCO',11.7,.92,sx*43.2,perimeter+.58,sx*47.35,sx===1?0:Math.PI,'#656d62','#fff5df');
   }
@@ -341,23 +365,21 @@ export function createUnionSquare(scene: THREE.Object3D) {
     add(geometry, heartMat, x, perimeter + .93, z, Math.atan2(x, z));
   }
 
-  function cafeTable(x: number, z: number, parasol: boolean) {
-    const y = plaza;
+  for(const table of PLAZA_CAFE_TABLES) movable(table.id,'table',()=>{
+    const {x,y,z,parasol}=table;
     cylinder(.10, .80, m.metal, x, y + .4, z); cylinder(.85, .10, m.timber, x, y + .85, z, .85, 16);
-    for (let chair = 0; chair < 3; chair++) {
-      const angle = chair * Math.PI * 2 / 3, xx = x + Math.sin(angle) * 1.33, zz = z + Math.cos(angle) * 1.33;
-      box(.65, .10, .65, m.timber, xx, y + .43, zz, angle);
-      box(.67, .60, .09, m.timber, xx + Math.sin(angle) * .25, y + .74, zz + Math.cos(angle) * .25, angle);
-      for (const side of [-1, 1]) rod(V(xx + Math.cos(angle) * side * .24, y + .41, zz - Math.sin(angle) * side * .24), V(xx + Math.cos(angle) * side * .28, y + .02, zz - Math.sin(angle) * side * .28), .034, m.metal);
-    }
     if (!parasol) return;
     cylinder(.052, 2.9, m.metal, x, y + 1.45, z);
     add(new THREE.ConeGeometry(2.15, .65, 10, 1, true), m.red, x, y + 2.76, z);
     cylinder(2.15, .17, m.red, x, y + 2.37, z, 2.15, 10);
     for (let rib = 0; rib < 10; rib++) { const angle = rib * Math.PI / 5; rod(V(x, y + 3.08, z), V(x + Math.sin(angle) * 2.13, y + 2.42, z + Math.cos(angle) * 2.13), .021, m.cream); }
-  }
-  for (const x of [-35,-28,28,35]) cafeTable(x,18,true);
-  for (const x of [-36,-29,29,36]) cafeTable(x,-20,false);
+  });
+  for(const chair of PLAZA_CAFE_CHAIRS) movable(chair.id,'chair',()=>{
+    const {x,y,z,heading:angle}=chair;
+    box(.65,.10,.65,m.timber,x,y+.43,z,angle);
+    box(.67,.60,.09,m.timber,x+Math.sin(angle)*.25,y+.74,z+Math.cos(angle)*.25,angle);
+    for(const side of [-1,1])rod(V(x+Math.cos(angle)*side*.24,y+.41,z-Math.sin(angle)*side*.24),V(x+Math.cos(angle)*side*.28,y+.02,z-Math.sin(angle)*side*.28),.034,m.metal);
+  });
   // The real cafe pavilions belong to the east and west flanks. Separate
   // light roofs, glazing, marble counters and planted edges give each a small
   // but complete architecture, with no fictional row of kiosks across Post.
@@ -379,7 +401,6 @@ export function createUnionSquare(scene: THREE.Object3D) {
   }
   cafePavilion(48.95,13,12.4,'MILLER & LUX');
   cafePavilion(-48.6,-13,12.4,'UNION SQUARE BAKERY');
-  for(const z of [-6.7,2.7])handrail(V(58.9,perimeter,z),V(44.7,plaza,z),6);
 
   // Union Square / Market Street station occupies the southeast apron by
   // Geary. Its mapped footprint runs east-west, with entry at the western end;
@@ -560,7 +581,29 @@ export function createUnionSquare(scene: THREE.Object3D) {
   const northAsset = createNorthSquare(group,northFallback);
   const frontageAsset = createSquareFrontages(group,frontageFallback);
 
-  // Static detail is merged by material; no individual window/tree/table draws.
+  // Movable pieces use independent transforms inside five material batches.
+  // A knocked span never takes the rest of a long stair handrail with it.
+  const propMaterials = new Map<THREE.Material, typeof propParts>();
+  for (const part of propParts) {
+    const list = propMaterials.get(part.material) ?? []; list.push(part); propMaterials.set(part.material, list);
+  }
+  for (const [material, parts] of propMaterials) {
+    const vertices = parts.reduce((sum, part) => sum + part.geometry.getAttribute('position').count, 0);
+    const mesh = new THREE.BatchedMesh(parts.length, vertices, 0, material);
+    mesh.name = `Union Square / movable ${material.name}`;
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    // Individual batch items are culled against their current transforms. The
+    // containing mesh must not use an obsolete initial furniture bounding sphere.
+    mesh.frustumCulled = false;
+    for (const part of parts) {
+      const geometry = mesh.addGeometry(part.geometry), instance = mesh.addInstance(geometry);
+      mesh.setMatrixAt(instance, part.pivot.matrix); part.bindings.push({ mesh, instance });
+      part.geometry.dispose();
+    }
+    propRoot.add(mesh);
+  }
+
+  // Static detail is merged by material; no individual window or tree draws.
   let triangles = 0;
   for (const [mat, geometries] of batches) {
     if(!geometries.length)continue;
@@ -571,6 +614,10 @@ export function createUnionSquare(scene: THREE.Object3D) {
   group.userData.drawCalls = group.children.length; group.userData.triangles = triangles;
   return {
     group,
+    knockProps(impacts: readonly PropImpact[]) { knockableProps.knock(impacts); },
+    updateProps(dt: number) { knockableProps.update(dt); },
+    resetProps() { knockableProps.reset(); },
+    get propStats() { return knockableProps.stats; },
     ready:Promise.all([westinAsset.ready, plazaReady, northAsset.ready, frontageAsset.ready]),
     update(_time: number, _progress: number, camera?:THREE.Camera) { if(camera){westinAsset.update(camera);northAsset.update(camera);frontageAsset.update(camera);} },
     setQuality(low: boolean) {
@@ -578,6 +625,7 @@ export function createUnionSquare(scene: THREE.Object3D) {
       northAsset.setQuality(low);
       frontageAsset.setQuality(low);
       plazaArt.setQuality(low);
+      for (const child of propRoot.children) if (child instanceof THREE.Mesh) child.castShadow = !low;
       for(const fallback of [monumentFallback, palmFallback, northFallback, frontageFallback]) fallback.traverse(child => { if(child instanceof THREE.Mesh) child.castShadow = !low; });
       westinFallback.traverse(child=>{if(child instanceof THREE.Mesh)child.castShadow=!low;});
       for (const child of group.children) if (child instanceof THREE.Mesh) child.castShadow = !low && !(child.material as THREE.Material).transparent;
