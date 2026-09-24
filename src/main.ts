@@ -24,6 +24,8 @@ import { createWaterfront } from './waterfront';
 import { createBayBridge } from './baybridge';
 import { createCityRoot, setCameraFromCity, steeringFromControls } from './coordinates';
 import { cityMapSvg } from './city-map';
+import { createPlayground, playgroundMapSvg, playgroundMapPoint } from './playground-scene';
+import { playgroundHeight, PLAYGROUND_COLLIDERS } from './playground';
 import './style.css';
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
@@ -45,7 +47,7 @@ app.innerHTML = `
   <h1>HILLS.<br><span>THRILLS.</span><br><i>NO GRAVITY.</i></h1>
   <p class="intro-copy">Big hills. Little car. Wild imagination.<br>Lap Union Square. Climb Powell. Fly down Grant.<br>Fall in love with San Francisco all over again.</p>
   <div class="intro-actions"><button class="primary" id="start">TAKE FLIGHT <span class="arrow">↗</span></button><button class="text-button" id="how">HOW TO PLAY</button></div>
-  <div class="keyboard-note"><button class="text-button" id="tour-start">WATCH A RUN ↗</button><span></span> LET THE CITY SWEEP YOU AWAY.</div>
+  <div class="keyboard-note intro-mode-actions"><button class="text-button" id="explore-start">EXPLORE UNION SQUARE ↗</button><span></span><button class="text-button" id="tour-start">WATCH A RUN ↗</button></div>
 </main>
 <footer class="intro-bottom" id="intro-bottom">
   <button class="route-card" id="open-city-map" aria-label="Open San Francisco city map and race route" aria-haspopup="dialog" aria-controls="city-map-dialog">
@@ -66,7 +68,9 @@ app.innerHTML = `
 <div class="edition" id="edition">WHIMSICAL SF &nbsp; / &nbsp; VOL. 001</div>
 <div class="race-hud faded" id="hud">
   <div class="race-top"><div class="stat"><span class="label">YOUR TIME</span><span class="stat-value" id="timer">00:00.00</span></div><div class="stat"><span class="label">PERSONAL BEST</span><span class="stat-value" id="best">—</span></div><div class="stat"><span class="label">CHECKPOINT</span><span class="stat-value" id="checkpoint">0 <em>/ 4</em></span></div></div>
-  <div class="hud-route">${mapSvg}<div class="district-name" id="district">UNION SQUARE</div><div class="street-name" id="street">POST STREET</div></div>
+  <div class="hud-route"><div id="course-map">${mapSvg}</div><div id="square-map" class="hidden">${playgroundMapSvg()}</div><div class="district-name" id="district">UNION SQUARE</div><div class="street-name" id="street">POST STREET</div><div class="postcard-counter hidden" id="postcard-counter">POSTCARDS 0 / 5</div></div>
+  <div class="explore-status hidden" id="explore-status"><small>FREE DRIVE / NO TIMER</small><strong>THE SQUARE IS YOURS.</strong><span>Explore the terraces. Find five hidden postcards.</span></div>
+  <div class="playground-controls hidden" id="playground-controls"><span><kbd>W</kbd> DRIVE &nbsp; <kbd>S</kbd> BRAKE / REVERSE</span><button id="return-road"><kbd>Q</kbd> RETURN TO STREET ↗</button></div>
   <div class="progress-bar"><div class="progress-track"><div class="progress-fill" id="progress-fill"></div><i class="progress-tick" style="left:24.2%"></i><i class="progress-tick" style="left:49.2%"></i><i class="progress-tick" style="left:75%"></i></div><div class="progress-label"><span>UNION SQUARE</span><span id="distance">2.3 KM TO MARKET</span></div></div>
   <div class="speedometer"><div class="gear">GEAR <span id="gear">N</span></div><div class="speed-row"><span class="speed" id="speed">0</span><span class="speed-units">MPH</span></div><div class="boost-track"><div class="boost-fill" id="boost-fill"></div></div><div class="boost-label"><span>BOOST</span><kbd>SHIFT</kbd></div></div>
 </div>
@@ -75,7 +79,7 @@ app.innerHTML = `
 <div class="race-message faded" id="message" aria-live="polite" aria-hidden="true"><strong></strong><span></span></div>
 <div class="race-flash" id="flash"></div><div class="tour-ui hidden" id="tour-ui"><div class="tour-caption"><span id="tour-mode">POSTCARD MODE / AUTOPILOT</span><strong id="tour-place">UNION SQUARE</strong><small>Drag to look around</small></div><div class="tour-stops" style="overflow-x:auto;white-space:nowrap"><button data-stop="35" data-scene="square">UNION SQUARE</button><button data-stop="${routeProgressAt(-75,-15)}" data-scene="westin">THE WESTIN</button><button data-stop="${routeProgressAt(45,65)}" data-scene="post" aria-label="POST STREET">POST ST</button><button data-stop="${ROUTE_STOPS.powell}">POWELL ST</button><button data-stop="${ROUTE_STOPS.grant-8}">GRANT AVE</button><button data-stop="${TRACK_LENGTH}">THE BAY</button></div><div class="tour-actions"><button id="tour-pause">PAUSE</button><button id="tour-race">LET’S RACE ↗</button><button id="tour-exit" aria-label="Exit scenic drive">×</button></div></div>
 <div class="touch-controls"><div class="touch-group"><button class="touch-button" data-control="left" aria-label="Steer left">‹</button><button class="touch-button" data-control="right" aria-label="Steer right">›</button><button class="touch-button small" data-control="drift" aria-label="Handbrake drift">DRIFT</button></div><div class="touch-group"><button class="touch-button small" data-control="boost" aria-label="Boost">N₂O</button><button class="touch-button small" data-control="brake" aria-label="Brake">BRAKE</button><button class="touch-button gas" data-control="gas" aria-label="Accelerate">GAS</button></div></div>
-<div class="modal-layer hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="panel"><button class="panel-close" id="close-help" aria-label="Close instructions">×</button><div class="panel-eyebrow">A LITTLE LOCAL KNOWLEDGE</div><h2 id="help-title">THE HILLS<br>HAVE WINGS.</h2><p>Lap Union Square, climb Powell, and enter Chinatown through the Dragon Gate on Grant Avenue. Hold the accelerator to build speed, ease off or brake before corners, and steer all the way through each turn. Build speed up the three hills, then launch. Your wheels fold flat automatically: steer through the sky, collect sun rings, and touch down with a boost refill.</p><div class="control-list"><div class="control-item"><div class="keys"><kbd>W</kbd><kbd>↑</kbd></div>Hold to accelerate</div><div class="control-item"><div class="keys"><kbd>S</kbd><kbd>↓</kbd></div>Brake</div><div class="control-item"><div class="keys"><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></div>Steer · on road & in air</div><div class="control-item"><div class="keys"><kbd>SPACE</kbd></div>Hold to drift</div><div class="control-item"><div class="keys"><kbd>SHIFT</kbd></div>Boost · recharges</div><div class="control-item"><div class="keys"><kbd>R</kbd><kbd>ESC</kbd><kbd>C</kbd></div>Restart · pause · camera</div></div><p class="help-caption">Controller: left stick to steer, RT to accelerate, LT to brake, A to boost, X to drift, Menu to pause. Touch controls appear on touchscreens. Wheels deploy automatically above 54 mph at a launch. Brake to dive; boost to gain lift. Auto Accelerate holds the gas for you; you still steer and brake. Watch a Run demonstrates the course; drag to look around.</p><div class="settings-row"><button id="quality">GRAPHICS: HIGH</button><span>/</span><button id="fullscreen">FULLSCREEN ↗</button></div><div class="settings-row" style="margin-top:12px;padding-top:12px"><button id="auto-throttle" aria-pressed="false">AUTO ACCELERATE: OFF</button><span>/</span><button id="reset-best">RESET BEST</button></div><button class="primary" id="help-play">LET’S DRIVE <span class="arrow">↗</span></button></div></div>
+<div class="modal-layer hidden" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="panel"><button class="panel-close" id="close-help" aria-label="Close instructions">×</button><div class="panel-eyebrow">A LITTLE LOCAL KNOWLEDGE</div><h2 id="help-title">THE HILLS<br>HAVE WINGS.</h2><p>Lap Union Square, climb Powell, and enter Chinatown through the Dragon Gate on Grant Avenue. Hold the accelerator to build speed, ease off or brake before corners, and steer all the way through each turn. Union Square is open: drive onto its plaza and terraces, then rejoin the streets. Follow the street gates in order during a race. Build speed up the three hills, then launch. Your wheels fold flat automatically: steer through the sky, collect sun rings, and touch down with a boost refill.</p><div class="control-list"><div class="control-item"><div class="keys"><kbd>W</kbd><kbd>↑</kbd></div>Hold to accelerate</div><div class="control-item"><div class="keys"><kbd>S</kbd><kbd>↓</kbd></div>Brake · hold to reverse in the square</div><div class="control-item"><div class="keys"><kbd>A</kbd><kbd>D</kbd><kbd>←</kbd><kbd>→</kbd></div>Steer · on road & in air</div><div class="control-item"><div class="keys"><kbd>SPACE</kbd></div>Hold to drift</div><div class="control-item"><div class="keys"><kbd>SHIFT</kbd></div>Boost · recharges</div><div class="control-item"><div class="keys"><kbd>R</kbd><kbd>ESC</kbd><kbd>C</kbd></div>Restart · pause · camera</div></div><p class="help-caption">Controller: left stick to steer, RT to accelerate, LT to brake, A to boost, X to drift, Menu to pause. Touch controls appear on touchscreens. Wheels deploy automatically above 54 mph at a launch. Brake to dive; boost to gain lift. Hold S or the brake pedal to reverse in the square. Q returns you to the street. Explore Union Square starts an untimed drive with five hidden postcards. Auto Accelerate holds the gas during races; free drive uses manual acceleration. Watch a Run demonstrates the course; drag to look around.</p><div class="settings-row"><button id="quality">GRAPHICS: HIGH</button><span>/</span><button id="fullscreen">FULLSCREEN ↗</button></div><div class="settings-row" style="margin-top:12px;padding-top:12px"><button id="auto-throttle" aria-pressed="false">AUTO ACCELERATE: OFF</button><span>/</span><button id="reset-best">RESET BEST</button></div><button class="primary" id="help-play">LET’S DRIVE <span class="arrow">↗</span></button></div></div>
 <div class="modal-layer hidden" id="pause-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="panel"><div class="panel-eyebrow">TAKE A BREATHER</div><h2 id="pause-title">CITY ON<br>STANDBY.</h2><p>Your run is paused. The clock can wait.</p><button class="primary" id="resume">BACK TO THE RUN <span class="arrow">↗</span></button><button class="secondary" id="restart">RESTART RACE</button><button class="secondary" id="pause-home">MAIN MENU</button></div></div>
 <div class="bay-caption" id="bay-caption" aria-hidden="true"><small>YOU MADE IT TO THE WATER</small><strong>San Francisco Bay.</strong><span>FERRY BUILDING &nbsp; / &nbsp; BAY BRIDGE</span></div><div class="modal-layer hidden" id="results" role="dialog" aria-modal="true" aria-labelledby="result-title"><div class="panel"><div class="panel-eyebrow" id="result-eyebrow">POWELL STREET / COMPLETE</div><h2 id="result-title">THAT’S<br>A RUN.</h2><div class="result-main"><div><div class="label" style="margin-bottom:8px">YOUR FINISH TIME</div><div class="result-time" id="result-time">00:00.00</div></div><div class="result-medal" id="result-medal">FINISHER</div></div><div class="result-stats"><div><span class="label">TOP SPEED</span><strong id="result-speed">0 MPH</strong></div><div><span class="label">TIME IN THE SKY</span><strong id="result-drift">0 M</strong></div><div><span class="label">CONTACTS</span><strong id="result-hits">0</strong></div></div><p id="result-copy">There’s always a cleaner line. Go find it.</p><button class="primary" id="again">ONE MORE RUN <span class="arrow">↗</span></button><button class="secondary" id="result-home">BACK TO THE CITY</button></div></div>
 <div class="loading" id="loading"><span class="brand-mark">SF</span><p>BENDING THE CITY</p><div class="loading-line"></div></div>`;
@@ -118,7 +122,8 @@ async function boot() {
   await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready,squareStreetDetails.ready]);
   const car = createCar(); cityRoot.add(car.group);
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
-  const sim = new DrivingSimulation(world.obstacles);
+  const sim = new DrivingSimulation(world.obstacles,{exploration:true});
+  const playground = createPlayground(cityRoot);
   const audio = new GameAudio();
   const skyCourse=createSkyCourse(cityRoot);
   const cableCars=world.obstacles.filter(obstacle=>obstacle.kind==='cablecar');
@@ -186,8 +191,8 @@ async function boot() {
   type TourScene = 'square'|'westin'|'post';
   let tourArt:TourScene|null=null;
   const tourSceneNames:Record<TourScene,string>={square:'UNION SQUARE',westin:'THE WESTIN ST. FRANCIS',post:'POST STREET'};
-  let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0;
-  let topSpeed=0, best=Number(safeRead('whimsical-sf-manual-driving-best-v2'))||0, muted=safeRead('sf-night-run-muted')==='true';
+  let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0, freeDrive=false;
+  let topSpeed=0, best=Number(safeRead('whimsical-sf-playground-race-best-v3'))||0, muted=safeRead('sf-night-run-muted')==='true';
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
   let cinematicQuality=safeRead('sf-night-run-quality')==='cinematic';
   let lowQuality=safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
@@ -215,6 +220,11 @@ async function boot() {
   function clearInputs(){keys.clear();touch.clear();document.querySelectorAll('.touch-button').forEach(b=>b.classList.remove('pressed'));}
   function syncPhase(){
     const inGame=phase!=='menu';app.classList.toggle('racing',inGame);app.classList.toggle('at-finish',phase==='finished');el('bay-caption').setAttribute('aria-hidden',String(phase!=='finished'));
+    app.classList.toggle('free-drive',freeDrive&&inGame&&phase!=='tour');
+    el('explore-status').classList.toggle('hidden',!freeDrive||!['racing','paused'].includes(phase));
+    el('restart').textContent=freeDrive?'RESTART EXPLORATION':'RESTART RACE';
+    el('pause').setAttribute('aria-label',freeDrive?'Pause exploration':'Pause race');
+    el('pause-panel').querySelector('p')!.textContent=freeDrive?'Take your time. There’s no timer to beat.':'Your run is paused. The clock can wait.';
     ['intro','intro-bottom','edition'].forEach(id=>{el(id).setAttribute('aria-hidden',String(inGame));el(id).inert=inGame;});el('hud').setAttribute('aria-hidden',String(!inGame));
     ['intro','intro-bottom','edition'].forEach(id=>el(id).classList.toggle('faded',inGame));
     el('hud').classList.toggle('faded',!inGame||phase==='tour'||phase==='finished');el('hud').setAttribute('aria-hidden',String(!inGame||phase==='tour'||phase==='finished'));el('pause').classList.toggle('hidden',!inGame||phase==='finished'||phase==='tour');el('tour-ui').classList.toggle('hidden',phase!=='tour');
@@ -222,31 +232,58 @@ async function boot() {
     el('best').textContent=best?formatTime(best):'—';
   }
   function announce(title:string, detail:string, duration=2){el('message').querySelector('strong')!.textContent=title;el('message').querySelector('span')!.textContent=detail;el('message').classList.remove('faded');el('message').setAttribute('aria-hidden','false');messageUntil=totalTime+duration;}
+  function returnToStreet(){
+    if(phase!=='racing')return;
+    clearInputs();sim.recover();cameraInitialized=false;shake=0;updateHud();canvas.focus();
+    announce('BACK ON THE STREET','READY WHEN YOU ARE',1.4);
+  }
+  function protectPlaygroundCamera(eye:THREE.Vector3){
+    const p=sim.position,origin={x:p.x,y:p.y+1.6,z:p.z};
+    let reach=1;
+    for(const solid of PLAYGROUND_COLLIDERS){
+      // Low furniture stays below the view; buildings and the monument shorten
+      // the camera's arm before it can disappear through their walls.
+      if(solid.maxY<origin.y+.35)continue;
+      let near=0,far=1;
+      for(const [start,end,min,max] of [[origin.x,eye.x,solid.minX-.3,solid.maxX+.3],[origin.y,eye.y,solid.minY-.3,solid.maxY+.3],[origin.z,eye.z,solid.minZ-.3,solid.maxZ+.3]]){
+        const delta=end-start;
+        if(Math.abs(delta)<1e-8){if(start<min||start>max){far=-1;break;}}
+        else{const a=(min-start)/delta,b=(max-start)/delta;near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b));}
+        if(near>far)break;
+      }
+      if(near<=far&&far>=0&&near<=1)reach=Math.min(reach,Math.max(.06,near-.04));
+    }
+    if(reach<1)eye.set(THREE.MathUtils.lerp(origin.x,eye.x,reach),THREE.MathUtils.lerp(origin.y,eye.y,reach),THREE.MathUtils.lerp(origin.z,eye.z,reach));
+  }
   function updateCountdown(){
     const n=Math.max(1,Math.ceil(countdownLeft));
     if(n!==countdownNumber){countdownNumber=n;el('countdown').innerHTML=`<strong>${n}</strong><span>CITY LOOP · HILLS HAVE WINGS</span>`;audio.cue('count');}
   }
-  function start(){
-    clearInputs();tourArt=null;sim.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase='countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';
+  function start(){startRun(false);}
+  function startExploration(){startRun(true);}
+  function restartRun(){startRun(freeDrive);}
+  function startRun(explore:boolean){
+    clearInputs();freeDrive=explore;tourArt=null;sim.reset();if(explore)sim.explore();playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore?'racing':'countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';
     ['help','pause-panel','results','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));
-    el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.remove('hidden');el('drift-hint').classList.remove('active');
-    void audio.unlock().then(()=>audio.cue('count'));updateCountdown();syncPhase();updateHud();canvas.focus();
+    el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.toggle('hidden',explore);el('drift-hint').classList.remove('active');
+    void audio.unlock().then(()=>{if(!explore)audio.cue('count');});if(!explore)updateCountdown();syncPhase();updateHud();canvas.focus();
   }
   function pause(){if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
   function menu(){phase='menu';tourArt=null;skyCourse.reset();finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
-    const s=sim.state, isBest=!best||s.elapsed<best;
-    if(isBest){best=s.elapsed;safeWrite('whimsical-sf-manual-driving-best-v2',String(best));}
-    el('result-eyebrow').textContent=isBest?'NEW PERSONAL BEST / CITY LOOP':'SAN FRANCISCO / CITY LOOP';
-    el('result-time').textContent=formatTime(s.elapsed);el('result-speed').textContent=`${Math.round(topSpeed*2.23694)} MPH`;el('result-drift').textContent=`${s.totalAirTime.toFixed(1)} SEC`;el('result-hits').textContent=String(s.collisions);
-    el('result-medal').textContent=s.elapsed<63?'GOLD':s.elapsed<76?'SILVER':s.elapsed<95?'BRONZE':'FINISHER';
-    el('result-copy').textContent=`${s.launches} flights. ${collectedRings} sun rings. ${s.collisions===0?'A little San Francisco magic.':'The sky is calling. Go again.'}`;
+    const s=sim.state, isBest=!freeDrive&&(!best||s.elapsed<best);
+    if(isBest){best=s.elapsed;safeWrite('whimsical-sf-playground-race-best-v3',String(best));}
+    el('result-eyebrow').textContent=freeDrive?'FREE DRIVE / AT THE BAY':isBest?'NEW PERSONAL BEST / CITY LOOP':'SAN FRANCISCO / CITY LOOP';
+    el('result-time').textContent=freeDrive?'UNTIMED':formatTime(s.elapsed);el('result-speed').textContent=`${Math.round(topSpeed*2.23694)} MPH`;el('result-drift').textContent=`${s.totalAirTime.toFixed(1)} SEC`;el('result-hits').textContent=String(s.collisions);
+    el('result-medal').textContent=freeDrive?'EXPLORER':s.elapsed<63?'GOLD':s.elapsed<76?'SILVER':s.elapsed<95?'BRONZE':'FINISHER';
+    el('results').querySelector('.result-main .label')!.textContent=freeDrive?'YOUR CITY ADVENTURE':'YOUR FINISH TIME';
+    el('result-copy').textContent=freeDrive?`${playground.collected} of ${playground.total} postcards found. ${s.launches} flights. A little San Francisco magic.`:`${s.launches} flights. ${collectedRings} sun rings. ${s.collisions===0?'A little San Francisco magic.':'The sky is calling. Go again.'}`;
     el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');syncPhase();
   }
   function readInput():DriveInput{
-    let throttle=(autoThrottle||keys.has('KeyW')||keys.has('ArrowUp')||touch.has('gas'))?1:0;
+    let throttle=((autoThrottle&&!freeDrive)||keys.has('KeyW')||keys.has('ArrowUp')||touch.has('gas'))?1:0;
     let brake=(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('brake'))?1:0;
     const left=keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left');
     const right=keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right');
@@ -258,25 +295,35 @@ async function boot() {
       steer=steeringFromControls(left,right,pad.axes[0]||0);
       const trigger=(index:number)=>{const value=pad.buttons[index]?.value??0;return Number.isFinite(value)?THREE.MathUtils.clamp((value-.08)/.92,0,1):0;};
       throttle=Math.max(throttle,trigger(7));brake=Math.max(brake,trigger(6));drift=drift||!!pad.buttons[2]?.pressed;boost=boost||!!pad.buttons[0]?.pressed;
-      const down=!!pad.buttons[9]?.pressed;if(down&&!gamepadPauseDown){if(phase==='racing'||phase==='countdown')pause();else if(phase==='paused')resume();else if(phase==='menu'||phase==='finished')start();}gamepadPauseDown=down;
+      const down=!!pad.buttons[9]?.pressed;if(down&&!gamepadPauseDown){if(phase==='racing'||phase==='countdown')pause();else if(phase==='paused')resume();else if(phase==='menu')start();else if(phase==='finished')restartRun();}gamepadPauseDown=down;
     }else{gamepadPauseDown=false;}
     if(autoThrottle&&brake>.1)throttle=0;
     return{throttle,brake,steer,drift,boost};
   }
   function updateHud(){
-    const s=sim.state;el('timer').textContent=formatTime(s.elapsed);el('speed').textContent=String(Math.round(s.speed*2.23694));el('gear').textContent=s.airborne?'✧':s.speed<1?'N':String(Math.min(6,Math.floor(s.speed/10)+1));
+    const s=sim.state;el('timer').textContent=formatTime(s.elapsed);el('speed').textContent=String(Math.round(Math.abs(s.speed)*2.23694));el('gear').textContent=s.airborne?'✧':s.speed<-.1?'R':s.speed<1?'N':String(Math.min(6,Math.floor(s.speed/10)+1));
     canvas.dataset.airborne=String(s.airborne);canvas.dataset.glide=s.glide.toFixed(2);canvas.dataset.altitude=s.altitude.toFixed(1);canvas.dataset.launches=String(s.launches);canvas.dataset.progress=s.progress.toFixed(1);canvas.dataset.airTime=s.totalAirTime.toFixed(1);
     el('checkpoint').innerHTML=`${s.checkpoint} <em>/ 4</em>`;el('boost-fill').style.transform=`scaleX(${s.boost})`;
     const p=(s.progress-START_PROGRESS)/(TRACK_LENGTH-START_PROGRESS);el('progress-fill').style.transform=`scaleX(${p})`;
-    el('distance').textContent=`${Math.max(0,(TRACK_LENGTH-s.progress)/1000).toFixed(1)} KM TO MARKET`;
-    const map=mapPoint(sampleRoute(s.progress));el('map-dot').setAttribute('cy',String(map.y));el('map-dot').setAttribute('cx',String(map.x));
-    const district=districtAt(s.progress);el('district').textContent=district.name;el('street').textContent=district.street;
+    const nextGate=sim.nextRaceGate,missedGate=!!nextGate&&nextGate.progress<s.progress-20;
+    el('distance').textContent=nextGate?`${missedGate?'MISSED ·':'NEXT ·'} ${nextGate.label}${missedGate?' · Q TO RETURN':''}`:`${Math.max(0,(TRACK_LENGTH-s.progress)/1000).toFixed(1)} KM TO MARKET`;
+    const position=sim.position,map=mapPoint(position),squarePoint=playgroundMapPoint(position.x,position.z);el('map-dot').setAttribute('cy',String(map.y));el('map-dot').setAttribute('cx',String(map.x));
+    el('playground-map-dot').setAttribute('cx',String(squarePoint.x));el('playground-map-dot').setAttribute('cy',String(squarePoint.y));
+    el('course-map').classList.toggle('hidden',sim.exploring);el('square-map').classList.toggle('hidden',!sim.exploring);
+    el('postcard-counter').classList.toggle('hidden',!sim.exploring);el('postcard-counter').textContent=`POSTCARDS ${playground.collected} / ${playground.total}`;
+    playground.found.forEach((found,index)=>el(`playground-postcard-${index}`).style.opacity=found?'.15':'1');
+    el('playground-controls').classList.toggle('hidden',phase!=='racing');
+    el('playground-controls').querySelector('span')!.classList.toggle('hidden',!sim.exploring);
+    const inPlaza=Math.abs(position.x)<61&&Math.abs(position.z)<51;
+    el('explore-status').querySelector('strong')!.textContent=sim.exploring?'THE SQUARE IS YOURS.':'THE CITY IS YOURS.';
+    el('explore-status').querySelector('span')!.textContent=sim.exploring?(playground.collected===playground.total?'All five postcards found. Keep making your own way.':'Explore the terraces. Find five hidden postcards.'):'Keep exploring, or follow Powell toward the bay.';
+    const district=inPlaza?{name:'UNION SQUARE',street:'PLAZA & TERRACES'}:districtAt(s.progress);el('district').textContent=district.name;el('street').textContent=district.street;
     if(district.name!==lastDistrict){if(lastDistrict&&phase==='racing')announce(district.name,district.street,2);lastDistrict=district.name;}
   }
   function updateCamera(dt:number){
     const s=sim.state;
     if(phase==='finished'){
-      const here=routePoint(s.progress,s.lateral);car.group.position.set(here.x,s.y+.03,here.z);car.group.rotation.set(-Math.atan(routeSlope(s.progress)),s.heading,0);
+      const here=sim.position;car.group.position.set(here.x,s.y+.03,here.z);car.group.rotation.set(-Math.atan(routeSlope(s.progress)),s.heading,0);
       const u=reduceMotion?1:THREE.MathUtils.clamp((totalTime-finishedAt)/4.2,0,1),ease=u*u*u*(u*(u*6-15)+10);
       desiredCamera.copy(finishCameraStart).lerp(bayCamera,ease);desiredCamera.y+=Math.sin(u*Math.PI)*7;lookAt.copy(finishLookStart).lerp(bayLook,ease);
       camera.fov=THREE.MathUtils.damp(camera.fov,camera.aspect<.65?82:camera.aspect<1?65:58,3,dt);
@@ -306,27 +353,38 @@ async function boot() {
       desiredCamera.set(35+orbit*.28,42,-45);lookAt.set(-86,47,-36);
       camera.fov=camera.aspect<.7?76:camera.aspect<1.2?64:56;
     }else{
-      const here=routePoint(s.progress,s.lateral),frame=routeFrame(s.progress),yaw=s.heading;
+      const here=sim.position,frame=routeFrame(s.progress),yaw=s.heading;
       car.group.position.set(here.x,s.y+.03,here.z);
       const forwardX=Math.sin(yaw),forwardZ=Math.cos(yaw);
       const ahead={x:here.x+forwardX*23,z:here.z+forwardZ*23};
-      const view=flightView(s,frame.slope*Math.cos(yaw-frame.yaw),groundHeight(ahead.x,ahead.z));
+      const view=flightView(s,frame.slope*Math.cos(yaw-frame.yaw),sim.exploring?playgroundHeight(ahead.x,ahead.z):groundHeight(ahead.x,ahead.z));
+      if(sim.exploring){view.pitch=-s.surfacePitch;view.bank=s.surfaceRoll-s.driftAngle*.1;view.lookHeight=s.y+1.2;}
       car.group.rotation.order='YXZ';car.group.rotation.x=THREE.MathUtils.damp(car.group.rotation.x,view.pitch,10,dt);car.group.rotation.y=yaw+s.driftAngle;car.group.rotation.z=THREE.MathUtils.damp(car.group.rotation.z,view.bank,7,dt);
       const chaseDistance=cameraMode===1?6.3:9.4,chaseHeight=cameraMode===1?2.25:4.2;
       const back={x:here.x-forwardX*chaseDistance,z:here.z-forwardZ*chaseDistance};
-      desiredCamera.set(back.x,Math.max(s.y+chaseHeight,groundHeight(back.x,back.z)+chaseHeight),back.z);
+      desiredCamera.set(back.x,Math.max(s.y+chaseHeight,(sim.exploring?playgroundHeight(back.x,back.z):groundHeight(back.x,back.z))+chaseHeight),back.z);
       lookAt.set(ahead.x,view.lookHeight,ahead.z);
       if(shake>.001&&!reduceMotion){desiredCamera.x+=(Math.random()-.5)*shake;desiredCamera.y+=(Math.random()-.5)*shake*.65;shake*=Math.exp(-8*dt);}
-      const targetFov=(cameraMode===1?70:68)+(reduceMotion?0:s.speed*.12+view.weight*3);camera.fov=THREE.MathUtils.damp(camera.fov,targetFov,3,dt);
+      const targetFov=(cameraMode===1?70:68)+(reduceMotion?0:Math.abs(s.speed)*.12+view.weight*3);camera.fov=THREE.MathUtils.damp(camera.fov,targetFov,3,dt);
     }
     if(!cameraInitialized){cityCameraPosition.copy(desiredCamera);smoothedLook.copy(lookAt);cameraInitialized=true;}else{cityCameraPosition.lerp(desiredCamera,1-Math.exp(-7*dt));smoothedLook.lerp(lookAt,1-Math.exp(-8*dt));}
-    if(phase!=='menu')cityCameraPosition.y=Math.max(cityCameraPosition.y,groundHeight(cityCameraPosition.x,cityCameraPosition.z)+1.8);
+    if(sim.exploring&&['racing','countdown','paused'].includes(phase)){
+      protectPlaygroundCamera(cityCameraPosition);
+      cityCameraPosition.y=Math.max(cityCameraPosition.y,playgroundHeight(cityCameraPosition.x,cityCameraPosition.z)+1.2);
+    }else if(phase!=='menu')cityCameraPosition.y=Math.max(cityCameraPosition.y,groundHeight(cityCameraPosition.x,cityCameraPosition.z)+1.8);
     setCameraFromCity(camera,cityCameraPosition,smoothedLook);camera.updateProjectionMatrix();
     atmosphere.update(totalTime,phase==='menu'?35:phase==='tour'?tour.progress:sim.state.progress);
   }
   function updateSpray(dt:number,input:DriveInput){
     const s=sim.state;
-    if(phase==='racing'&&s.speed>12&&!s.airborne){const amount=input.drift?4:1;for(let n=0;n<amount;n++){const i=particleCursor++%particleCount,j=i*3;ages[i]=0;const f=routeFrame(s.progress),side=i%2?-.81:.81;positions[j]=car.group.position.x+f.normal.x*side-f.tangent.x*1.5;positions[j+1]=s.y+.12;positions[j+2]=car.group.position.z+f.normal.z*side-f.tangent.z*1.5;velocities[j]=(Math.random()-.5)*1.4-f.tangent.x*s.speed*.07;velocities[j+1]=.25+Math.random()*.5;velocities[j+2]=-f.tangent.z*s.speed*.07;}}
+    if(phase==='racing'&&Math.abs(s.speed)>8&&!s.airborne){
+      const amount=input.drift?4:1,forwardX=Math.sin(s.heading),forwardZ=Math.cos(s.heading),rightX=Math.cos(s.heading),rightZ=-Math.sin(s.heading);
+      for(let n=0;n<amount;n++){
+        const i=particleCursor++%particleCount,j=i*3,side=i%2?-.81:.81;ages[i]=0;
+        positions[j]=car.group.position.x+rightX*side-forwardX*1.5;positions[j+1]=s.y+.12;positions[j+2]=car.group.position.z+rightZ*side-forwardZ*1.5;
+        velocities[j]=(Math.random()-.5)*1.4-forwardX*s.speed*.07;velocities[j+1]=.25+Math.random()*.5;velocities[j+2]=-forwardZ*s.speed*.07;
+      }
+    }
     for(let i=0;i<particleCount;i++){ages[i]+=dt;const j=i*3;if(ages[i]>1){positions[j+1]=-1000;continue;}positions[j]+=velocities[j]*dt;positions[j+1]+=velocities[j+1]*dt;positions[j+2]+=velocities[j+2]*dt;}
     particleGeo.attributes.position.needsUpdate=true;
   }
@@ -334,13 +392,14 @@ async function boot() {
   window.addEventListener('keydown',event=>{
     if(controls.has(event.code)&&(phase==='racing'||phase==='countdown')){event.preventDefault();keys.add(event.code);}
     if(event.repeat)return;
-    if(event.code==='Enter'&&el('help').classList.contains('hidden')&&el('city-map-dialog').classList.contains('hidden')){if(phase==='menu'&&document.activeElement?.tagName!=='BUTTON')start();else if(phase==='finished'&&document.activeElement?.tagName!=='BUTTON')start();}
+    if(event.code==='Enter'&&el('help').classList.contains('hidden')&&el('city-map-dialog').classList.contains('hidden')){if(phase==='menu'&&document.activeElement?.tagName!=='BUTTON')start();else if(phase==='finished'&&document.activeElement?.tagName!=='BUTTON')restartRun();}
     if(event.code==='Escape'){
       if(!el('city-map-dialog').classList.contains('hidden')){modal('city-map-dialog',false);return;}
       if(!el('help').classList.contains('hidden')){closeHelp();return;}
       if(phase==='tour')menu();else if(phase==='paused')resume();else if(phase==='racing'||phase==='countdown')pause();
     }
-    if(event.code==='KeyR'&&(phase==='racing'||phase==='countdown'||phase==='paused'||phase==='finished'))start();
+    if(event.code==='KeyR'&&(phase==='racing'||phase==='countdown'||phase==='paused'||phase==='finished'))restartRun();
+    if(event.code==='KeyQ'&&phase==='racing')returnToStreet();
     if(event.code==='KeyC')cameraMode=(cameraMode+1)%2;
     if(event.code==='KeyM')toggleSound();
     // Keep keyboard focus inside an open dialog.
@@ -367,7 +426,8 @@ async function boot() {
   el('tour-exit').onclick=menu;el('tour-race').onclick=start;el('tour-pause').onclick=()=>{if(tourArt){tour.orbit=0;cameraInitialized=false;}tourArt=null;if(tour.progress>=TRACK_LENGTH-1){tour.jump(START_PROGRESS);cameraInitialized=false;}tour.paused=!tour.paused;el('tour-pause').textContent=tour.paused?'RESUME':'PAUSE';if(tour.paused)audio.suspend();else void audio.unlock();};
   document.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(button=>button.onclick=()=>{const stop=Number(button.dataset.stop);tourBayStarted=null;tour.jump(stop);const scene=button.dataset.scene;tourArt=scene==='square'||scene==='westin'||scene==='post'?scene:null;if(tourArt){tour.paused=true;audio.suspend();}if(stop>=TRACK_LENGTH-1){tour.paused=true;audio.suspend();}el('tour-pause').textContent=stop>=TRACK_LENGTH-1?'RUN AGAIN':tour.paused?'RESUME':'PAUSE';skyCourse.reset();cameraInitialized=false;});
   let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit+(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
-  el('start').onclick=start;el('again').onclick=start;el('restart').onclick=start;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
+  el('start').onclick=start;el('again').onclick=restartRun;el('restart').onclick=restartRun;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
+  el('explore-start').onclick=startExploration;el('return-road').onclick=returnToStreet;
   el('home').onclick=menu;el('pause-home').onclick=menu;el('result-home').onclick=menu;el('sound').onclick=toggleSound;
   el('how').onclick=()=>{helpWasPaused=phase==='racing'||phase==='countdown';if(helpWasPaused)pause();modal('help',true);};el('close-help').onclick=closeHelp;el('help-play').onclick=start;
   el('open-city-map').onclick=()=>modal('city-map-dialog',true);
@@ -376,7 +436,7 @@ async function boot() {
   el('city-map-play').onclick=start;
   function updateAssist(){el('auto-throttle').textContent=`AUTO ACCELERATE: ${autoThrottle?'ON':'OFF'}`;el('auto-throttle').setAttribute('aria-pressed',String(autoThrottle));}
   el('auto-throttle').onclick=()=>{autoThrottle=!autoThrottle;safeWrite('sf-night-run-auto-throttle',String(autoThrottle));updateAssist();};updateAssist();
-  el('reset-best').onclick=()=>{best=0;safeWrite('whimsical-sf-manual-driving-best-v2','0');el('best').textContent='—';el('reset-best').textContent='BEST CLEARED';};
+  el('reset-best').onclick=()=>{best=0;safeWrite('whimsical-sf-playground-race-best-v3','0');el('best').textContent='—';el('reset-best').textContent='BEST CLEARED';};
   el('quality').onclick=()=>{if(lowQuality){lowQuality=false;cinematicQuality=false;}else if(cinematicQuality){cinematicQuality=false;lowQuality=true;}else{cinematicQuality=true;}applyQuality();};
   el('fullscreen').onclick=()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});else void document.documentElement.requestFullscreen?.().catch(()=>{el('fullscreen').textContent='USE YOUR BROWSER’S FULLSCREEN';});};
   document.addEventListener('fullscreenchange',()=>el('fullscreen').textContent=document.fullscreenElement?'EXIT FULLSCREEN ↙':'FULLSCREEN ↗');
@@ -392,6 +452,7 @@ async function boot() {
     const input=readInput();
     canvas.dataset.throttle=String(input.throttle);canvas.dataset.steer=String(input.steer);
     canvas.dataset.speed=sim.state.speed.toFixed(2);canvas.dataset.heading=sim.state.heading.toFixed(4);
+    canvas.dataset.worldX=sim.position.x.toFixed(2);canvas.dataset.worldZ=sim.position.z.toFixed(2);canvas.dataset.worldY=sim.position.y.toFixed(2);canvas.dataset.exploring=String(sim.exploring);canvas.dataset.freeDrive=String(freeDrive);canvas.dataset.postcards=String(playground.collected);
     let raceDt=dt;if(phase==='tour'){
       const beforeTour=tour.progress,wasTourPaused=tour.paused;tour.update(dt);if(tour.progress<beforeTour){cameraInitialized=false;tourBayStarted=null;}
       if(tour.progress>=TRACK_LENGTH-1&&tour.paused){el('tour-pause').textContent='RUN AGAIN';if(!wasTourPaused){audio.suspend();tourBayStarted=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);}}
@@ -404,10 +465,12 @@ async function boot() {
       if(countdownLeft<=0){raceDt=Math.max(0,-countdownLeft);phase='racing';audio.cue('go');el('countdown').innerHTML='<strong>GO.</strong><span>MAKE IT A GOOD ONE</span>';goUntil=totalTime+.8;syncPhase();}
     }
     if(phase==='racing'){
-      const events=sim.update(raceDt,input);topSpeed=Math.max(topSpeed,sim.state.speed);
-      for(const event of events){if(event==='checkpoint'&&!sim.state.finished){audio.cue('checkpoint');announce('CHECKPOINT',`${sim.state.checkpoint} OF 4 · ${formatTime(sim.state.elapsed)}`,1.6);}if(event==='crash'){audio.cue('crash');shake=.5;flashUntil=totalTime+.16;}if(event==='land'){shake=.24;landingPulse=1;audio.cue('land');announce('STUCK THE LANDING','BOOST RECHARGED',1.3);}if(event==='finish')finish();}
+      const events=sim.update(raceDt,input);topSpeed=Math.max(topSpeed,Math.abs(sim.state.speed));
+      for(const event of events){if(event==='checkpoint'&&!sim.state.finished&&!freeDrive){audio.cue('checkpoint');announce('CHECKPOINT',`${sim.state.checkpoint} OF 4 · ${formatTime(sim.state.elapsed)}`,1.6);}if(event==='crash'){audio.cue('crash');shake=.5;flashUntil=totalTime+.16;}if(event==='land'){shake=.24;landingPulse=1;audio.cue('land');announce('STUCK THE LANDING','BOOST RECHARGED',1.3);}if(event==='finish')finish();}
+      // An untimed wander can reach the waterfront without the race's gates.
+      if(freeDrive&&phase==='racing'&&sim.state.progress>=TRACK_LENGTH)finish();
       if(sim.state.airborne&&sim.state.glide>.35&&sim.state.launches>presentedLaunches){presentedLaunches=sim.state.launches;audio.cue('launch');announce('HELLO, SKY.','WHEELS OUT · STEER TO GLIDE',1.8);}
-      if(phase==='racing'){audio.update(sim.state.speed,input.throttle,input.drift&&Math.abs(sim.state.driftAngle)>.08,sim.boosting,sim.state.glide);updateCitySound(sim.state.progress,sim.state.lateral);}
+      if(phase==='racing'){audio.update(Math.abs(sim.state.speed),input.throttle,input.drift&&Math.abs(sim.state.driftAngle)>.08,sim.boosting,sim.state.glide);updateCitySound(sim.state.progress,sim.state.lateral);}
     }
     if(goUntil&&totalTime>goUntil){el('countdown').classList.add('hidden');goUntil=0;}
     if(finishReveal&&totalTime>finishReveal){modal('results',true);finishReveal=0;}
@@ -429,6 +492,8 @@ async function boot() {
     canvas.dataset.heroAssets=String(!!landmarks.group.getObjectByName('Westin St. Francis / Blender landmark')?.userData.loaded);canvas.dataset.phase=phase;canvas.dataset.scenicView=phase==='tour'?(tourArt??'drive'):'';canvas.dataset.wheelFold=String(car.group.userData.wheelFoldDegrees??0);
     if(phase==='tour'){canvas.dataset.progress=tour.progress.toFixed(1);canvas.dataset.airborne=String(tour.airborne);canvas.dataset.altitude=tour.altitude.toFixed(1);canvas.dataset.glide=tour.glide.toFixed(2);}
     const hits=skyCourse.update(totalTime,cityProgress,car.group.position,phase==='racing');
+    const postcards=playground.update(totalTime,sim.position,phase==='racing'&&sim.exploring);
+    if(postcards){audio.cue('checkpoint');sim.state.boost=Math.min(1,sim.state.boost+.2);announce(playground.collected===playground.total?'SQUARE EXPLORER':'POSTCARD FOUND',playground.collected===playground.total?'ALL FIVE FOUND · THE CITY IS YOURS':`${playground.collected} OF ${playground.total} · KEEP EXPLORING`,2);}
     if(hits){collectedRings+=hits;sim.state.boost=Math.min(1,sim.state.boost+.14*hits);audio.cue('checkpoint');announce('SUN RING',`${collectedRings} COLLECTED · +BOOST`,1);}
     world.update(totalTime,cityProgress);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}

@@ -1,6 +1,6 @@
 # Whimsical SF
 
-A browser-playable arcade racer through a compact, recognizable San Francisco. Lap Union Square, climb Powell, enter Chinatown on Grant, and finish at the Ferry Building. Three exaggerated hills turn the coral coupe's wheels into hover pods for a glide over the city.
+A browser-playable arcade racer through a compact, recognizable San Francisco. Lap Union Square, climb Powell, enter Chinatown on Grant, and finish at the Ferry Building. Three exaggerated hills turn the coral coupe's wheels into hover pods for a glide over the city. Union Square also opens into a small driving playground, with reachable terraces and five postcards to discover.
 
 ## Run
 
@@ -11,21 +11,34 @@ npm run dev
 
 Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Grant Ave**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Resume** returns to driving.
 
+**Explore Union Square** starts an untimed drive on the square's southern promenade. Drive onto the plaza, climb its stairs and ramps, and explore the surrounding streets. This mode uses manual acceleration even when Auto Accelerate is enabled for races.
+
 The menu's **Explore the City** postcard opens an illustrated downtown map with the course highlighted among San Francisco's neighborhoods, streets, waterfront piers and Bay Bridge. It uses local SVG artwork and simplified geography, with no map service required.
 
 ## Controls
 
 - Hold W / Up: accelerate
 - A, D / Left, Right: steer on the street and in the sky
-- S / Down: brake; dive in flight
+- S / Down: brake; keep holding after stopping to reverse in the square; dive in flight
 - Shift: boost; gain lift in flight
 - Space: drift
 - C: change chase camera
+- Q / **Return to Street**: recover to the last earned street position
 - R: restart
 - Escape: pause
 - M: mute
 
-Hold the accelerator to build speed. Releasing it lets the car coast and slow down; brake before corners, then steer through the turn. The car keeps its heading until you steer. Hold drift with steering for tighter turns. Hover deploys automatically at a hill launch above 54 mph. Nine gold sun rings replenish boost, and wheels return upright before landing. Touch and standard gamepad controls are supported. **How to Play** includes optional auto-accelerate, three graphics settings, fullscreen, and best-time reset. Auto-accelerate holds the gas; you still steer and brake. Only **Watch a Run** drives the course for you.
+Hold the accelerator to build speed. Releasing it lets the car coast and slow down; brake before corners, then steer through the turn. The car keeps its heading until you steer. Hold drift with steering for tighter turns. Hover deploys automatically at a hill launch above 54 mph. Nine gold sun rings replenish boost, and wheels return upright before landing. Touch and standard gamepad controls are supported. **How to Play** includes optional auto-accelerate, three graphics settings, fullscreen, and best-time reset. Auto-accelerate holds the gas during races; you still steer and brake, and untimed exploration always uses manual gas. Only **Watch a Run** drives the course for you.
+
+## Union Square playground
+
+The car can leave the asphalt throughout the square and its neighboring blocks. Plaza terraces, the broad Geary steps, the Stockton flight, the Post entrance and the side ramps have driving surfaces that follow the visible architecture. Curbs and steps jostle the car; rolling off a terrace produces a small gravity-driven hop. Buildings, the monument, planters, café pavilions, subway entrance and parked cars remain solid.
+
+Find **five golden postcards** on the square's paving. The local map shows buildings, streets, stairs, gardens, your car and the remaining postcards; the HUD keeps count. Restarting the drive restores all five. If you get wedged against an object, hold S after braking to reverse, or use **Q / Return to Street**. Recovery preserves the run's elapsed time and statistics.
+
+Temporary streetworks barricades mark the boundaries of this first explorable district. Powell remains connected to the racing course: head north to continue toward Chinatown, the three existing hill glides and the bay, or turn back before the climb to return to the square. This is a bounded playground around Union Square; the rest of the city retains the established racing corridor.
+
+The plaza is also open during a race. Street gates must be crossed in order on Stockton, Geary and Powell before subsequent race checkpoints count, so a detour across the square cannot silently complete the opening lap. Untimed exploration does not set a personal best.
 
 ## Course
 
@@ -45,7 +58,7 @@ The street connections and landmark relationships establish a more recognizable 
 
 At the finish, the camera reveals the Ferry Building on its pier, animated turquoise water and the silver Bay Bridge behind it. Compact results preserve the waterfront view.
 
-Manual-driving times use the separate local-storage key `whimsical-sf-manual-driving-best-v2`. Records from the former guided handling are preserved under their old key rather than compared with manual steering. Reset Best affects the current course only.
+Races with the open square and ordered street gates use the separate local-storage key `whimsical-sf-playground-race-best-v3`. Earlier manual-driving records remain under `whimsical-sf-manual-driving-best-v2`, and records from the former guided handling remain under their older key. Reset Best affects the current course only.
 
 ## Stack and assets
 
@@ -64,9 +77,13 @@ npm run build
 
 Tests cover route geometry and driving behavior, including coasting to a stop, manual cornering, curb recovery, frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap. Camera-projection tests protect landmark order, the clockwise square lap and left/right driving controls in all four street headings.
 
-The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. `window.sfNightRun` provides read-only diagnostic snapshots.
+Playground checks cover continuous terrace and stair surfaces, car-width access to all five postcards, solid obstacles and parked cars, reversing and recovery, small terrace drops, ordered race gates, return through the Powell corridor, and a complete race with all three glides. World driving is checked at 30, 60 and 120 Hz.
+
+The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. Additional attributes report world X/Y/Z, whether the car is in the playground, untimed free-drive mode and the postcard count. `window.sfNightRun` provides read-only diagnostic snapshots.
 
 ## Recovery checkpoints
+
+The complete city-map and manual-driving version before opening the square is saved at `pre-union-square-playground` (`4cb84f4`).
 
 The corrected city orientation, full block returns and new Blender street furniture are saved at `union-square-orientation-v3`.
 
