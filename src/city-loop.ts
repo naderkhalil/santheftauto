@@ -4,7 +4,7 @@ import { createCableCarAsset } from './street-assets';
 import { CHECKPOINTS, ROAD_HALF_WIDTH, ROUTE_POLYLINE, ROUTE_STOPS, TRACK_LENGTH, groundHeight, intersectsSquareParcel, routePoint, routeProgressAt, routeSlope, routeYaw, sampleRoute, type Obstacle } from './route';
 
 /** A compact street grid, with the square and Grant left to their authored sets. */
-export function createCityLoop(scene: THREE.Scene) {
+export function createCityLoop(scene: THREE.Object3D) {
   const group = new THREE.Group(); group.name = 'Downtown San Francisco / connected city blocks'; scene.add(group);
   const mats = new Map<string, THREE.MeshStandardMaterial>();
   const mat = (color: string, roughness = .8, metalness = 0) => {
@@ -30,6 +30,8 @@ export function createCityLoop(scene: THREE.Scene) {
     const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=128;const c=canvas.getContext('2d')!;
     c.fillStyle=bg;c.fillRect(0,0,1024,128);c.strokeStyle=color;c.lineWidth=3;c.strokeRect(9,9,1006,110);c.fillStyle=color;c.textAlign='center';c.textBaseline='middle';c.font='600 58px Arial';c.fillText(text,512,66,960);
     const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;
+    // Text compensates for the map-to-render reflection; street geometry does not.
+    map.repeat.x=-1;map.offset.x=1;
     const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshStandardMaterial({map,roughness:.8,side:THREE.DoubleSide}));mesh.position.set(x,y,z);mesh.rotation.y=yaw;group.add(mesh);
   }
   // One continuous road ribbon keeps the tyres on precisely the same hills as physics.
@@ -72,7 +74,8 @@ export function createCityLoop(scene: THREE.Scene) {
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setIndex(ids);g.computeVertexNormals();if(!batches.has(sideRoad))batches.set(sideRoad,[]);batches.get(sideRoad)!.push(g);
   }
   for(const z of streetsZ)crossRoad(-260,z,635,z);
-  for(const x of streetsX)crossRoad(x,-180,x,860);
+  for(const x of streetsX)crossRoad(x,-270,x,860);
+  crossRoad(-199,-730,-199,1110); // Mason continues behind the Westin block.
 
   // Street furniture follows the course frame, including turns and the eastbound finish.
   for(let s=20;s<TRACK_LENGTH-15;s+=29){
@@ -93,14 +96,18 @@ export function createCityLoop(scene: THREE.Scene) {
   const powellStart=routeProgressAt(-75,-46),powellEnd=routeProgressAt(-75,279);
   for(let s=powellStart;s<powellEnd;s+=3){for(const offset of [-2.8,-1.45,1.45,2.8])roadBox(metal,s,offset,.07,.014,3.12);roadBox(dark,s,0,.13,.016,3.12);}
   const roadNames:[number,string][]=[[32,'POST ST'],[ROUTE_STOPS.stockton+18,'STOCKTON ST'],[ROUTE_STOPS.geary+18,'GEARY ST'],[ROUTE_STOPS.powell+45,'POWELL ST'],[ROUTE_STOPS.bush+20,'BUSH ST'],[ROUTE_STOPS.grant+24,'GRANT AVE'],[ROUTE_STOPS.washington+25,'WASHINGTON ST'],[ROUTE_STOPS.embarcadero+35,'THE EMBARCADERO']];
-  for(const [s,name] of roadNames){const p=routePoint(s,-10.5),yaw=routeYaw(s);pole(metal,p.x,p.y+3.5,p.z,.065,7);label(name,p.x,p.y+6.1,p.z,5,.64,yaw+Math.PI,'#284a41');}
+  for(const [s,name] of roadNames){
+    // The square now has four correctly oriented, modeled street-name blades.
+    if(s<ROUTE_STOPS.powell)continue;
+    const p=routePoint(s,-10.5),yaw=routeYaw(s);pole(metal,p.x,p.y+3.5,p.z,.065,7);label(name,p.x,p.y+6.1,p.z,5,.64,yaw+Math.PI,'#284a41');
+  }
   for(const [cornerX,cornerZ] of ROUTE_POLYLINE.slice(1,-1)){
     const corner=routeProgressAt(cornerX,cornerZ),s=corner-30;
     for(let stripe=-6;stripe<=6;stripe+=1.5){const p=routePoint(s,stripe);box(cream,p.x,p.y+.17,p.z,.65,.018,3.4,routeYaw(s));}
     const p=routePoint(s+12,-10);pole(metal,p.x,p.y+2.9,p.z,.09,5.8);box(dark,p.x,p.y+5.1,p.z,.40,1.12,.30);
     for(let i=0;i<3;i++)add(sphere,i===2?green:i===0?red:gold,p.x,p.y+5.42-i*.31,p.z-.18,.10,.10,.05);
     const arrow=routePoint(s+5,-9.5),angle=routeYaw(corner+22)-routeYaw(corner-22),turn=Math.atan2(Math.sin(angle),Math.cos(angle));
-    label(turn>0?'‹  ‹  ‹':'›  ›  ›',arrow.x,arrow.y+3.3,arrow.z,3.6,.7,routeYaw(s)+Math.PI,'#2e665e','#d0f8b3');
+    label(turn>0?'›  ›  ›':'‹  ‹  ‹',arrow.x,arrow.y+3.3,arrow.z,3.6,.7,routeYaw(s)+Math.PI,'#2e665e','#d0f8b3');
   }
 
   // Narrow frontages, regular floor heights, recessed glazing and real rooflines.
@@ -150,10 +157,24 @@ export function createCityLoop(scene: THREE.Scene) {
     const x=(a+b)/2,z=(c+d)/2,w=Math.min(42,b-a-34),depth=Math.min(40,d-c-34);if(w<12||depth<12)continue;
     building(x,z,w,depth,25+(index%7)*6,index++,'south');
   }
-  for(let z=-130;z<840;z+=78){if(z>-75&&z<85)continue;building(-206,z,40,48,23+(index%4)*7,index++,'east');}
-  // The square belongs to a continuous city, with streets visible beyond every turn.
-  building(-192,0,43,101,54,index++,'east');
-  building(149,0,25,99,48,index++,'west');
+  // Mason's west block is parcelled between real cross-street corridors.
+  // The old fixed-pitch strip crossed Sutter and several uphill intersections,
+  // while the outer-grid companions occupied the same buildings' back halves.
+  const mason=-199,westStreet=-335,plotSetback=14.2;
+  const westBlockStreets=[-195,-65,65,185,300,400,500,600,700,850];
+  for(const z of streetsZ)crossRoad(westStreet,z,-260,z);
+  for(let block=0;block<westBlockStreets.length-1;block++){
+    const south=westBlockStreets[block]+plotSetback,north=westBlockStreets[block+1]-plotSetback;
+    const count=Math.max(1,Math.round((north-south)/46)),pitch=(north-south)/count;
+    for(let lot=0;lot<count;lot++){
+      const z=south+(lot+.5)*pitch,depth=pitch-2.4;
+      // Separate narrow lots face each street; a clear rear court remains
+      // between the two rows, and every cornice/awning clears the sidewalk.
+      building(mason-plotSetback-21,z,42,depth,30+((block*3+lot)%5)*6,index++,'east');
+      building(westStreet+plotSetback+21,z,42,depth,27+((block*2+lot+2)%5)*6,index++,'west');
+    }
+  }
+  // The authored Stockton blocks now reach Grant; Maiden Lane stays open.
   const outerX=[-660,-530,-400,-270,-150,-20,110,240,365,485,590];
   const outerZ=[-660,-525,-390,-250,-130,15,140,255,375,495,615,785,920,1050];
   for(const x of [-600,-465,-335])crossRoad(x,-730,x,1110);
@@ -161,10 +182,17 @@ export function createCityLoop(scene: THREE.Scene) {
   for(const x of outerX)for(const z of outerZ){
     if(x>-245&&z>-170&&z<760)continue;
     if(x>530&&z>100)continue;
+    // The complete Mason-to-westStreet block above owns these outer-grid lots.
+    if(x===-270&&z>westBlockStreets[0]&&z<westBlockStreets.at(-1)!)continue;
     // Tight blocks with multiple roof heights rather than isolated towers on empty ground.
     const width=x<-200?54:58,depth=64,height=22+(index%6)*8;
     building(x,z,width,depth,height,index++,'north');
-    if(x<-240||z<-200)building(x+36,z+28,20,31,height*.72,index++,'east');
+    if(x<-240||z<-200){
+      // Fit the companion beside its main block with a two-metre body gap;
+      // a fixed 20 m width formerly overlapped every 54 m/58 m block by 1–3 m.
+      const companionWidth=Math.min(20,2*(36-width/2-2));
+      building(x+36,z+22,companionWidth,31,height*.72,index++,'east');
+    }
   }
   // A few recognisable distant silhouettes, positioned relative to the street grid.
   const blue=mat('#70a4b3',.27,.35),white=mat('#e0ded1');

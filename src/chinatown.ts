@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { groundHeight } from './route';
 
 /** Grant Avenue's narrow masonry shopfronts, Dragon Gate, and California corners. */
-export function createChinatown(scene: THREE.Scene) {
+export function createChinatown(scene: THREE.Object3D) {
   const group = new THREE.Group(); group.name = 'Grant Avenue · Chinatown'; scene.add(group);
   const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
@@ -134,7 +134,7 @@ export function createChinatown(scene: THREE.Scene) {
   function sign(index: number, x: number, y: number, z: number, w: number, h: number, yaw: number) {
     const geo = new THREE.PlaneGeometry(w, h), uv = geo.getAttribute('uv');
     const col = index % 2, row = Math.floor(index / 2), inset = .002;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, (col + inset + uv.getX(i) * (1 - inset * 2)) / 2, 1 - (row + 1 - inset - uv.getY(i) * (1 - inset * 2)) / 8);
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, (col + inset + (1 - uv.getX(i)) * (1 - inset * 2)) / 2, 1 - (row + 1 - inset - uv.getY(i) * (1 - inset * 2)) / 8);
     add(geo, signMat, x, y, z, new THREE.Euler(0, yaw, 0));
   }
 

@@ -12,7 +12,7 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 /** Union Square's four real street frontages, compressed into a drivable block.
  * East is +x, north is +z. All entrances face the square, at street level 22.
  */
-export function createUnionSquare(scene: THREE.Scene) {
+export function createUnionSquare(scene: THREE.Object3D) {
   const group = new THREE.Group(); group.name = 'Union Square · plaza, Dewey Monument, Westin, Macy’s and Apple'; scene.add(group);
   let batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const ground = 22;
@@ -77,6 +77,7 @@ export function createUnionSquare(scene: THREE.Scene) {
       ctx.fillText(text, 1024, sub ? 102 : 135, 1960);
       if (sub) { ctx.font = '37px Arial'; ctx.fillText(sub, 1024, 208, 1960); }
     });
+    map.repeat.x=-1;map.offset.x=1;
     const mat = new THREE.MeshStandardMaterial({ map, roughness: .8 }); mat.name = `Union Square sign / ${text}`;
     add(new THREE.PlaneGeometry(w, h), mat, x, y, z, yaw);
   }

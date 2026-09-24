@@ -38,7 +38,7 @@ export function createNorthSquare(parent: THREE.Group, fallback: THREE.Group) {
         material.shadowSide = THREE.DoubleSide;
         material.roughness = .82;
       }
-      if (/structural glass/i.test(material.name)) {
+      if (/structural glass|shopfront clear glazing/i.test(material.name)) {
         material.transparent = true;
         material.opacity = .13;
         material.depthWrite = false;

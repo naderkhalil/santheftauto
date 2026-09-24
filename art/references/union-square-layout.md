@@ -4,7 +4,7 @@ Checked 23 September 2026 against Apple's own store page and announcement, and t
 
 ## Orientation and method
 
-The game uses +X east, +Z north, and +Y up. Powell is X = -75; Stockton is X = 75; Post is Z = 65; Geary is Z = -65. The real street grid is rotated relative to geographic north.
+Authoring and route coordinates use +X east, +Z north, and +Y up. The rendered world uses +X east, −Z north, and +Y up through the explicit conversion in `src/coordinates.ts`. Keeping these spaces separate fixes the old mirrored city view without changing course heights. Powell is X = -75; Stockton is X = 75; Post is Z = 65; Geary is Z = -65. The real street grid is rotated relative to geographic north.
 
 The approximate game-coordinate bounds below were derived by an affine mapping from three OSM street-center intersections:
 
@@ -18,7 +18,7 @@ This preserves sides and approximate frontage proportions. It deliberately stret
 
 ## Apple and the north side of the square
 
-Apple Union Square is **north of Post, west of Stockton**, at the east end of the north frontage. Its main glass entrance faces south across Post toward Union Square. The previous game building was in the correct general quadrant, but its width, presentation, missing neighbors, and detached surroundings made the corner read incorrectly. Do not move it across Stockton or to the opposite side of the square.
+Apple Union Square is **north of Post, west of Stockton**, at the east end of the north frontage. Its main glass entrance faces south across Post toward Union Square. The previous game building had the correct authoring parcel, but the renderer mirrored the entire city: Apple appeared west of Saks when looking north. The corrected renderer restores its position at the Stockton end, opposite the Neiman Marcus end of the square. Missing neighbors and incomplete building returns also weakened that relationship and have been rebuilt. Do not move it across Stockton or to the opposite side of the square.
 
 Apple's official announcement specifically describes the glass doors opening to Post Street and the square, and a public plaza **north of the store**. That rear plaza has Ruth Asawa's San Francisco Fountain and a roughly 50-foot green wall. The green wall belongs to the outdoor plaza composition; it should not read as a solid green back wall sealing off the retail room. The Grand Hyatt rises immediately behind this store/plaza complex, on the **west side of Stockton**.
 
@@ -65,11 +65,11 @@ Macy's occupies the south frontage, west of Stockton. Its main OSM footprint is 
 
 ## The square is a terraced plaza
 
-The current game has a central raised platform, but its five identical shallow steps on all four sides flatten the real composition. The real plaza has several terraces, retaining walls, different stair runs, and entrances from sidewalks at differing elevations. It is also built above the underground garage.
+The earlier prototype used a central platform with five identical shallow steps on all four sides. The implemented square replaces this with distinct terraces, retaining walls, broad stair runs and side access ramps. The real plaza has several terraces, retaining walls, different stair runs, and entrances from sidewalks at differing elevations. It is also built above the underground garage.
 
 The OSM park is tagged with an elevation of 24 m. More useful for visual composition are the mapped **17- and 18-step flights on the Stockton side**, **six-step flights at the central terraces**, and retaining walls. These counts substantiate a visibly stronger elevation change on the east side than the old uniform stair treatment. They do not establish a surveyed elevation for every sidewalk.
 
-Recommended game interpretation: preserve the driven road surface, establish a coherent raised central plaza, and make the Stockton edge clearly step down through retaining walls and broad stair openings. Use roughly 0.15–0.17 m risers as an artistic working scale; do not claim that an exact two- or three-metre lift matches a survey. Keep access routes, cafes and palms grounded on their respective terrace surfaces.
+Implemented game interpretation: the driven road surface is preserved, with a coherent raised central plaza and a Stockton edge that steps down through retaining walls and broad stair openings. Use roughly 0.15–0.17 m risers as an artistic working scale; do not claim that an exact two- or three-metre lift matches a survey. Keep access routes, cafes and palms grounded on their respective terrace surfaces.
 
 The cafes/pavilions are chiefly on the **east and west sides**, not two generic kiosks lined up across Post. Reference footprint positions include east-side Miller & Lux Provisions around X 53, Z 13, and west-side cafe/bakery pavilions around X -49, Z -13 and X -52, Z 13. The square's southeast transit entrance also gives that corner a real, occupied purpose.
 

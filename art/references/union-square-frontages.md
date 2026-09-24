@@ -13,22 +13,22 @@ No photograph or downloaded image is embedded in these assets. Geometry, materia
 
 ## Delivered geometry
 
-- Macy’s: a recessed, gently concave glazed entrance, modeled interior balconies and stair flights, recessed stone window bays, bronze doors and canopy, carved cornice and full exposed Powell return.
+- Macy’s: a recessed, gently concave glazed entrance, modeled interior balconies and stair flights, recessed stone window bays, bronze doors and canopy, carved cornice and full exposed Powell return. The complete block now extends to O’Farrell, with a taller cream terracotta rear body and Gothic parapet inspired by the original O’Connor Moffat building. Recessed returns on Powell, Stockton and O’Farrell, articulated rooftop plant and raised masonry parapets complete the views from the driving and gliding cameras.
 - Former I. Magnin wing: independent taller marble mass, narrower recessed windows, dark storefront bases and full Stockton return.
-- Neiman Marcus: at the **southeast diagonal** of Geary and Stockton, outside the square’s east edge. Two real masonry arms enclose a hollow atrium. The glass corner contains stacked circular galleries, columns, gilded railings, capitals and a segmented amber/cream/green stained-glass dome.
-- Stockton: five separate retail parcels with independent roof heights and window rhythms. The complete exterior returns face Post, Geary and Maiden Lane. Shared party walls deliberately have no hidden window ornament.
+- Neiman Marcus: at the **southeast diagonal** of Geary and Stockton, outside the square’s east edge. Two real masonry arms enclose a hollow atrium. The glass corner contains stacked circular galleries, columns, gilded railings, capitals and a segmented amber/cream/green stained-glass dome. The Geary frontage extends east toward Grant with a distinct entrance referencing the preserved Talbot pilasters and cornice described by the architect. Its side and rear elevations have service doors, clerestory openings, tiled walls and complete roof edges.
+- Stockton: five separate retail parcels with independent roof heights and window rhythms. They now extend to Grant, with complete exterior returns facing Post, Geary and Maiden Lane, plus back windows and rooftop service courts. Maiden Lane remains open through the entire block. Shared party walls retain continuous masonry without hidden window ornament.
 - Storefronts contain deep display boxes, ceiling lights, plinths and small original mannequin/garment silhouettes. Clear glass uses low-opacity reflected panes instead of a transmission pass.
 
 ## Coordinate contract
 
-Blender: `+X=east`, `-Y=north`, `+Z=up`; metres. glTF exports Y-up. All architectural vertices use world X/Z at ground-relative height zero. The loader positions the complete asset at `(0,22,0)`, without additional rotation or scaling.
+The generator constructs semantic coordinates with `+X=east`, `-Y=north`, `+Z=up`, in metres. The editable Blender source reflects each object’s Y axis, presenting a physically oriented scene with `+Y=north` and readable lettering. Export temporarily removes that object reflection. The resulting glTF has semantic world X/Z at ground-relative height zero; the loader places it at `(0,22,0)` below the game’s reflected city root. Each sign is counter-reflected around its own local horizontal baseline before export, so the final game lettering is readable. Individual sign meshes retain the text, baseline center and facade orientation as glTF extras.
 
 | Component | World X bounds | World Z bounds | Height above street |
 |---|---:|---:|---:|
-| Macy’s and Magnin | −60…60 | −136…−83 | 36.6 / 42.6 m |
-| Neiman Marcus | 94…137 | −128…−83 | 31.6 m, service objects to 33.4 m |
-| Stockton parcels | 94…129 | −48…48 | 18…40 m |
-| Maiden Lane opening | 94…129 | −5…5 | Unobstructed |
+| Macy’s and Magnin | −60…60 | −182…−83 | 36.6 / 42.6 m; rear crown and vents to 46.1 m |
+| Neiman Marcus | 94…161 | −132…−83 | 31.6 m, service objects to 33.5 m |
+| Stockton parcels | 94…161 | −48…48 | 18…40 m, roof service objects to 43 m |
+| Maiden Lane opening | 94…175 | −5…5 | Unobstructed to Grant |
 
 The course compresses parcel depths and street widths. Dimensions preserve the model’s street clearances rather than claiming survey accuracy. Low trim and canopies can extend modestly beyond these massing bounds onto the sidewalks.
 
@@ -39,7 +39,7 @@ The course compresses parcel depths and street widths. Dimensions preserve the m
 - Main asset: `public/assets/square-frontages/square-frontages.glb`
 - Distant asset: `public/assets/square-frontages/square-frontages-lod.glb`
 - Measured budgets: `public/assets/square-frontages/square-frontages.meta.json`
-- Reviews: `art/reviews/square-frontages-overview.png`, `art/reviews/neiman-rotunda-study.png`
+- Reviews: `art/reviews/square-frontages-overview.png`, `art/reviews/neiman-rotunda-study.png`, `art/reviews/maiden-lane-continuity.png`, `art/reviews/square-frontages-rear-returns.png`
 - Loader: `src/square-frontages.ts`; `createSquareFrontages(parent, fallback?)`
 
-The loader uses the local Draco decoder, merges opaque shared materials for fewer draw calls, keeps each building’s transparent panes separate for depth sorting, reuses materials between detail levels, and keeps an optional procedural fallback until the main model has loaded. Flat glass uses a single double-sided pass. Material names are normalized to the `Union Square /` prefix so the regional reflection capture recognizes them. The current runtime uses 25 batches for 22 materials. A camera distance of 235 m selects the reduced detail mesh; Low quality also uses that mesh and omits building shadow casting.
+The loader uses the local Draco decoder, merges opaque shared materials for fewer draw calls, keeps each building’s transparent panes separate for depth sorting, reuses materials between detail levels, and keeps an optional procedural fallback until the main model has loaded. Flat glass uses a single double-sided pass. Material names are normalized to the `Union Square /` prefix so the regional reflection capture recognizes them. The current runtime uses 26 batches for 22 materials. A camera distance of 235 m selects the reduced detail mesh; Low quality also uses that mesh and omits building shadow casting.

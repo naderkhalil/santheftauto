@@ -10,7 +10,7 @@ ROOT=Path(__file__).resolve().parents[2];OUT=ROOT/'public/assets/north-square';S
 OUT.mkdir(parents=True,exist_ok=True);SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
 bpy.context.preferences.filepaths.save_version=0
-BATCH={};M={};PART='north';rng=random.Random(301)
+BATCH={};M={};PART='north';rng=random.Random(301);SIGN_PROBES=[]
 def srgb(h):
  c=[int(h[i:i+2],16)/255 for i in (1,3,5)];return tuple(v/12.92 if v<=.04045 else ((v+.055)/1.055)**2.4 for v in c)
 def mat(name,color,rough=.7,metal=0,alpha=1,emit=0):
@@ -20,6 +20,7 @@ def mat(name,color,rough=.7,metal=0,alpha=1,emit=0):
  m.diffuse_color=(*srgb(color),alpha);M[name]=m;return name
 stone=mat('honed limestone','#cebfaa');trim=mat('carved warm stone','#e9ddc8');granite=mat('gray granite plinth','#888d86');bronze=mat('bronze sash and doors','#4e473c',.4,.65);glass=mat('deep recessed glazing','#426778',.24,.35);inside=mat('linen curtains','#bbae94');roof=mat('roof and interior shade','#41494c');steel=mat('Apple bead blasted steel','#d6dcd8',.28,.62);white=mat('Apple luminous soffit','#eeeae1',.6,0,emit=.12);clear=mat('Apple structural glass','#c4e5e7',.13,.12,.17);oak=mat('Apple oak furniture','#bf8c53',.55);leaf=mat('living foliage','#386337');bark=mat('tree trunks','#79654c');tiffany=mat('Tiffany bronze green','#497f7b',.46,.2);red=mat('Beacon terracotta brick','#976552');darkred=mat('Handlery brick','#ad7a63');concrete=mat('Hyatt precast concrete','#b8b5a7');hyattglass=mat('Hyatt smoked bronze glass','#465b63',.24,.4);copper=mat('Beacon oxidized copper','#4d7365',.48,.35);gold=mat('hotel gilt lettering','#d4b56d',.33,.55)
 leafsun=mat('Apple tree sunlit leaves','#668c42');leafshade=mat('Apple tree shaded leaves','#366242')
+shopclear=mat('shopfront clear glazing','#b8d0d0',.18,.15,.19)
 # Correctly colored baked, tileable stone pore/roughness maps.
 for name in [stone,trim,granite,concrete,red,darkred]:
  m=M[name];p=m.node_tree.nodes.get('Principled BSDF');n=256;rr=np.random.default_rng(100+len(name));noise=rr.normal(0,.025,(n,n));px=np.ones((n,n,4),dtype=np.float32);px[:,:,:3]=np.clip(.65+noise[:,:,None],0,1)
@@ -65,14 +66,22 @@ def sphere(x,y,z,rx,ry,rz,m):
    face([(x+rx*math.sin(math.pi*(j+dj)/q)*math.cos(math.tau*(i+di)/n),y+ry*math.cos(math.pi*(j+dj)/q),z+rz*math.sin(math.pi*(j+dj)/q)*math.sin(math.tau*(i+di)/n)) for di,dj in [(0,0),(1,0),(1,1),(0,1)]],m)
 def text(body,x,y,z,size,m,yaw=math.pi):
  curve=bpy.data.curves.new(body,'FONT');curve.body=body;curve.align_x='CENTER';curve.size=size;curve.extrude=.006;curve.bevel_depth=.002;curve.bevel_resolution=0
- obj=bpy.data.objects.new(body,curve);bpy.context.collection.objects.link(obj);obj.rotation_euler=(math.pi/2,0,yaw);obj.location=(x,-z,y);bpy.context.view_layer.objects.active=obj;obj.select_set(True);bpy.ops.object.convert(target='MESH');obj=bpy.context.object
+ obj=bpy.data.objects.new(body,curve);bpy.context.collection.objects.link(obj);obj.rotation_euler=(math.pi/2,0,yaw);obj.location=(x,-z,y);obj.scale.x=-1;bpy.context.view_layer.objects.active=obj;obj.select_set(True);bpy.ops.object.convert(target='MESH');obj=bpy.context.object
+ normal=Vector((math.sin(yaw),0,math.cos(yaw)))
+ vertices=[obj.matrix_world@v.co for v in obj.data.vertices];vertices=[Vector((v.x,v.z,-v.y)) for v in vertices]
+ front=max(v.dot(normal) for v in vertices);samples=[]
  for p in obj.data.polygons:
-  pts=[obj.matrix_world@obj.data.vertices[i].co for i in p.vertices];face([(v.x,v.z,-v.y) for v in pts],m)
+  pts=[vertices[i] for i in p.vertices];face([tuple(v) for v in pts],m)
+  if all(abs(v.dot(normal)-front)<.0001 for v in pts):samples.append(sum(pts,Vector())/len(pts))
+ SIGN_PROBES.append({'text':body,'part':PART,'normal':normal,'samples':samples})
  bpy.data.objects.remove(obj,do_unlink=True)
 class Facade:
  def __init__(self,x,z,yaw=math.pi):self.x=x;self.z=z;self.a=yaw;self.c=math.cos(yaw);self.s=math.sin(yaw)
  def b(self,x,y,z,w,h,d,m,bevel=0):box(self.x+self.c*x+self.s*z,y,self.z-self.s*x+self.c*z,w,h,d,m,bevel,self.a)
- def letter(self,body,y,size,m):text(body,self.x,y,self.z+(-.06 if self.a==math.pi else .06),size,m,self.a)
+ def letter(self,body,y,size,m,projection=.48):
+  # Lower carved bands reach .42m beyond the wall. Mount letters 6cm in
+  # front of that fascia; their old .06m projection buried them inside it.
+  text(body,self.x+self.s*projection,y,self.z+self.c*projection,size,m,self.a)
  def facade(self,w,h,cols,wall=stone,style=0):
   pitch=w/cols;winw=min(2.0,pitch*.5);wh=2.5;ys=list(np.arange(7,h-2,3.5));low=4.8
   if style<0:
@@ -98,20 +107,27 @@ class Facade:
   self.b(0,(low+h)/2,-.3,w,h-low,.6,wall)
   for yy,deep in [(4.7,.5),(5.0,.6),(h-1.1,.55),(h-.4,.85),(h,1.2)]:self.b(0,yy,.12,w+.5,.22,deep,trim,.04)
   for j in range(cols):
-   xx=-w/2+(j+.5)*pitch;self.b(xx,2.28,-.25,pitch-.45,4.2,.10,glass)
+   xx=-w/2+(j+.5)*pitch;self.b(xx,2.28,-.25,pitch-.45,4.2,.10,shopclear)
    for sign in [-1,1]:self.b(xx+sign*(pitch-.2)/2,2.3,-.06,.28,4.6,.65,wall,.03)
    self.b(xx,2.15,-.08,.09,4.1,.12,bronze);self.b(xx,3.4,-.06,pitch-.45,.09,.12,bronze)
-   # Warm deep display case, shelves and a restrained object silhouette.
-   self.b(xx,1.3,-.6,pitch-.8,.14,.7,oak)
-   self.b(xx,.7,-.75,pitch-.8,1.2,.12,inside)
+   # A complete 3m display cavity stays in front of the inset structural core.
+   self.b(xx,2.1,-2.82,pitch-.40,4.2,.12,inside)
+   self.b(xx,4.32,-1.48,pitch-.40,.18,2.85,white)
+   self.b(xx,.12,-1.48,pitch-.40,.16,2.85,granite)
+   self.b(xx,1.1,-1.62,pitch-.95,.14,1.12,oak)
+   for dx in [-.55,.30]:self.b(xx+dx,1.42,-1.55,.32,.48,.30,trim)
 
 # Post's four different parcels: no giant anonymous wall or empty gap.
 for name,cx,w,h,wall,cols in [('Saks Fifth Avenue',-40,52,27,stone,11),('Tiffany & Co.',-2.5,23,42,trim,5),('Williams Sonoma',15,12,17,stone,3)]:
- PART=name;depth=49;box(cx,h/2,106,w-1.5,h,45,wall)
+ PART=name;depth=49;box(cx,h/2,106,w-6,h,43,wall)
  front=Facade(cx,81);front.facade(w,h,cols,wall,1)
  for side in [-1,1]:
   end=Facade(cx+side*w/2,105.5,side*math.pi/2);end.facade(depth,h,max(4,int(depth/4.7)),wall,0)
  rear=Facade(cx,130);rear.facade(w,h,cols,wall,-1)
+ box(cx,h+.15,105.5,w+.2,.30,49.2,trim)
+ for zz in [96,117]:
+  box(cx,h+.70,zz,min(5,w*.35),1.0,4,roof,.07)
+  for dx in [-1,1]:cyl(cx+dx,h+1.45,zz,.3,.6,steel,10)
  front.letter(name.upper(),4.72,.41 if w<15 else .48,bronze)
  for xx in [cx-w*.27,cx+w*.27]:
   box(xx,3.8,79.85,w*.34,.16,1.55,tiffany if 'Tiffany' in name else bronze,.03)
@@ -176,10 +192,10 @@ spline=shape.splines.new('BEZIER');pts=[(0,-.7),(-.47,-.68),(-.80,-.1),(-.77,.47
 for p,co in zip(spline.bezier_points,pts):p.co=(*co,0);p.handle_left_type='AUTO';p.handle_right_type='AUTO'
 spline.use_cyclic_u=True;o=bpy.data.objects.new('Apple silhouette',shape);bpy.context.collection.objects.link(o);o.rotation_euler=(math.pi/2,0,math.pi);o.location=(41,-82.15,11.2);bpy.context.view_layer.objects.active=o;o.select_set(True);bpy.ops.object.convert(target='MESH');o=bpy.context.object
 for p in o.data.polygons:
- pts=[o.matrix_world@o.data.vertices[i].co for i in p.vertices];face([(v.x,v.z,-v.y) for v in pts],white)
+ pts=[o.matrix_world@o.data.vertices[i].co for i in p.vertices];face([(82-v.x,v.z,-v.y) for v in pts],white)
 bpy.data.objects.remove(o,do_unlink=True)
 # The tilted leaf above the mark is a slim lens, not a rectangular glyph.
-face([(41.05,11.96,82.1),(41.07,12.32,82.1),(41.42,12.62,82.1),(41.42,12.26,82.1)],white)
+face([(40.95,11.96,82.1),(40.93,12.32,82.1),(40.58,12.62,82.1),(40.58,12.26,82.1)],white)
 # Public garden behind Apple separates its pavilion from the Hyatt tower.
 box(cx,.38,122,42,.36,14,granite,.04)
 for xx in [23,59]:box(xx,.9,122,2.8,1.2,12,stone,.05);box(xx,1.56,122,2.5,.10,11.5,leaf)
@@ -197,7 +213,8 @@ for yaw,xx,zz,span,depth in [(0,cx,z+d/2,w,d),(math.pi,cx,z-d/2,w,d),(math.pi/2,
   f.b(u-span/cols/2,h/2,.24,.46,h,.85,concrete,.04)
   for yy in np.arange(3,91,3.05):f.b(u,yy,.28,span/cols,.56,1.0,concrete,.025)
  f.b(0,h-.4,.20,span+.4,.8,1.6,concrete,.055)
-text('GRAND HYATT',46.5,8.0,132.8,.58,gold)
+# Hyatt's horizontal precast bands reach .78m; the inscription clears them.
+Facade(46.5,133).letter('GRAND HYATT',8.0,.58,gold,projection=.85)
 
 # The tall Beacon is EAST of Powell, behind Saks. Chancellor and the lower
 # historic retail rooms occupy the other side of that intersection.
@@ -206,30 +223,42 @@ for name,cx,z,w,d,h,wall in [
  ('Chancellor Hotel',-100,122.5,24,25,52,stone),
  ('Post Powell corner',-109,95.5,42,29,20,trim),
  ('Inn at Union Square',-136,108,12,54,29,darkred),
+ ('Kensington Park',-163,106,40,50,45,stone),
  ('278 Post corner',109,106,40,50,27,stone),
+ ('Post Street east return',145,106,32,50,31,trim),
  ('Taj Campton Place',108,153.5,38,29,33,trim),
+ ('Campton Place east wing',145,155.5,32,41,31,stone),
+ ('Sutter service block',.5,157.5,57,49,38,stone),
  ('Elkan Gunst Building',-108,-110,40,54,27,stone),
- ('Handlery Union Square',-157,-110,56,54,28,darkred)]:
- PART=name;box(cx,h/2,z,w-2,h,d-2,wall)
+ ('Handlery Union Square',-157,-110,56,54,28,darkred),
+ ('Handlery rear wing',-157,-160.5,56,43,36,trim),
+ ('Powell O Farrell corner',-108,-160.5,40,43,24,stone)]:
+ PART=name;box(cx,h/2,z,w-6,h,d-6,wall)
  for yaw,xx,zz,span in [(0,cx,z+d/2,w),(math.pi,cx,z-d/2,w),(math.pi/2,cx+w/2,z,d),(-math.pi/2,cx-w/2,z,d)]:
   street_side=(yaw==math.pi if z>0 else yaw==0) or (yaw==math.pi/2 if cx<0 else yaw==-math.pi/2)
   f=Facade(xx,zz,yaw);f.facade(span,h,max(6,int(span/4.7)),wall,1 if street_side else -1)
  # An occupied roofscape, shaped parapets and cornice around all four sides.
  box(cx,h+.35,z,w+1,.65,d+1,trim,.10)
  for side in [-1,1]:box(cx+side*(w/2-1.2),h+1.35,z,1.1,1.4,d,trim,.06)
+ for xx,zz in [(cx-w*.21,z+d*.20),(cx+w*.20,z-d*.19)]:
+  box(xx,h+1.0,zz,5.1,1.3,4.6,roof,.08)
+  for dx in [-1.3,1.3]:cyl(xx+dx,h+1.78,zz,.66,.32,steel,16)
+  for slat in range(9):box(xx-2.1+slat*.51,h+1.38,zz-2.33,.08,.70,.04,steel)
  if name=='Beacon Grand':
   box(cx,h+3,z,24,5,27,stone,.1);box(cx,h+6.2,z,27,1.0,30,copper,.1)
   for side in [-1,1]:
    cyl(cx+side*11,h+9,z-11,1.3,5,copper,8,r2=.18)
-  text('BEACON GRAND',cx,h+3,z-d/2-.14,.78,gold)
- elif name=='Handlery Union Square':text('HANDLERY',cx,5.25,z+d/2+.05,.85,gold,0)
+  # Mount on the actual rooftop pavilion, whose south wall is z-13.5.
+  Facade(cx,z-13.5).letter('BEACON GRAND',h+3,.78,gold,projection=.08)
+ elif name=='Handlery Union Square':Facade(cx,z+d/2,0).letter('HANDLERY',5.25,.85,gold)
  elif name=='Chancellor Hotel':
   # Powell's projecting vertical sign makes the hotel legible from the road.
   box(cx+w/2+.8,18,z-7,1.4,12,.7,bronze,.10)
-  for i,ch in enumerate('CHANCELLOR'):text(ch,cx+w/2+1.52,23-i*1.06,z-7,.74,gold,math.pi/2)
- elif name=='Taj Campton Place':text('CAMPTON PLACE',cx,5.1,z-d/2-.1,.58,bronze)
+  for i,ch in enumerate('CHANCELLOR'):text(ch,cx+w/2+1.58,23-i*1.06,z-7,.74,gold,math.pi/2)
+ elif name=='Taj Campton Place':Facade(cx,z-d/2).letter('CAMPTON PLACE',5.1,.58,bronze)
+ elif name=='Kensington Park':Facade(cx,z-d/2).letter('KENSINGTON PARK',5.1,.65,bronze)
  elif name=='Elkan Gunst Building':
-  text('GEARY',cx,4.9,z+d/2+.07,.65,bronze,0)
+  Facade(cx,z+d/2,0).letter('GEARY',4.9,.65,bronze)
  elif name=='278 Post corner':
   # A deep two-storey display plinth and emphatic square cornice distinguish
   # this occupied diagonal corner from Apple's low, glazed pavilion.
@@ -247,22 +276,42 @@ for (part,m),(verts,faces,uvs) in BATCH.items():
   for i,co in zip(p.loop_indices,coords):uv.data[i].uv=co
  bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.00001);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces));bm.to_mesh(mesh);bm.free()
  o=bpy.data.objects.new(part+' / '+m,mesh);bpy.context.collection.objects.link(o);o.data.materials.append(M[m]);objects.append(o)
+# Test actual glyph-face samples against every modeled wall and cornice before
+# rendering/export. A ray starting just outside a glyph must have clear space
+# for the first metre along the facade normal, even where a letter crosses a band.
+bpy.context.view_layer.update();deps=bpy.context.evaluated_depsgraph_get();sign_audit=[]
+for sign in SIGN_PROBES:
+ blocked=0;count=0;direction=sign['normal'];direction=Vector((direction.x,-direction.z,direction.y))
+ for sample in sign['samples']:
+  if sign['part']=='Apple Union Square':sample=Vector((27+(sample.x-20)*36/42,sample.y,sample.z-2))
+  origin=Vector((sample.x,-sample.z,sample.y))+direction*.018
+  hit,position,normal,index,obj,matrix=bpy.context.scene.ray_cast(deps,origin,direction,distance=1)
+  count+=1
+  if hit:blocked+=1
+ sign_audit.append({'text':sign['text'],'part':sign['part'],'glyphFaceSamples':count,'blockedSamples':blocked})
+assert all(s['glyphFaceSamples'] and not s['blockedSamples'] for s in sign_audit),sign_audit
+print('NORTH_SIGN_MOUNT_AUDIT',json.dumps(sign_audit))
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=24
 world=bpy.data.worlds.new('soft blue daylight');world.use_nodes=True;world.node_tree.nodes['Background'].inputs[0].default_value=(.42,.56,.7,1);world.node_tree.nodes['Background'].inputs[1].default_value=.6;scene.world=world
-bpy.ops.object.light_add(type='AREA',location=(0,170,140));sun=bpy.context.object;sun.data.energy=190000;sun.data.size=80;sun.rotation_euler=(Vector((0,-70,20))-sun.location).to_track_quat('-Z','Y').to_euler()
-bpy.ops.object.camera_add(location=(105,70,65));camera=bpy.context.object;camera.rotation_euler=(Vector((15,-115,28))-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.lens=38;scene.camera=camera
+bpy.ops.object.light_add(type='AREA',location=(0,-170,140));sun=bpy.context.object;sun.data.energy=190000;sun.data.size=80;sun.rotation_euler=(Vector((0,70,20))-sun.location).to_track_quat('-Z','Y').to_euler()
+bpy.ops.object.camera_add(location=(105,-70,65));camera=bpy.context.object;camera.rotation_euler=(Vector((15,115,28))-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.lens=38;scene.camera=camera
 scene.render.resolution_x=1400;scene.render.resolution_y=1000;scene.render.resolution_percentage=100
+# Editable Blender scene uses physical east/+X, north/+Y. Runtime exports use
+# semantic X/Z and precompensated glyphs inside the game's reflected city root.
+for o in objects:o.scale.y=-1
 bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/'north-square.blend'),compress=True)
 bpy.ops.object.select_all(action='DESELECT')
-for o in objects:o.select_set(True)
+for o in objects:o.select_set(True);o.scale.y=1
 bpy.context.view_layer.objects.active=objects[0]
 bpy.ops.export_scene.gltf(filepath=str(OUT/'north-square.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_cameras=False,export_lights=False,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6,export_draco_position_quantization=16)
-report={'triangles':sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in objects),'draws':len(objects),'origin':'world XZ; Y relative to22m street datum'}
+report={'triangles':sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in objects),'draws':len(objects),'origin':'world XZ; Y relative to22m street datum','signMountAudit':sign_audit}
+for o in objects:o.scale.y=-1
 scene.render.filepath=str(ROOT/'art/reviews/north-square.png');bpy.ops.render.render(write_still=True)
-camera.location=(78,-33,26);camera.rotation_euler=(Vector((44,-94,8))-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.lens=52
+camera.location=(78,33,26);camera.rotation_euler=(Vector((44,94,8))-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.lens=52
 scene.render.filepath=str(ROOT/'art/reviews/apple-post-street.png');bpy.ops.render.render(write_still=True)
 # Collapse bevels/window returns only for distant and performance-mode views.
 for o in objects:
+ o.scale.y=1
  bpy.context.view_layer.objects.active=o
  mod=o.modifiers.new('Distant facade simplification','DECIMATE');mod.ratio=.36;bpy.ops.object.modifier_apply(modifier=mod.name)
 bpy.ops.export_scene.gltf(filepath=str(OUT/'north-square-lod.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_cameras=False,export_lights=False,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6,export_draco_position_quantization=16)

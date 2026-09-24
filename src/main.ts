@@ -10,6 +10,7 @@ import { createAtmosphere } from './atmosphere';
 import { upgradeRoadSurface } from './surfaces';
 import { createCityLoop } from './city-loop';
 import { createUnionSquare } from './union-square';
+import { createSquareStreetDetails } from './square-street-details';
 import { createChinatown } from './chinatown';
 import { createCar } from './car';
 import { GameAudio } from './audio';
@@ -21,6 +22,7 @@ import { createSkyCourse } from './skycourse';
 import { flightView } from './flight-view';
 import { createWaterfront } from './waterfront';
 import { createBayBridge } from './baybridge';
+import { createCityRoot, setCameraFromCity, steeringFromControls } from './coordinates';
 import './style.css';
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
@@ -86,18 +88,23 @@ async function boot() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.info.autoReset=false;
   const scene = new THREE.Scene();
+  // The authored map/physics use north +Z; the visible city uses north -Z.
+  // Reflect geometry once, while every camera remains outside this root.
+  const cityRoot = createCityRoot(); scene.add(cityRoot);
   const camera = new THREE.PerspectiveCamera(57, innerWidth / innerHeight, .15, 4200);
   const atmosphere=createAtmosphere(renderer,scene,camera);
-  const world = createCityLoop(scene);
-  const landmarks=createUnionSquare(scene),chinatown=createChinatown(scene);
-  const bayStage=new THREE.Group();bayStage.rotation.y=Math.PI/2;bayStage.position.set(-750,0,250);scene.add(bayStage);
+  const world = createCityLoop(cityRoot);
+  const landmarks=createUnionSquare(cityRoot),chinatown=createChinatown(cityRoot);
+  // This new kit already uses the physical world axes and readable lettering.
+  const squareStreetDetails=createSquareStreetDetails(scene);
+  const bayStage=new THREE.Group();bayStage.rotation.y=Math.PI/2;bayStage.position.set(-750,0,250);cityRoot.add(bayStage);
   const waterfront=createWaterfront(bayStage);createBayBridge(bayStage);
-  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready]);
-  const car = createCar(); scene.add(car.group);
-  const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);scene.add(heroFill);
+  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready,squareStreetDetails.ready]);
+  const car = createCar(); cityRoot.add(car.group);
+  const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
   const sim = new DrivingSimulation(world.obstacles);
   const audio = new GameAudio();
-  const skyCourse=createSkyCourse(scene);
+  const skyCourse=createSkyCourse(cityRoot);
   const cableCars=world.obstacles.filter(obstacle=>obstacle.kind==='cablecar');
   const soundedCableCars=new Set<number>();
   let previousSoundProgress=0;
@@ -107,7 +114,7 @@ async function boot() {
     for(const cable of cableCars){
       if(soundedCableCars.has(cable.progress))continue;
       const distance=Math.hypot(cable.progress-progress,cable.lateral-lateral);
-      if(distance<32){audio.cableBell(distance,(lateral-cable.lateral)/9);soundedCableCars.add(cable.progress);}
+      if(distance<32){audio.cableBell(distance,(cable.lateral-lateral)/9);soundedCableCars.add(cable.progress);}
     }
   }
   const composer = new EffectComposer(renderer);
@@ -156,7 +163,7 @@ async function boot() {
   const particleGeo=new THREE.BufferGeometry();particleGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
   const sprayCanvas=document.createElement('canvas');sprayCanvas.width=sprayCanvas.height=32;const sprayCtx=sprayCanvas.getContext('2d')!;const sprayGradient=sprayCtx.createRadialGradient(16,16,0,16,16,16);sprayGradient.addColorStop(0,'rgba(255,255,255,.7)');sprayGradient.addColorStop(.35,'rgba(255,255,255,.3)');sprayGradient.addColorStop(1,'rgba(255,255,255,0)');sprayCtx.fillStyle=sprayGradient;sprayCtx.fillRect(0,0,32,32);
   const particleMat=new THREE.PointsMaterial({map:new THREE.CanvasTexture(sprayCanvas),color:0xc5d9dd,size:.4,transparent:true,opacity:.045,depthWrite:false,sizeAttenuation:true});
-  const spray=new THREE.Points(particleGeo,particleMat);spray.frustumCulled=false;scene.add(spray);let particleCursor=0;
+  const spray=new THREE.Points(particleGeo,particleMat);spray.frustumCulled=false;cityRoot.add(spray);let particleCursor=0;
 
   type Phase = 'menu'|'countdown'|'racing'|'paused'|'finished'|'tour';
   const tour=new CityTour(world.obstacles);
@@ -173,13 +180,13 @@ async function boot() {
   const bayCamera=new THREE.Vector3(640,45,250),bayLook=new THREE.Vector3(845,25,250);
   let lastDistrict='', gamepadPauseDown=false, shake=0, helpWasPaused=false, goUntil=0, finishReveal=0;
   const keys=new Set<string>(), touch=new Set<string>();
-  const desiredCamera=new THREE.Vector3(), lookAt=new THREE.Vector3(), smoothedLook=new THREE.Vector3();
+  const desiredCamera=new THREE.Vector3(), cityCameraPosition=new THREE.Vector3(), lookAt=new THREE.Vector3(), smoothedLook=new THREE.Vector3();
   let cameraInitialized=false, performanceFrames=0, performanceTime=0;
   let lastFocus:HTMLElement|null=null;
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   audio.setMuted(muted);
   function updateSoundButton(){el('sound').innerHTML=muted?muteIcon:speakerIcon;el('sound').setAttribute('aria-label',muted?'Unmute sound':'Mute sound');el('sound').setAttribute('aria-pressed',String(muted));}
-  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.02:.065;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
+  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.02:.065;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);squareStreetDetails.setQuality(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
   function resize(){
     camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
     // Scenic stops scroll as one row on small screens. On wider screens,
@@ -213,7 +220,7 @@ async function boot() {
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
   function menu(){phase='menu';tourArt=null;skyCourse.reset();finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
-    phase='finished';finishedAt=totalTime;finishCameraStart.copy(camera.position);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
+    phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
     const s=sim.state, isBest=!best||s.elapsed<best;
     if(isBest){best=s.elapsed;safeWrite('whimsical-sf-city-loop-best-v1',String(best));}
     el('result-eyebrow').textContent=isBest?'NEW PERSONAL BEST / CITY LOOP':'SAN FRANCISCO / CITY LOOP';
@@ -225,12 +232,13 @@ async function boot() {
   function readInput():DriveInput{
     let throttle=(autoThrottle||keys.has('KeyW')||keys.has('ArrowUp')||touch.has('gas'))?1:0;
     let brake=(keys.has('KeyS')||keys.has('ArrowDown')||touch.has('brake'))?1:0;
-    // Positive lane offset is the left-hand normal of the current street.
-    let steer=((keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left'))?1:0)-((keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right'))?1:0);
+    const left=keys.has('KeyA')||keys.has('ArrowLeft')||touch.has('left');
+    const right=keys.has('KeyD')||keys.has('ArrowRight')||touch.has('right');
+    let steer=steeringFromControls(left,right);
     let drift=keys.has('Space')||touch.has('drift'),boost=keys.has('ShiftLeft')||keys.has('ShiftRight')||touch.has('boost');
     const pads=navigator.getGamepads?.();const pad=pads?Array.from(pads).find(p=>p?.connected):undefined;
     if(pad){
-      const axis=pad.axes[0]||0;if(Math.abs(axis)>.14)steer=-axis;
+      steer=steeringFromControls(left,right,pad.axes[0]||0);
       throttle=Math.max(throttle,pad.buttons[7]?.value||0);brake=Math.max(brake,pad.buttons[6]?.value||0);drift=drift||!!pad.buttons[2]?.pressed;boost=boost||!!pad.buttons[0]?.pressed;
       const down=!!pad.buttons[9]?.pressed;if(down&&!gamepadPauseDown){if(phase==='racing'||phase==='countdown')pause();else if(phase==='paused')resume();else if(phase==='menu'||phase==='finished')start();}gamepadPauseDown=down;
     }else{gamepadPauseDown=false;}
@@ -277,7 +285,7 @@ async function boot() {
     }else if(phase==='menu'){
       const hero=routePoint(40,1.3);car.group.position.set(hero.x,hero.y+.05,hero.z);car.group.rotation.set(0,routeYaw(40),0);
       const orbit=reduceMotion?0:Math.sin(totalTime*.055)*10;
-      desiredCamera.set(35+orbit*.28,42,-45);lookAt.set(-86,47,8);
+      desiredCamera.set(35+orbit*.28,42,-45);lookAt.set(-86,47,-36);
       camera.fov=camera.aspect<.7?76:camera.aspect<1.2?64:56;
     }else{
       const here=routePoint(s.progress,s.lateral),frame=routeFrame(s.progress),yaw=frame.yaw;
@@ -291,9 +299,9 @@ async function boot() {
       if(shake>.001&&!reduceMotion){desiredCamera.x+=(Math.random()-.5)*shake;desiredCamera.y+=(Math.random()-.5)*shake*.65;shake*=Math.exp(-8*dt);}
       const targetFov=(cameraMode===1?70:68)+(reduceMotion?0:s.speed*.12+view.weight*3);camera.fov=THREE.MathUtils.damp(camera.fov,targetFov,3,dt);
     }
-    if(!cameraInitialized){camera.position.copy(desiredCamera);smoothedLook.copy(lookAt);cameraInitialized=true;}else{camera.position.lerp(desiredCamera,1-Math.exp(-7*dt));smoothedLook.lerp(lookAt,1-Math.exp(-8*dt));}
-    if(phase!=='menu')camera.position.y=Math.max(camera.position.y,groundHeight(camera.position.x,camera.position.z)+1.8);
-    camera.lookAt(smoothedLook);camera.updateProjectionMatrix();
+    if(!cameraInitialized){cityCameraPosition.copy(desiredCamera);smoothedLook.copy(lookAt);cameraInitialized=true;}else{cityCameraPosition.lerp(desiredCamera,1-Math.exp(-7*dt));smoothedLook.lerp(lookAt,1-Math.exp(-8*dt));}
+    if(phase!=='menu')cityCameraPosition.y=Math.max(cityCameraPosition.y,groundHeight(cityCameraPosition.x,cityCameraPosition.z)+1.8);
+    setCameraFromCity(camera,cityCameraPosition,smoothedLook);camera.updateProjectionMatrix();
     atmosphere.update(totalTime,phase==='menu'?35:phase==='tour'?tour.progress:sim.state.progress);
   }
   function updateSpray(dt:number,input:DriveInput){
@@ -336,7 +344,7 @@ async function boot() {
   el('tour-start').onclick=()=>{phase='tour';tourArt=null;tourBayStarted=null;skyCourse.reset();tour.jump(START_PROGRESS);tour.paused=false;el('tour-pause').textContent='PAUSE';clearInputs();cameraInitialized=false;void audio.unlock();syncPhase();resize();};
   el('tour-exit').onclick=menu;el('tour-race').onclick=start;el('tour-pause').onclick=()=>{if(tourArt){tour.orbit=0;cameraInitialized=false;}tourArt=null;if(tour.progress>=TRACK_LENGTH-1){tour.jump(START_PROGRESS);cameraInitialized=false;}tour.paused=!tour.paused;el('tour-pause').textContent=tour.paused?'RESUME':'PAUSE';if(tour.paused)audio.suspend();else void audio.unlock();};
   document.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(button=>button.onclick=()=>{const stop=Number(button.dataset.stop);tourBayStarted=null;tour.jump(stop);const scene=button.dataset.scene;tourArt=scene==='square'||scene==='westin'||scene==='post'?scene:null;if(tourArt){tour.paused=true;audio.suspend();}if(stop>=TRACK_LENGTH-1){tour.paused=true;audio.suspend();}el('tour-pause').textContent=stop>=TRACK_LENGTH-1?'RUN AGAIN':tour.paused?'RESUME':'PAUSE';skyCourse.reset();cameraInitialized=false;});
-  let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit-(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
+  let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit+(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
   el('start').onclick=start;el('again').onclick=start;el('restart').onclick=start;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
   el('home').onclick=menu;el('pause-home').onclick=menu;el('result-home').onclick=menu;el('sound').onclick=toggleSound;
   el('how').onclick=()=>{helpWasPaused=phase==='racing'||phase==='countdown';if(helpWasPaused)pause();modal('help',true);};el('close-help').onclick=closeHelp;el('help-play').onclick=start;
@@ -357,7 +365,7 @@ async function boot() {
     performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
     const input=readInput();let raceDt=dt;if(phase==='tour'){
       const beforeTour=tour.progress,wasTourPaused=tour.paused;tour.update(dt);if(tour.progress<beforeTour){cameraInitialized=false;tourBayStarted=null;}
-      if(tour.progress>=TRACK_LENGTH-1&&tour.paused){el('tour-pause').textContent='RUN AGAIN';if(!wasTourPaused){audio.suspend();tourBayStarted=totalTime;finishCameraStart.copy(camera.position);finishLookStart.copy(smoothedLook);}}
+      if(tour.progress>=TRACK_LENGTH-1&&tour.paused){el('tour-pause').textContent='RUN AGAIN';if(!wasTourPaused){audio.suspend();tourBayStarted=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);}}
       if(!tour.paused){audio.update(tour.speed,.40,false,false,tour.glide);updateCitySound(tour.progress,tour.lateral);}
       el('tour-place').textContent=tourArt?tourSceneNames[tourArt]:tour.progress>=TRACK_LENGTH-1?'FERRY BUILDING & THE BAY':districtAt(tour.progress).name;
       el('tour-mode').textContent=tourArt?'POSTCARD MODE / CITY PORTRAITS':tour.paused?'POSTCARD MODE / PAUSED':'POSTCARD MODE / AUTOPILOT';
@@ -393,7 +401,7 @@ async function boot() {
     if(phase==='tour'){canvas.dataset.progress=tour.progress.toFixed(1);canvas.dataset.airborne=String(tour.airborne);canvas.dataset.altitude=tour.altitude.toFixed(1);canvas.dataset.glide=tour.glide.toFixed(2);}
     const hits=skyCourse.update(totalTime,cityProgress,car.group.position,phase==='racing');
     if(hits){collectedRings+=hits;sim.state.boost=Math.min(1,sim.state.boost+.14*hits);audio.cue('checkpoint');announce('SUN RING',`${collectedRings} COLLECTED · +BOOST`,1);}
-    world.update(totalTime,cityProgress);landmarks.update(totalTime,cityProgress,camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress);
+    world.update(totalTime,cityProgress);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}
     heroFill.position.set(car.group.position.x-4,car.group.position.y+6,car.group.position.z-7);
     renderer.info.reset();composer.render();

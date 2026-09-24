@@ -1,6 +1,6 @@
 # Blender art pipeline — implemented
 
-The reference-based art stretch now covers the four Union Square frontages and surrounding corner buildings. The game loads original Blender models for the Westin, Post Street and nearby hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms and Powell cable car. Four canopy trees reuse the credited CC0 jacaranda model. Gameplay, terrain, streets, plaza terraces and collisions stay in TypeScript/Three.js. The wider city, Chinatown and waterfront still use the preceding procedural architecture.
+The reference-based art stretch now covers the four Union Square frontages, surrounding corner buildings and complete block returns. The game loads original Blender models for the Westin, Post Street and nearby hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms, Powell cable car and a close street furniture kit. Four canopy trees reuse the credited CC0 jacaranda model. Gameplay, terrain, streets, plaza terraces and collisions stay in TypeScript/Three.js. The wider city, Chinatown and waterfront still use the preceding procedural architecture.
 
 ## Delivered models
 
@@ -20,21 +20,23 @@ The following counts come from the exported GLBs and adjacent metadata. Sizes ar
 
 | Group | Close triangles | Distant triangles | Exported meshes / materials | Close GLB | Distant GLB |
 | --- | ---: | ---: | --- | --- | --- |
-| Post Street and outside corners | 283,658 | 101,301 | 87 / 22 in each level | 2,291,064 bytes (2.29 MB) | 1,683,512 bytes (1.68 MB) |
-| Geary stores and Stockton boutiques | 152,876 | 62,674 | 56 / 22 in each level | 3,429,320 bytes (3.43 MB) | 3,053,004 bytes (3.05 MB) |
+| Post Street and outside corners | 440,182 | 154,016 | 206 / 23 in each level | 3,255,840 bytes (3.25 MB) | 2,445,972 bytes (2.45 MB) |
+| Geary stores and Stockton boutiques | 285,078 | 114,808 | 96 / 22 in each level | 4,319,032 bytes (4.32 MB) | 3,702,640 bytes (3.70 MB) |
+| Street signs, newsracks and bike racks | 54,592 | — | 32 / 10 | 405,940 bytes (0.41 MB) | — |
 
-Both groups use Draco geometry compression. The north files each embed six images; the south/east files each embed nine. Their distant versions retain the texture payload, so their file-size reduction is smaller than their triangle reduction. The four jacarandas share one 75,735-triangle CC0 model with external local WebP maps; see `public/assets/vegetation/SOURCE.md` for its existing asset budget.
+All three groups use Draco geometry compression. The north files each embed six images; the south/east files each embed nine. Their distant versions retain the texture payload, so their file-size reduction is smaller than their triangle reduction. The street kit has no image textures; 22 lettering nodes remain independent of its ten shared material meshes. The four jacarandas share one 75,735-triangle CC0 model with external local WebP maps; see `public/assets/vegetation/SOURCE.md` for its existing asset budget.
 
 ## Editable sources and references
 
 - `art/source/westin.blend`; generator `tools/blender/build_westin.py`; references `art/references/westin.md`; reviewed renders `art/reviews/westin-overview.png` and `westin-entrance.png`.
 - `art/blender/dewey-monument.blend` and `date-palm.blend`; generator `tools/blender/create_plaza.py`; references and geometry notes in `public/assets/plaza/SOURCE.md`.
 - `art/source/cable-car.blend`; generator `tools/blender/create_cable_car.py`; reference notes in `public/assets/models/cable-car-SOURCE.md`; review image `art/source/cable-car-study.png`.
-- `art/source/north-square.blend`; generator `tools/blender/build_north_square.py`; review renders `art/reviews/north-square.png` and `art/reviews/apple-post-street.png`. Includes Post's four main parcels, Apple's visible interior and garden, Hyatt, Beacon Grand, Chancellor, adjoining Post buildings, 278 Post, Campton Place, Elkan Gunst and Handlery.
-- `art/source/union-square-frontages.blend`; generator `tools/blender/build_square_frontages.py`; review renders `art/reviews/square-frontages-overview.png` and `art/reviews/neiman-rotunda-study.png`. Includes Macy's glass atrium, the I. Magnin marble wing, Neiman Marcus and its modeled rotunda, and five Stockton boutique parcels.
+- `art/source/north-square.blend`; generator `tools/blender/build_north_square.py`; review renders `art/reviews/north-square.png` and `art/reviews/apple-post-street.png`. Includes Post's four main parcels, Apple's visible interior and garden, Hyatt, Beacon Grand, Chancellor, Inn at Union Square, Kensington Park, 278 Post, Campton Place, Elkan Gunst and Handlery. Complete side/rear elevations, the Sutter service block and the southwest returns toward O'Farrell fill the deeper blocks.
+- `art/source/union-square-frontages.blend`; generator `tools/blender/build_square_frontages.py`; reference notes `art/references/union-square-frontages.md`; review renders `art/reviews/square-frontages-overview.png`, `art/reviews/neiman-rotunda-study.png`, `art/reviews/maiden-lane-continuity.png` and `art/reviews/square-frontages-rear-returns.png`. Includes Macy's glass atrium and rear terracotta body through O'Farrell, the I. Magnin marble wing, Neiman Marcus and its modeled rotunda, and five Stockton boutique parcels with complete returns toward Grant. Maiden Lane remains open through the block.
+- `art/source/square-street-details.blend`; generator `tools/blender/build_square_street_details.py`; review renders `art/reviews/square-street-signs.png` and `art/reviews/square-newsracks.png`. Includes four corner street-name assemblies, two detailed newspaper dispensers with fictional cover artwork, and three galvanized bicycle racks. Placement and coordinate notes are in `public/assets/square-street-details/README.md`.
 - `art/references/union-square-layout.md` records the verified street relationships, approximate placement bounds, public references and geographic source attribution. `src/plaza-layout.ts` is the shared source for terrace elevations and seven palm/four jacaranda placements.
 
-The Blender architecture, sculpture, palms, cable car and generated texture pixels are original project assets. Public museum elevations and photographs were used as visual references, not embedded as copied textures or meshes. The jacaranda is a separately licensed CC0 source model. OpenStreetMap supplied geographic reference data, credited to its contributors under the ODbL; the game includes no OSM map tiles. The depicted landmarks/transit system are not sponsors. See `public/assets/CREDITS.md` for source attribution and decoder licensing.
+The Blender architecture, sculpture, palms, cable car, street furniture and generated texture pixels are original project assets. Public museum elevations and photographs were used as visual references, not embedded as copied textures or meshes. Newspaper covers are original fictional artwork. The jacaranda is a separately licensed CC0 source model. OpenStreetMap supplied geographic reference data, credited to its contributors under the ODbL; the game includes no OSM map tiles. The depicted landmarks/transit system are not sponsors. See `public/assets/CREDITS.md` for source attribution and decoder licensing.
 
 ## Rebuild
 
@@ -46,6 +48,7 @@ Authored and exported using official Blender 4.5.9 LTS for Apple silicon. Use a 
 /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python tools/blender/create_cable_car.py
 /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python tools/blender/build_north_square.py
 /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python tools/blender/build_square_frontages.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python tools/blender/build_square_street_details.py
 ```
 
 The scripts save editable `.blend` files and export runtime GLBs. Some also render review images, which may take several minutes. Blender was originally run from the official disk image; it is not a runtime dependency of the browser game. Generated source backups (`.blend1`) are ignored.
@@ -54,7 +57,21 @@ Generated normal/roughness images must have their **Non-Color** colorspace set b
 
 ## Coordinates and runtime
 
-All models use metres and glTF +Y up. Individual hero objects use ground-contact origins; the two frontage sets encode world X/Z coordinates relative to the square's 22 m street datum. Blender source coordinates may be Z-up; the export handles axis conversion.
+All models use metres. Map coordinates remain separate from the renderer so the established route and hill profiles do not need to change:
+
+| Space | East | North | Up | Use |
+| --- | --- | --- | --- | --- |
+| Semantic city/map | +X | +Z | +Y | Route, terrain, gameplay, existing scene geometry and two frontage GLBs |
+| Physical Blender source | +X | +Y | +Z | Saved north/south block scenes and new street furniture source |
+| Canonical/render world | +X | −Z | +Y | Three.js camera, lights and the street furniture GLB |
+
+Using semantic +Z north directly with an ordinary Three.js camera mirrored the city on screen: east appeared on the left when looking north. `src/coordinates.ts` now provides the explicit `(x,y,z) → (x,y,−z)` conversion. Existing city geometry and animated objects live beneath `cityRoot.scale.z = -1`. The camera stays outside that group; its semantic position is stored separately and converted at the render boundary. Directional light positions, targets and reflection-capture positions are converted as well. Projection regression tests cover Apple/Saks, Apple/Neiman, the first clockwise corner and actual steering in all four street headings.
+
+The two frontage generators save physically oriented, readable Blender scenes with +Y north. For export they temporarily remove the source objects' Y reflection, producing semantic +Z-north GLBs for the reflected city root. Their signs are counter-reflected individually along each sign's local horizontal baseline before batching. Existing local hero objects also use local X compensation to preserve readable lettering and asymmetric details. Do not mirror an entire text atlas: compensate each label within its own cell or mesh.
+
+The new street furniture generator instead follows normal Blender-to-glTF conversion throughout. Its exported north is already −Z; `src/main.ts` attaches it directly to the scene, outside `cityRoot`, with identity rotation and scale. Its 22 sign/newspaper lettering nodes use proper rotations and need no reflection. Adding it under the legacy reflection group would put it on the wrong side of the square.
+
+Individual hero objects use ground-contact origins. The two frontage sets encode semantic world X/Z coordinates relative to the square's 22 m street datum; the street kit encodes canonical world X/Z relative to that same datum. Placements below are semantic unless explicitly marked canonical.
 
 | Asset | Placement / orientation |
 | --- | --- |
@@ -65,12 +82,15 @@ All models use metres and glTF +Y up. Individual hero objects use ground-contact
 | Cable car | Existing Powell obstacle at world Z=139; route frame supplies position, pitch and yaw. +Z is forward. Existing 2.25 × 7.2 m obstacle envelope retained. |
 | North frontage and corner group | Runtime translation `(0,22,0)`, no rotation. Apple lies north of Post and west of Stockton; Hyatt is behind it. |
 | South/east frontage group | Runtime translation `(0,22,0)`, no rotation. Macy's is south of Geary, Neiman Marcus southeast across Geary, and the Stockton parcels leave Maiden Lane open. |
+| Street furniture kit | Canonical translation `(0,22,0)`, identity rotation/scale, directly under the scene. Four crossing-street signs, Post newsracks and Stockton bicycle racks occupy pedestrian space. |
 
 `src/westin.ts` loads the hotel and switches to its distant mesh at 290m with hysteresis, or explicitly on Performance graphics. Repeated materials are shared between the two levels. The Draco WebAssembly decoder is bundled locally under `/assets/draco/`; no CDN dependency is required.
 
 `src/north-square.ts` switches to its distant model at 270 m, with 12% hysteresis, and batches by material within spatial cells. `src/square-frontages.ts` switches at 235 m with the same hysteresis; it batches opaque materials while retaining separate transparent building panes for sorting. Performance graphics explicitly select their distant models. Materials are shared between close and distant levels.
 
 `src/plaza-assets.ts` renders seven palms as six instanced meshes and shares the jacaranda model across four placements. `src/street-assets.ts` replaces the cable car visual in its existing route frame. Imported architecture, the monument and palms retain their procedural fallback until loading succeeds. The jacarandas have no separate tree fallback. Scene startup waits for the local asset attempts before capturing reflections and revealing the game.
+
+`src/square-street-details.ts` loads the kit before the startup reflection capture, controls shadow casting with graphics quality, and culls the complete kit beyond 370 m, or 230 m in Performance mode. These furnishings are scenery; they do not add driving obstacles.
 
 The plaza perimeter is Y=22.34, the central paving Y=24.40 and the north terrace Y=25.12. These are art-directed elevations, not survey measurements. Broad stair runs, retaining walls, side access ramps, east/west cafes and the southeast transit entrance replace the old uniform five-step platform. The Apple lot and public garden are level at Y=22; the terrain still follows the exaggerated Powell sidewalk beside opaque hotel foundations. Parcel reservations prevent background buildings and non-racing cross streets from cutting through the authored architecture. `sampleRoute`, `routePoint` and the accepted flight height profiles are unchanged.
 
@@ -86,9 +106,23 @@ The contact-shading pass reuses the main render's shadow map and excludes transp
 
 This is a reference-informed, compressed interpretation. No claim of photogrammetry or survey-level dimensional accuracy is made. The square now has distinct architecture on every side, but the wider city, people and ordinary vehicles still show the earlier procedural style. The next useful art work is Dragon Gate and Grant storefronts, then close street life and the other neighborhoods, judged in the actual racing camera.
 
-The entire pre-art game is preserved at `pre-art-direction-v2` (`3f03057`), and the first Westin-focused Blender pass at `union-square-blender-v1` (`ffae8dc`). Keep those tags when iterating or comparing versions.
+The entire pre-art game is preserved at `pre-art-direction-v2` (`3f03057`), the first Westin-focused Blender pass at `union-square-blender-v1` (`ffae8dc`), and the preceding wider square at `union-square-fidelity-v2`. The last of these predates the map handedness correction, complete block expansion and Blender street furniture. Keep those tags when iterating or comparing versions.
 
-## Validation of the wider square assets
+## Validation status of the current expansion
+
+Validated on 23 September 2026:
+
+- All 35 tests and the production build pass, including screen projection, clockwise turns, left/right controls, route geometry and all three flight transitions.
+- The five updated GLBs have valid container lengths and the expected triangle counts; no negative node scales leak into either architectural export or the canonical street kit. North sign geometry passes 4,502 outward glyph-clearance checks with zero letters buried by walls or cornices.
+- The complete automatic run reached 2,328.2 m and stopped at the Ferry Building. Reviewed the Post frontage, Westin, square overview, Stockton/Neiman corner, Geary, Chinatown and bay in the live browser. No browser warnings or errors were reported in the final check.
+- A 390 × 844 viewport check verified the menu composition and square-tour controls; the override was reset. This was desktop viewport emulation, not a physical-phone benchmark. High graphics and auto acceleration off were retained.
+- On this Mac at 705 × 776, High graphics sampled about 40 fps on the Powell approach, 48 fps at the settled Post portrait and 60 fps at the bay. Post submitted 6,347,743 triangles and 1,534 draws across all render passes. These are local observations, not a frame-rate guarantee. The expansion is heavier than the preceding checkpoint; farther block culling remains an optimization opportunity.
+
+The saved modeling reviews establish asset appearance separately from these browser observations.
+
+## Earlier wider square checkpoint validation
+
+These observations describe the preserved `union-square-fidelity-v2` checkpoint, before the latest expansion and orientation correction:
 
 - All four new close/distant GLBs pass structural inspection: correct container lengths and chunk alignment, in-range buffers/views/accessors, finite ordered declared position bounds, valid primitive/material references and acyclic scene graphs.
 - Every new primitive declares Draco compression; all four files embed their images and use no external image URI. This is structural inspection, not an independent decoder conformance test.

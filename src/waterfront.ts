@@ -53,7 +53,7 @@ export function createWaterfront(scene: THREE.Object3D) {
   }
   function canvasTexture(width: number, height: number, paint: (ctx: CanvasRenderingContext2D) => void) {
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height; paint(canvas.getContext('2d')!);
-    const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4; return map;
+    const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 4; map.repeat.x=-1;map.offset.x=1; return map;
   }
   function lettering(text: string, w: number, h: number, x: number, y: number, z: number) {
     const map = canvasTexture(2048, 256, ctx => {

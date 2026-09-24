@@ -145,7 +145,7 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
     rc.fillStyle = '#ffe5ae'; rc.beginPath(); rc.arc(128, 128, 117, 0, Math.PI * 2); rc.fill();
     rc.strokeStyle = '#f95030'; rc.lineWidth = 8; rc.beginPath(); rc.arc(128, 128, 105, 0, Math.PI * 2); rc.stroke();
     rc.fillStyle = '#203348'; rc.font = '900 108px sans-serif'; rc.textAlign = 'center'; rc.textBaseline = 'middle'; rc.fillText('01', 128, 129);
-    const map = new THREE.CanvasTexture(roundelCanvas); map.colorSpace = THREE.SRGBColorSpace;
+    const map = new THREE.CanvasTexture(roundelCanvas); map.colorSpace = THREE.SRGBColorSpace;map.repeat.x=-1;map.offset.x=1;
     const material = new THREE.MeshStandardMaterial({ map, transparent: true, alphaTest: .25, roughness: .36, polygonOffset: true, polygonOffsetFactor: -1 });
     for (const side of [-1, 1]) {
       const roundel = mesh(new THREE.PlaneGeometry(.32, .32), material, side * .893, .615, -.20);
@@ -175,7 +175,7 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
     pc.fillStyle = '#e7e6dc'; pc.fillRect(0, 0, 512, 160);
     pc.strokeStyle = '#74808b'; pc.lineWidth = 10; pc.strokeRect(6, 6, 500, 148);
     pc.fillStyle = '#233247'; pc.textAlign = 'center'; pc.font = 'bold 63px monospace'; pc.fillText('SF HOP', 256, 109);
-    const map = new THREE.CanvasTexture(plateCanvas);
+    const map = new THREE.CanvasTexture(plateCanvas);map.repeat.x=-1;map.offset.x=1;
     map.colorSpace = THREE.SRGBColorSpace;
     const plate = mesh(new THREE.PlaneGeometry(.46, .144), new THREE.MeshStandardMaterial({ map, roughness: .5 }), 0, .415, -2.101);
     plate.rotation.y = Math.PI;

@@ -1,6 +1,128 @@
 {
-  "triangles": 283658,
-  "draws": 87,
+  "triangles": 440182,
+  "draws": 206,
   "origin": "world XZ; Y relative to22m street datum",
-  "lodTriangles": 101301
+  "signMountAudit": [
+    {
+      "text": "SAKS FIFTH AVENUE",
+      "part": "Saks Fifth Avenue",
+      "glyphFaceSamples": 414,
+      "blockedSamples": 0
+    },
+    {
+      "text": "TIFFANY & CO.",
+      "part": "Tiffany & Co.",
+      "glyphFaceSamples": 488,
+      "blockedSamples": 0
+    },
+    {
+      "text": "WILLIAMS SONOMA",
+      "part": "Williams Sonoma",
+      "glyphFaceSamples": 511,
+      "blockedSamples": 0
+    },
+    {
+      "text": "300",
+      "part": "Apple Union Square",
+      "glyphFaceSamples": 337,
+      "blockedSamples": 0
+    },
+    {
+      "text": "GRAND HYATT",
+      "part": "Grand Hyatt",
+      "glyphFaceSamples": 307,
+      "blockedSamples": 0
+    },
+    {
+      "text": "BEACON GRAND",
+      "part": "Beacon Grand",
+      "glyphFaceSamples": 596,
+      "blockedSamples": 0
+    },
+    {
+      "text": "C",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 96,
+      "blockedSamples": 0
+    },
+    {
+      "text": "H",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 10,
+      "blockedSamples": 0
+    },
+    {
+      "text": "A",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 11,
+      "blockedSamples": 0
+    },
+    {
+      "text": "N",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 8,
+      "blockedSamples": 0
+    },
+    {
+      "text": "C",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 96,
+      "blockedSamples": 0
+    },
+    {
+      "text": "E",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 10,
+      "blockedSamples": 0
+    },
+    {
+      "text": "L",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 4,
+      "blockedSamples": 0
+    },
+    {
+      "text": "L",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 4,
+      "blockedSamples": 0
+    },
+    {
+      "text": "O",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 96,
+      "blockedSamples": 0
+    },
+    {
+      "text": "R",
+      "part": "Chancellor Hotel",
+      "glyphFaceSamples": 94,
+      "blockedSamples": 0
+    },
+    {
+      "text": "KENSINGTON PARK",
+      "part": "Kensington Park",
+      "glyphFaceSamples": 537,
+      "blockedSamples": 0
+    },
+    {
+      "text": "CAMPTON PLACE",
+      "part": "Taj Campton Place",
+      "glyphFaceSamples": 463,
+      "blockedSamples": 0
+    },
+    {
+      "text": "GEARY",
+      "part": "Elkan Gunst Building",
+      "glyphFaceSamples": 222,
+      "blockedSamples": 0
+    },
+    {
+      "text": "HANDLERY",
+      "part": "Handlery Union Square",
+      "glyphFaceSamples": 198,
+      "blockedSamples": 0
+    }
+  ],
+  "lodTriangles": 154016
 }

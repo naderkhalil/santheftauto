@@ -100,11 +100,12 @@ const squareParcels: readonly (readonly [number, number, number, number])[] = [
   [-161, -92, -50, 50],                       // Westin
   [-67, 63, 79, 132],                         // Post frontage and Apple garden
   [31, 63, 132, 185], [-67, -28, 132, 183],   // Hyatt and Beacon Grand
-  [-131, -87, 80, 111], [-113, -87, 110, 136], [-143, -129, 80, 136],
-  [88, 130, 80, 132], [88, 128, 138, 169],    // 278 Post and Campton Place
-  [-129, -87, -138, -82], [-186, -128, -138, -82],
-  [-61, 61, -137, -82], [93, 138, -129, -82], // Macy's and Neiman Marcus
-  [93, 130, 5, 49], [93, 130, -49, -5],      // Stockton, leaving Maiden Lane open
+  [-131, -87, 80, 111], [-113, -87, 110, 136], [-184, -129, 80, 136],
+  [-28.5, 30, 132, 183],
+  [88, 162, 80, 132], [88, 162, 138, 177],    // 278 Post and Campton Place
+  [-129, -87, -183, -82], [-186, -128, -183, -82],
+  [-61, 61, -183, -82], [93, 162, -133, -82], // Macy's and Neiman Marcus
+  [93, 162, 5, 49], [93, 162, -49, -5],      // Stockton, leaving Maiden Lane open
 ];
 
 /** Used by background buildings and non-racing cross streets only. */

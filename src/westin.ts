@@ -8,6 +8,8 @@ export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
   group.name = 'Westin St. Francis / Blender landmark';
   group.position.set(-93, 22, -1.5);
   group.rotation.y = Math.PI / 2;
+  // Local authored models retain readable lettering under the city's Z reflection.
+  group.scale.x = -1;
   parent.add(group);
   const lod = new THREE.LOD();
   // Explicit camera-distance selection also accounts for the aerial menu.

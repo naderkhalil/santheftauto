@@ -12,6 +12,7 @@ export function createCableCarAsset(parent: THREE.Group, fallback: THREE.Group) 
   cableCar ??= new GLTFLoader().loadAsync('/assets/models/cable-car.glb').then(gltf => gltf.scene);
   const ready = cableCar.then(template => {
     const model = template.clone(true);
+    model.scale.x = -1; // local asset chirality inside the reflected map root
     model.name = 'Blender / Powell combination car / 16';
     model.traverse(object => {
       if (!(object instanceof THREE.Mesh)) return;

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LAUNCH_ZONES, sampleRoute, routePoint, routeFrame, sampleGlidePath, routeSlope, routeYaw } from './route';
 
 /** The airborne racing line: three handcrafted flights with collectible sun hoops. */
-export function createSkyCourse(scene:THREE.Scene){
+export function createSkyCourse(scene:THREE.Object3D){
   const root=new THREE.Group();root.name='The Powell Skyway';scene.add(root);
   const gold=new THREE.MeshStandardMaterial({color:'#ffc426',emissive:'#ff9e05',emissiveIntensity:.55,metalness:.45,roughness:.26});
   const mint=new THREE.MeshStandardMaterial({color:'#38fff1',emissive:'#08d5d6',emissiveIntensity:.8,metalness:.2,roughness:.32});
@@ -17,7 +17,7 @@ export function createSkyCourse(scene:THREE.Scene){
     const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=128;
     const ctx=canvas.getContext('2d')!;ctx.fillStyle='#143b54';ctx.fillRect(0,0,1024,128);
     ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 60px sans-serif';ctx.fillText(text,512,67);
-    const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+    const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.repeat.x=-1;texture.offset.x=1;
     return new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide});
   }
   LAUNCH_ZONES.forEach((zone,zi)=>{

@@ -1,0 +1,132 @@
+{
+  "coordinateSystem": "canonical right handed: X east, Y up, Z south",
+  "runtimeTranslation": [
+    0,
+    22,
+    0
+  ],
+  "runtimeRotation": [
+    0,
+    0,
+    0
+  ],
+  "runtimeScale": [
+    1,
+    1,
+    1
+  ],
+  "triangles": 54592,
+  "draws": 32,
+  "independentLabelNodes": 22,
+  "placements": [
+    {
+      "kind": "corner sign",
+      "name": "Post / Powell",
+      "semantic": [
+        -63.3,
+        0.05,
+        53.3
+      ],
+      "canonical": [
+        -63.3,
+        0.05,
+        -53.3
+      ]
+    },
+    {
+      "kind": "corner sign",
+      "name": "Post / Stockton",
+      "semantic": [
+        63.3,
+        0.05,
+        53.3
+      ],
+      "canonical": [
+        63.3,
+        0.05,
+        -53.3
+      ]
+    },
+    {
+      "kind": "corner sign",
+      "name": "Geary / Powell",
+      "semantic": [
+        -63.3,
+        0.05,
+        -53.3
+      ],
+      "canonical": [
+        -63.3,
+        0.05,
+        53.3
+      ]
+    },
+    {
+      "kind": "corner sign",
+      "name": "Geary / Stockton",
+      "semantic": [
+        63.3,
+        0.05,
+        -53.3
+      ],
+      "canonical": [
+        63.3,
+        0.05,
+        53.3
+      ]
+    },
+    {
+      "kind": "newsracks",
+      "semantic": [
+        -54.5,
+        0.05,
+        75.3
+      ],
+      "canonical": [
+        -54.5,
+        0.05,
+        -75.3
+      ]
+    },
+    {
+      "kind": "bike rack",
+      "semantic": [
+        85,
+        0.05,
+        26
+      ],
+      "canonical": [
+        85,
+        0.05,
+        -26
+      ]
+    },
+    {
+      "kind": "bike rack",
+      "semantic": [
+        85,
+        0.05,
+        29
+      ],
+      "canonical": [
+        85,
+        0.05,
+        -29
+      ]
+    },
+    {
+      "kind": "bike rack",
+      "semantic": [
+        85,
+        0.05,
+        32
+      ],
+      "canonical": [
+        85,
+        0.05,
+        -32
+      ]
+    }
+  ],
+  "sources": "Original geometry and fictional newspaper cover artwork; street names and placement follow the Union Square map audit. Fonts converted to geometry; no font files or third-party photographs exported."
+}

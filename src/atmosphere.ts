@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { sampleRoute } from './route';
+import { cityToRender } from './coordinates';
 
 /** Clear Pacific afternoon: blue skylight, warm raking sun and distant coastal air. */
 export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
   scene.fog = new THREE.FogExp2('#8ccbea', .00056);
   const sunlightDirection = new THREE.Vector3(.570, .682, -.461).normalize();
+  const renderSunlightDirection = cityToRender(sunlightDirection);
   const skyMaterial = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { time: { value: 0 }, sunDirection: { value: sunlightDirection }, photographicSky: { value: null }, usePhotographicSky: { value: 0 } },
@@ -53,6 +55,10 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
       }`,
   });
   const sky=new THREE.Mesh(new THREE.SphereGeometry(3500,32,20),skyMaterial);
+  // Keep the existing photographic/procedural sky direction in city space,
+  // but reflect its sphere just like the city. This also applies to the PMREM
+  // clone, so the visible sun, directional light and reflections still agree.
+  sky.scale.z=-1;
   sky.name='Pacific blue sky';sky.renderOrder=-1000;sky.frustumCulled=false;scene.add(sky);
   const hemisphere=new THREE.HemisphereLight('#84bcff','#e9bd92',.82);scene.add(hemisphere);
   const sun=new THREE.DirectionalLight('#fff0cb',3.6);sun.castShadow=true;
@@ -60,7 +66,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   sun.shadow.camera.left=-61;sun.shadow.camera.right=61;sun.shadow.camera.top=78;sun.shadow.camera.bottom=-56;
   sun.shadow.camera.near=1;sun.shadow.camera.far=620;sun.shadow.normalBias=.035;sun.shadow.bias=-.00012;sun.shadow.radius=1.8;
   scene.add(sun,sun.target);
-  const coolFill=new THREE.DirectionalLight('#90c9ff',.32);coolFill.position.set(-100,130,-120);scene.add(coolFill);
+  const coolFill=new THREE.DirectionalLight('#90c9ff',.32);cityToRender({x:-100,y:130,z:-120},coolFill.position);scene.add(coolFill);
 
   const pmrem=new THREE.PMREMGenerator(renderer);
   const environmentScene=new THREE.Scene();
@@ -91,7 +97,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     // Westin's glass reflects the square, rather than an unrelated uphill block.
     const viewpoints=[new THREE.Vector3(-61,29,0),new THREE.Vector3(175,84,400),new THREE.Vector3(660,11,250)];
     for(const viewpoint of viewpoints){
-      scene.environment=skyEnvironment.texture;captureCamera.position.copy(viewpoint);
+      scene.environment=skyEnvironment.texture;cityToRender(viewpoint,captureCamera.position);
       captureCamera.update(renderer,scene);cityEnvironments.push(pmrem.fromCubemap(captureTarget.texture));
     }
     const seen=new Set<THREE.Material>();
@@ -126,7 +132,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
       // Stabilize the moving map to its texel grid to keep fine cornices calm.
       const texel=2*extent/sun.shadow.mapSize.x;
       target.x=Math.round(target.x/texel)*texel;target.z=Math.round(target.z/texel)*texel;
-      sun.target.position.copy(target);sun.position.copy(target).addScaledVector(sunlightDirection,300);
+      cityToRender(target,sun.target.position);sun.position.copy(sun.target.position).addScaledVector(renderSunlightDirection,300);
       const region=p.x>560?2:p.z>180?1:0;
       if(captured&&region!==environmentRegion){scene.environment=cityEnvironments[region].texture;environmentRegion=region;}
     },

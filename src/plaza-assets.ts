@@ -34,6 +34,7 @@ export function createPlazaAssets(parent: THREE.Group, monumentFallback: THREE.G
     model.position.set(0, PLAZA_LEVELS.center, 0);
     // The sculpture faces east toward Stockton; its raised trident reads on Powell.
     model.rotation.y = Math.PI / 2;
+    model.scale.x = -1;
     model.traverse(object => { if (object instanceof THREE.Mesh) configure(object); });
     art.add(model); monumentFallback.visible = false;
   }).catch(error => { console.warn('Dewey sculpture unavailable; retaining procedural monument.', error); });
