@@ -118,8 +118,6 @@ export function createCityLoop(scene: THREE.Object3D) {
     for(let stripe=-6;stripe<=6;stripe+=1.5){const p=routePoint(s,stripe);box(cream,p.x,p.y+.17,p.z,.65,.018,3.4,routeYaw(s));}
     const p=routePoint(s+12,-10);pole(metal,p.x,p.y+2.9,p.z,.09,5.8);box(dark,p.x,p.y+5.1,p.z,.40,1.12,.30);
     for(let i=0;i<3;i++)add(sphere,i===2?green:i===0?red:gold,p.x,p.y+5.42-i*.31,p.z-.18,.10,.10,.05);
-    const arrow=routePoint(s+5,-9.5),angle=routeYaw(corner+22)-routeYaw(corner-22),turn=Math.atan2(Math.sin(angle),Math.cos(angle));
-    label(turn>0?'›  ›  ›':'‹  ‹  ‹',arrow.x,arrow.y+3.3,arrow.z,3.6,.7,routeYaw(s)+Math.PI,'#2e665e','#d0f8b3');
   }
 
   // Narrow frontages, regular floor heights, recessed glazing and real rooflines.

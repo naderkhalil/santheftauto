@@ -13,6 +13,8 @@ Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for 
 
 **Explore Union Square** starts an untimed drive on the square's southern promenade. Drive onto the plaza, climb its stairs and ramps, and explore the surrounding streets. This mode uses manual acceleration even when Auto Accelerate is enabled for races.
 
+Races have temporary gold chevrons around all eight curves, 50 m and 25 m approach boards, and a next-turn card with street names and speed-aware braking cues. Every marker stays outside the racing road and has no collision body. Explore Union Square removes the markers and turn card; the city, plaza entrances and existing driving remain open. Scenic driving shows the course markings, while architectural portrait stops keep them hidden.
+
 The menu's **Explore the City** postcard opens an illustrated downtown map with the course highlighted among San Francisco's neighborhoods, streets, waterfront piers and Bay Bridge. It uses local SVG artwork and simplified geography, with no map service required.
 
 ## Controls
