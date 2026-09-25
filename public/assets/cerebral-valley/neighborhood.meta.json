@@ -1,0 +1,38 @@
+{
+  "triangles": 3025855,
+  "lodTriangles": 561883,
+  "meshes": 834,
+  "lodMeshes": 605,
+  "spatialBlocks": 41,
+  "buildings": 1559,
+  "parkFeatures": [
+    {
+      "park": "Duboce Park",
+      "surveyedBoundary": true,
+      "pathCount": 33,
+      "treeAnchors": 21
+    },
+    {
+      "park": "Alamo Square",
+      "surveyedBoundary": true,
+      "pathCount": 55,
+      "treeAnchors": 98
+    },
+    {
+      "park": "Patricia's Green",
+      "surveyedBoundary": true,
+      "pathCount": 21,
+      "treeAnchors": 8
+    }
+  ],
+  "vegetationAnchors": 127,
+  "bytes": 35900196,
+  "lodBytes": 12547920,
+  "coordinates": "+X east, glTF -Z north, +Y altitude, no parent reflection",
+  "origin": {
+    "longitude": -122.42415,
+    "latitude": 37.77655
+  },
+  "geometrySource": "OSM mapped building footprints/heights and USGS elevation raster; facade ornament/paint reference-informed",
+  "terrainFootings": true
+}

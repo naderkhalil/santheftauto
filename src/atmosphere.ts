@@ -4,17 +4,25 @@ import { sampleRoute } from './route';
 import { cityToRender } from './coordinates';
 
 /** Clear Pacific afternoon: blue skylight, warm raking sun and distant coastal air. */
-export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
+export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, options: {
+  sampleRoute?: typeof sampleRoute;
+  reflectionPoints?: readonly {x:number;y:number;z:number}[];
+  shadowExtent?: number;
+  sunDirection?: {x:number;y:number;z:number};
+  prepareReflection?: (point: {x:number;y:number;z:number}) => void;
+} = {}) {
+  const courseSample=options.sampleRoute??sampleRoute;
   scene.fog = new THREE.FogExp2('#8ccbea', .00056);
-  const sunlightDirection = new THREE.Vector3(.570, .682, -.461).normalize();
+  const sunlightDirection = options.sunDirection ? new THREE.Vector3(options.sunDirection.x,options.sunDirection.y,options.sunDirection.z).normalize() : new THREE.Vector3(.570,.682,-.461).normalize();
+  const photographRotation=-1.31+Math.atan2(sunlightDirection.z,sunlightDirection.x)-Math.atan2(-.461,.570);
   const renderSunlightDirection = cityToRender(sunlightDirection);
   const skyMaterial = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { time: { value: 0 }, sunDirection: { value: sunlightDirection }, photographicSky: { value: null }, usePhotographicSky: { value: 0 } },
+    uniforms: { photographRotation: {value:photographRotation}, time: { value: 0 }, sunDirection: { value: sunlightDirection }, photographicSky: { value: null }, usePhotographicSky: { value: 0 } },
     vertexShader: `varying vec3 vDirection;void main(){vDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
     fragmentShader: `
       varying vec3 vDirection; uniform float time; uniform vec3 sunDirection;
-      uniform sampler2D photographicSky; uniform float usePhotographicSky;
+      uniform sampler2D photographicSky; uniform float usePhotographicSky; uniform float photographRotation;
       float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
       float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+1.),f.x),f.y);}
       float fbm(vec2 p){float v=0.,a=.5;mat2 r=mat2(.8,.6,-.6,.8);for(int i=0;i<5;i++){v+=a*noise(p);p=r*p*2.03+19.1;a*=.49;}return v;}
@@ -22,7 +30,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
         vec3 d=normalize(vDirection);float h=max(d.y,0.);
         if(usePhotographicSky>.5){
           // Match the measured photographic sun to the directional light.
-          float a=-1.31;vec3 q=vec3(cos(a)*d.x+sin(a)*d.z,d.y,-sin(a)*d.x+cos(a)*d.z);
+          float a=photographRotation;vec3 q=vec3(cos(a)*d.x+sin(a)*d.z,d.y,-sin(a)*d.x+cos(a)*d.z);
           vec2 uv=vec2(atan(q.z,q.x)/6.28318530718+.5,asin(clamp(q.y,-1.,1.))/3.14159265359+.5);
           vec3 c=texture2D(photographicSky,uv).rgb*1.65*vec3(.80,1.02,1.12);
           float l=dot(c,vec3(.2126,.7152,.0722));
@@ -95,8 +103,14 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     for(const environment of cityEnvironments)environment.dispose();cityEnvironments.length=0;
     // Capture actual opposing architecture at three distinct locations. The
     // Westin's glass reflects the square, rather than an unrelated uphill block.
-    const viewpoints=[new THREE.Vector3(-61,29,0),new THREE.Vector3(175,84,400),new THREE.Vector3(660,11,250)];
+    const viewpoints=options.reflectionPoints?.map(p=>new THREE.Vector3(p.x,p.y,p.z))??[new THREE.Vector3(-61,29,0),new THREE.Vector3(175,84,400),new THREE.Vector3(660,11,250)];
     for(const viewpoint of viewpoints){
+      if(options.prepareReflection){
+        options.prepareReflection(viewpoint);
+        cityToRender({x:viewpoint.x,y:viewpoint.y+15,z:viewpoint.z},sun.target.position);
+        sun.position.copy(sun.target.position).addScaledVector(renderSunlightDirection,300);
+        renderer.shadowMap.needsUpdate=true;
+      }
       scene.environment=skyEnvironment.texture;cityToRender(viewpoint,captureCamera.position);
       captureCamera.update(renderer,scene);cityEnvironments.push(pmrem.fromCubemap(captureTarget.texture));
     }
@@ -121,9 +135,9 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     bakeCityReflections,
     update(time:number,progress:number){
       sky.position.copy(camera.position);skyMaterial.uniforms.time.value=time;
-      const p=sampleRoute(progress);
-      const inSquare=p.x<90&&p.x>-180&&p.z<100&&p.z>-100;
-      const extent=inSquare?146:74;
+      const p=courseSample(progress);
+      const inSquare=!options.sampleRoute&&p.x<90&&p.x>-180&&p.z<100&&p.z>-100;
+      const extent=options.shadowExtent??(inSquare?146:74);
       if(extent!==shadowExtent){
         shadowExtent=extent;sun.shadow.camera.left=-extent;sun.shadow.camera.right=extent;
         sun.shadow.camera.top=extent;sun.shadow.camera.bottom=-extent;
@@ -134,7 +148,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
       const texel=2*extent/sun.shadow.mapSize.x;
       target.x=Math.round(target.x/texel)*texel;target.z=Math.round(target.z/texel)*texel;
       cityToRender(target,sun.target.position);sun.position.copy(sun.target.position).addScaledVector(renderSunlightDirection,300);
-      const region=p.x>560?2:p.z>180?1:0;
+      const region=options.reflectionPoints?options.reflectionPoints.reduce((best,q,index)=>Math.hypot(q.x-p.x,q.z-p.z)<Math.hypot(options.reflectionPoints![best].x-p.x,options.reflectionPoints![best].z-p.z)?index:best,0):p.x>560?2:p.z>180?1:0;
       if(captured&&region!==environmentRegion){scene.environment=cityEnvironments[region].texture;environmentRegion=region;}
     },
     setQuality(low:boolean,cinematic=false){

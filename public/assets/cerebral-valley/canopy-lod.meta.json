@@ -1,0 +1,42 @@
+[
+  {
+    "name": "jacaranda_tree_leaves",
+    "before": 55000,
+    "after": 27000,
+    "method": "whole leaf-island sampling, no leaf edge collapse",
+    "sourceConnectedIslands": 31100,
+    "retainedIslands": 12494,
+    "sourceIslandTriangleHistogram": {
+      "1": 15431,
+      "2": 10827,
+      "3": 2284,
+      "4": 1960,
+      "5": 374,
+      "6": 216,
+      "7": 7,
+      "8": 1
+    },
+    "spatialCells": 5678,
+    "sourceLeafVertices": 146167,
+    "retainedLeafVertices": 69284,
+    "maximumRetainedVertexDisplacement": 0.0,
+    "maximumRetainedUVDisplacement": 0.0,
+    "silhouetteDirections": 96,
+    "seed": 53124,
+    "sourceTexturedLeafArea": 545.1617903809439,
+    "retainedTexturedLeafArea": 368.386842660744,
+    "selection": "per-cell coverage representative plus highest visible leaf area per triangle"
+  },
+  {
+    "name": "jacaranda_tree_branches",
+    "before": 14706,
+    "after": 5710,
+    "method": "edge collapse on woody structure only"
+  },
+  {
+    "name": "jacaranda_tree_trunk",
+    "before": 4994,
+    "after": 1598,
+    "method": "edge collapse on woody structure only"
+  }
+]

@@ -29,6 +29,8 @@ import { cityMapSvg } from './city-map';
 import { createPlayground, playgroundMapSvg, playgroundMapPoint } from './playground-scene';
 import { playgroundHeight, PLAYGROUND_COLLIDERS } from './playground';
 import './style.css';
+import { mountRacePicker } from './race-picker';
+import { courseById } from './courses';
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
 const muteIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9l6 6m0-6-6 6"/></svg>`;
@@ -527,4 +529,8 @@ async function boot() {
   }
   requestAnimationFrame(frame);
 }
-boot().catch(error=>{console.error(error);el('loading').innerHTML='<div class="no-webgl"><h2>The city couldn’t load.</h2><p>Please reload to try again.</p><button class="primary" onclick="location.reload()">RELOAD ↗</button></div>';});
+const selectedCourse = courseById(new URLSearchParams(location.search).get('race') ?? '');
+const launch = selectedCourse
+  ? import('./course-experience').then(module => module.bootCourseRace(app, selectedCourse))
+  : (mountRacePicker(app), boot());
+launch.catch(error=>{console.error(error);const loading=document.getElementById('loading');if(loading){loading.classList.remove('hidden','faded');loading.innerHTML='<div class="no-webgl"><h2>The city couldn’t load.</h2><p>Please reload to try again.</p><button class="primary" onclick="location.reload()">RELOAD ↗</button></div>';}});

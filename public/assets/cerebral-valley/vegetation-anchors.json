@@ -1,0 +1,1148 @@
+{
+  "coordinateSystem": "semantic x east,z north,y altitude; runtime glTF z=-z",
+  "anchors": [
+    {
+      "x": -940.121,
+      "z": -753.471,
+      "y": 57.931,
+      "scale": 1.102,
+      "yaw": 0.5288,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -930.266,
+      "z": -797.633,
+      "y": 60.038,
+      "scale": 1.332,
+      "yaw": 6.0677,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -906.857,
+      "z": -794.269,
+      "y": 55.528,
+      "scale": 1.308,
+      "yaw": 6.0164,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -699.017,
+      "z": -758.904,
+      "y": 42.67,
+      "scale": 1.099,
+      "yaw": 3.125,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -949.683,
+      "z": -696.871,
+      "y": 54.562,
+      "scale": 0.808,
+      "yaw": 6.0902,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -917.451,
+      "z": -784.402,
+      "y": 57.96,
+      "scale": 1.139,
+      "yaw": 3.5692,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -684.284,
+      "z": -749.025,
+      "y": 41.679,
+      "scale": 0.911,
+      "yaw": 3.9889,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -952.668,
+      "z": -681.38,
+      "y": 53.541,
+      "scale": 0.937,
+      "yaw": 4.5538,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -923.359,
+      "z": -755.894,
+      "y": 56.493,
+      "scale": 1.024,
+      "yaw": 3.5811,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -678.839,
+      "z": -739.118,
+      "y": 41.18,
+      "scale": 1.198,
+      "yaw": 4.4505,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -695.873,
+      "z": -737.616,
+      "y": 42.187,
+      "scale": 0.817,
+      "yaw": 1.0443,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -937.329,
+      "z": -778.821,
+      "y": 59.9,
+      "scale": 1.105,
+      "yaw": 5.2377,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -893.823,
+      "z": -798.747,
+      "y": 53.756,
+      "scale": 1.04,
+      "yaw": 3.6509,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -942.899,
+      "z": -734.648,
+      "y": 56.812,
+      "scale": 1.202,
+      "yaw": 0.4462,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -921.501,
+      "z": -767.428,
+      "y": 56.967,
+      "scale": 0.828,
+      "yaw": 3.6076,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -935.125,
+      "z": -763.083,
+      "y": 58.717,
+      "scale": 1.169,
+      "yaw": 0.114,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -907.44,
+      "z": -775.287,
+      "y": 55.595,
+      "scale": 1.03,
+      "yaw": 0.6953,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -677.498,
+      "z": -760.111,
+      "y": 41.154,
+      "scale": 1.13,
+      "yaw": 3.6818,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -706.592,
+      "z": -746.886,
+      "y": 43.069,
+      "scale": 1.046,
+      "yaw": 1.8462,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -907.397,
+      "z": -758.235,
+      "y": 55.136,
+      "scale": 1.308,
+      "yaw": 6.1477,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -953.114,
+      "z": -711.44,
+      "y": 55.651,
+      "scale": 0.885,
+      "yaw": 3.9732,
+      "kind": "park",
+      "park": "Duboce Park"
+    },
+    {
+      "x": -881.963,
+      "z": 73.762,
+      "y": 59.143,
+      "scale": 0.827,
+      "yaw": 1.7022,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1028.003,
+      "z": -118.076,
+      "y": 69.347,
+      "scale": 1.056,
+      "yaw": 3.9014,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -915.719,
+      "z": 27.565,
+      "y": 68.751,
+      "scale": 1.342,
+      "yaw": 3.3465,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -840.23,
+      "z": 88.035,
+      "y": 53.662,
+      "scale": 0.782,
+      "yaw": 0.0984,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -977.093,
+      "z": -18.368,
+      "y": 76.335,
+      "scale": 0.866,
+      "yaw": 6.0499,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1012.638,
+      "z": -3.889,
+      "y": 75.165,
+      "scale": 1.141,
+      "yaw": 0.2815,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -859.792,
+      "z": 76.817,
+      "y": 57.549,
+      "scale": 1.059,
+      "yaw": 2.0932,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1028.551,
+      "z": 9.174,
+      "y": 73.954,
+      "scale": 1.273,
+      "yaw": 0.8904,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -938.765,
+      "z": -17.716,
+      "y": 75.535,
+      "scale": 0.82,
+      "yaw": 1.8115,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1045.849,
+      "z": -99.846,
+      "y": 68.199,
+      "scale": 0.93,
+      "yaw": 1.5978,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -881.558,
+      "z": 42.798,
+      "y": 65.719,
+      "scale": 1.163,
+      "yaw": 2.2969,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -926.876,
+      "z": 60.298,
+      "y": 63.266,
+      "scale": 0.814,
+      "yaw": 1.9766,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -972.408,
+      "z": -37.747,
+      "y": 78.323,
+      "scale": 1.03,
+      "yaw": 5.0787,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1017.662,
+      "z": -85.114,
+      "y": 74.914,
+      "scale": 1.006,
+      "yaw": 5.4221,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1019.568,
+      "z": -14.742,
+      "y": 75.432,
+      "scale": 0.815,
+      "yaw": 2.0518,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -828.798,
+      "z": 28.187,
+      "y": 64.779,
+      "scale": 1.186,
+      "yaw": 3.7141,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -843.421,
+      "z": 77.049,
+      "y": 56.619,
+      "scale": 1.32,
+      "yaw": 3.9574,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -959.962,
+      "z": -50.559,
+      "y": 79.004,
+      "scale": 1.086,
+      "yaw": 0.5186,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1052.888,
+      "z": -90.338,
+      "y": 67.712,
+      "scale": 1.311,
+      "yaw": 3.5013,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -811.004,
+      "z": 45.026,
+      "y": 59.665,
+      "scale": 1.365,
+      "yaw": 3.6949,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -996.418,
+      "z": 59.963,
+      "y": 66.255,
+      "scale": 0.842,
+      "yaw": 4.4582,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -973.76,
+      "z": 31.854,
+      "y": 69.719,
+      "scale": 0.957,
+      "yaw": 3.0336,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1030.294,
+      "z": -11.87,
+      "y": 74.659,
+      "scale": 1.254,
+      "yaw": 0.6631,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -862.999,
+      "z": 37.115,
+      "y": 66.166,
+      "scale": 0.881,
+      "yaw": 5.1258,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1064.485,
+      "z": -16.065,
+      "y": 69.872,
+      "scale": 1.171,
+      "yaw": 5.1724,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1016.513,
+      "z": 41.924,
+      "y": 70.38,
+      "scale": 1.007,
+      "yaw": 1.0717,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -933.112,
+      "z": 32.633,
+      "y": 68.129,
+      "scale": 0.938,
+      "yaw": 2.0858,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -785.88,
+      "z": -78.875,
+      "y": 68.976,
+      "scale": 0.912,
+      "yaw": 1.7897,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -824.997,
+      "z": -21.644,
+      "y": 69.903,
+      "scale": 0.847,
+      "yaw": 1.1655,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1042.364,
+      "z": 19.864,
+      "y": 73.068,
+      "scale": 1.221,
+      "yaw": 0.9698,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -798.06,
+      "z": 11.631,
+      "y": 62.489,
+      "scale": 0.898,
+      "yaw": 4.3904,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -952.85,
+      "z": 34.929,
+      "y": 67.934,
+      "scale": 0.892,
+      "yaw": 2.0133,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -817.323,
+      "z": 25.855,
+      "y": 63.774,
+      "scale": 1.009,
+      "yaw": 2.1921,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1029.378,
+      "z": -43.36,
+      "y": 74.989,
+      "scale": 0.796,
+      "yaw": 2.3016,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1039.82,
+      "z": 43.859,
+      "y": 70.752,
+      "scale": 1.177,
+      "yaw": 5.4596,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -972.948,
+      "z": -50.151,
+      "y": 79.147,
+      "scale": 1.202,
+      "yaw": 4.7063,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -980.096,
+      "z": 45.905,
+      "y": 67.889,
+      "scale": 1.333,
+      "yaw": 3.6652,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1030.284,
+      "z": -130.149,
+      "y": 67.733,
+      "scale": 0.86,
+      "yaw": 2.3313,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -811.805,
+      "z": 82.842,
+      "y": 52.67,
+      "scale": 1.019,
+      "yaw": 5.2302,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -896.501,
+      "z": 78.509,
+      "y": 59.09,
+      "scale": 1.262,
+      "yaw": 2.0538,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -820.113,
+      "z": -87.955,
+      "y": 73.775,
+      "scale": 1.001,
+      "yaw": 4.5711,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -859.658,
+      "z": 23.804,
+      "y": 68.075,
+      "scale": 1.092,
+      "yaw": 4.5673,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1020.487,
+      "z": -53.925,
+      "y": 75.987,
+      "scale": 0.965,
+      "yaw": 3.2523,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -977.512,
+      "z": 59.846,
+      "y": 65.182,
+      "scale": 1.36,
+      "yaw": 1.9896,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1060.598,
+      "z": -29.646,
+      "y": 69.563,
+      "scale": 1.218,
+      "yaw": 1.9042,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -959.8,
+      "z": -15.208,
+      "y": 75.553,
+      "scale": 1.122,
+      "yaw": 5.4721,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -963.105,
+      "z": -25.308,
+      "y": 76.936,
+      "scale": 0.832,
+      "yaw": 6.1743,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -942.116,
+      "z": 46.905,
+      "y": 65.753,
+      "scale": 1.009,
+      "yaw": 1.3781,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1055.238,
+      "z": 12.95,
+      "y": 72.34,
+      "scale": 1.246,
+      "yaw": 3.4654,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -798.782,
+      "z": -22.021,
+      "y": 65.745,
+      "scale": 0.899,
+      "yaw": 4.5282,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -803.6,
+      "z": 25.823,
+      "y": 61.481,
+      "scale": 1.233,
+      "yaw": 4.5728,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -827.219,
+      "z": 87.339,
+      "y": 52.958,
+      "scale": 1.009,
+      "yaw": 1.7319,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1044.262,
+      "z": 53.035,
+      "y": 69.506,
+      "scale": 0.827,
+      "yaw": 2.3812,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1051.206,
+      "z": -68.083,
+      "y": 69.83,
+      "scale": 1.229,
+      "yaw": 3.2782,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1027.888,
+      "z": 56.018,
+      "y": 68.45,
+      "scale": 1.219,
+      "yaw": 2.3553,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1022.202,
+      "z": -31.791,
+      "y": 75.754,
+      "scale": 1.18,
+      "yaw": 3.5827,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -818.916,
+      "z": -48.584,
+      "y": 71.538,
+      "scale": 1.241,
+      "yaw": 5.4632,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -872.004,
+      "z": 81.363,
+      "y": 57.233,
+      "scale": 1.227,
+      "yaw": 0.5721,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -901.726,
+      "z": 25.626,
+      "y": 69.019,
+      "scale": 0.848,
+      "yaw": 1.6712,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -993.086,
+      "z": 41.699,
+      "y": 69.367,
+      "scale": 0.906,
+      "yaw": 1.3811,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -961.674,
+      "z": 41.785,
+      "y": 67.354,
+      "scale": 1.215,
+      "yaw": 3.8415,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1060.843,
+      "z": -49.059,
+      "y": 68.508,
+      "scale": 1.124,
+      "yaw": 2.6702,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1011.054,
+      "z": 57.117,
+      "y": 67.453,
+      "scale": 1.203,
+      "yaw": 6.2785,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -897.317,
+      "z": 54.772,
+      "y": 64.111,
+      "scale": 0.943,
+      "yaw": 4.331,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -952.37,
+      "z": 64.68,
+      "y": 62.758,
+      "scale": 1.316,
+      "yaw": 2.1727,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1042.396,
+      "z": -53.965,
+      "y": 72.669,
+      "scale": 1.207,
+      "yaw": 6.2302,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -883.409,
+      "z": 54.807,
+      "y": 63.479,
+      "scale": 1.3,
+      "yaw": 3.1992,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -822.17,
+      "z": 49.897,
+      "y": 60.174,
+      "scale": 0.897,
+      "yaw": 4.4617,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -789.771,
+      "z": -33.346,
+      "y": 65.353,
+      "scale": 1.314,
+      "yaw": 4.7534,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -825.524,
+      "z": 3.403,
+      "y": 67.356,
+      "scale": 1.142,
+      "yaw": 3.3537,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1047.541,
+      "z": -9.652,
+      "y": 73.093,
+      "scale": 1.066,
+      "yaw": 1.7071,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -983.982,
+      "z": -36.759,
+      "y": 78.198,
+      "scale": 1.254,
+      "yaw": 1.9514,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -854.823,
+      "z": 62.079,
+      "y": 60.306,
+      "scale": 1.225,
+      "yaw": 3.3543,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -795.262,
+      "z": -48.652,
+      "y": 67.872,
+      "scale": 1.319,
+      "yaw": 4.1754,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1067.701,
+      "z": 29.723,
+      "y": 71.061,
+      "scale": 1.101,
+      "yaw": 6.108,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -839.833,
+      "z": 35.664,
+      "y": 65.033,
+      "scale": 1.335,
+      "yaw": 4.2786,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -842.081,
+      "z": 53.384,
+      "y": 61.524,
+      "scale": 1.249,
+      "yaw": 5.2697,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1000.258,
+      "z": 49.26,
+      "y": 68.308,
+      "scale": 1.08,
+      "yaw": 3.6048,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -972.262,
+      "z": -6.459,
+      "y": 74.751,
+      "scale": 1.252,
+      "yaw": 4.973,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -922.624,
+      "z": 71.025,
+      "y": 61.22,
+      "scale": 1.317,
+      "yaw": 2.5357,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1012.835,
+      "z": -119.924,
+      "y": 71.429,
+      "scale": 1.149,
+      "yaw": 5.3536,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1018.139,
+      "z": 22.322,
+      "y": 73.004,
+      "scale": 1.061,
+      "yaw": 1.4497,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -801.756,
+      "z": -88.59,
+      "y": 71.363,
+      "scale": 1.364,
+      "yaw": 4.0284,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1024.732,
+      "z": -75.971,
+      "y": 74.612,
+      "scale": 0.939,
+      "yaw": 0.9764,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -818.153,
+      "z": -61.842,
+      "y": 72.306,
+      "scale": 0.891,
+      "yaw": 0.0231,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -820.448,
+      "z": -74.467,
+      "y": 73.233,
+      "scale": 0.987,
+      "yaw": 3.7639,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -983.669,
+      "z": 25.969,
+      "y": 71.161,
+      "scale": 1.372,
+      "yaw": 0.0951,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -811.87,
+      "z": 63.073,
+      "y": 56.557,
+      "scale": 0.972,
+      "yaw": 1.3844,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -999.124,
+      "z": 23.148,
+      "y": 72.328,
+      "scale": 1.01,
+      "yaw": 0.3185,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1013.255,
+      "z": -26.584,
+      "y": 76.46,
+      "scale": 0.873,
+      "yaw": 3.0954,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1055.938,
+      "z": 46.589,
+      "y": 70.736,
+      "scale": 1.228,
+      "yaw": 4.1227,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -790.358,
+      "z": -66.777,
+      "y": 68.591,
+      "scale": 1.042,
+      "yaw": 1.2424,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1062.199,
+      "z": 0.952,
+      "y": 71.099,
+      "scale": 0.998,
+      "yaw": 1.735,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -944.746,
+      "z": 25.078,
+      "y": 69.543,
+      "scale": 1.363,
+      "yaw": 5.8586,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1013.627,
+      "z": -99.208,
+      "y": 73.836,
+      "scale": 1.117,
+      "yaw": 2.5792,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -870.74,
+      "z": 57.911,
+      "y": 62.024,
+      "scale": 1.354,
+      "yaw": 3.3377,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -1019.864,
+      "z": -106.644,
+      "y": 71.945,
+      "scale": 1.182,
+      "yaw": 3.6334,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -961.977,
+      "z": 58.631,
+      "y": 64.503,
+      "scale": 1.267,
+      "yaw": 0.4438,
+      "kind": "park",
+      "park": "Alamo Square"
+    },
+    {
+      "x": -26.29,
+      "z": -66.945,
+      "y": 21.173,
+      "scale": 0.74,
+      "yaw": 1.7605,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -14.153,
+      "z": -65.015,
+      "y": 21.057,
+      "scale": 0.74,
+      "yaw": 5.0274,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -29.278,
+      "z": -48.177,
+      "y": 21.425,
+      "scale": 0.74,
+      "yaw": 0.9148,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -17.141,
+      "z": -46.247,
+      "y": 21.373,
+      "scale": 0.74,
+      "yaw": 0.3886,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -32.692,
+      "z": -26.729,
+      "y": 21.637,
+      "scale": 0.74,
+      "yaw": 0.2045,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -20.556,
+      "z": -24.799,
+      "y": 21.648,
+      "scale": 0.74,
+      "yaw": 5.1861,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -35.823,
+      "z": -7.068,
+      "y": 21.775,
+      "scale": 0.74,
+      "yaw": 0.0755,
+      "kind": "park",
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -23.686,
+      "z": -5.138,
+      "y": 21.773,
+      "scale": 0.74,
+      "yaw": 1.7848,
+      "kind": "park",
+      "park": "Patricia's Green"
+    }
+  ]
+}
