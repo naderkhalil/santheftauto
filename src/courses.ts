@@ -1,9 +1,11 @@
-import { CEREBRAL_POINTS, cerebralGroundHeight } from './cerebral-geography.ts';
+import { cerebralGroundHeight } from './cerebral-geography.ts';
+import { CEREBRAL_PLAY_POINTS, CEREBRAL_PLAY_FEATURES } from './cerebral-play-route.ts';
 
 /** Authored, geographically inspired race itineraries. Distances and grades are
  * compressed for play; these are closed game courses, not street directions. */
 export type CourseId = 'vc-circle' | 'cerebral-valley' | 'golden-gate-surfride' | 'lands-end' | 'presidio' | 'hawk-hill';
 export type CoursePoint = { x: number; z: number; y: number; label: string };
+export type CourseRange = { from: number; to: number; startOffset?: number; endOffset?: number };
 export type CourseDefinition = {
   id: CourseId;
   name: string;
@@ -19,6 +21,9 @@ export type CourseDefinition = {
   cornerRadius?: number;
   roadHalfWidth?: number;
   terrainHeight?: (x:number,z:number)=>number;
+  launches?: readonly (CourseRange & { label: string; height: number; minSpeed: number; halfWidth: number })[];
+  boosts?: readonly (CourseRange & { label: string; speed: number; duration: number; halfWidth: number })[];
+  widths?: readonly (CourseRange & { halfWidth: number })[];
 };
 
 const p = (x: number, z: number, y: number, label: string): CoursePoint => ({ x, z, y, label });
@@ -51,15 +56,16 @@ export const COURSES: readonly CourseDefinition[] = [
   },
   {
     id: 'cerebral-valley', name: 'Cerebral Valley', subtitle: 'HAYES VALLEY → DUBOCE PARK', theme: 'victorian', accent: '#d0b2ff', difficulty: 'HILLS & CORNERS',
-    description: 'Climb Hayes, circle Alamo Square, then find Page & Pierce, 531 Page, and Café Réveille on your way to Duboce.',
-    highlights: ['Alamo Square lap', '531 Page Street', 'Café Réveille', 'Duboce Park'],
-    points: CEREBRAL_POINTS,
+    description: 'Catch a rainbow rush up Hayes. Climb into Alamo Square, fly toward the Painted Ladies and skyline, then roll down Steiner to Page, Réveille, and Duboce.',
+    highlights: ['Hayes rainbow rush', 'Painted Ladies skyline glide', '531 Page Street', 'Café Réveille → Duboce'],
+    points: CEREBRAL_PLAY_POINTS,
+    ...CEREBRAL_PLAY_FEATURES,
     cornerRadius: 12, roadHalfWidth: 6.4, terrainHeight: cerebralGroundHeight,
     landmarks: [
       { name: 'Hayes Valley', at: .04, side: 1, kind: 'cafe' },
       { name: 'Alamo Square', at: .34, side: 1, kind: 'park' },
       { name: 'Painted Ladies', at: .487, side: -1, kind: 'houses' },
-      { name: 'Page & Pierce', at: .675, side: 1, kind: 'houses' },
+      { name: 'Steiner → Page', at: .675, side: 1, kind: 'houses' },
       { name: '531 Page St', at: .775, side: 1, kind: 'houses' },
       { name: 'Café Réveille', at: .960, side: 1, kind: 'cafe' },
       { name: 'Duboce Park', at: 1, side: 1, kind: 'park' },

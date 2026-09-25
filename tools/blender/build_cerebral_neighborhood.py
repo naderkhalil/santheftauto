@@ -22,6 +22,12 @@ for d in list(bpy.data.materials): bpy.data.materials.remove(d)
 BATCH={}; LOD_BATCH={}; MATERIALS={}; PART='neighborhood'; DETAIL='structural'; MODEL_LOG=[]; ANCHORS=[]
 GROUND_SAMPLE=None
 FAST='--fast' in sys.argv
+# These three procedurally interpreted seats overlap the widened playable
+# asphalt corridor. Other park furniture remains at its original position.
+# Clearance was checked against the rounded live route, not the old perimeter
+# itinerary in layout.json (centres are 1.223m, .957m and 1.604m from the route).
+ALAMO_INTRUDING_BENCHES=((-1014.912,-91.004),(-1043.667,-134.586),(-813.772,-70.488))
+ALAMO_RESTROOM_ID='389112749'
 
 def linear(hexcolor):
     c=[int(hexcolor[i:i+2],16)/255 for i in (1,3,5)]
@@ -321,6 +327,33 @@ def polygon_body(poly,z,h,paint,open_edge=None):
     vectors=[Vector((x,y,z+h)) for x,y in poly]
     for tri in tessellate_polygon([vectors]):face([tuple(vectors[v]) if isinstance(v,int) else tuple(v) for v in tri],ROOF)
 
+def alamo_restroom(poly,base,height):
+    """OSM amenity=toilets, building=yes: one small park service building.
+
+    Its surveyed footprint is authoritative. Height, muted stucco, flush metal
+    doors and high ventilation are restrained interpretations, not a facade
+    photo survey. Do not pass this amenity through the Victorian house author.
+    """
+    body_height=height-.16
+    polygon_body(poly,base,body_height,STUCCO[0])
+    area=sum(poly[i][0]*poly[(i+1)%len(poly)][1]-poly[(i+1)%len(poly)][0]*poly[i][1] for i in range(len(poly)))
+    for i,a in enumerate(poly):
+        b=poly[(i+1)%len(poly)];length=math.dist(a,b)
+        ux,uy=(b[0]-a[0])/length,(b[1]-a[1])/length
+        nx,ny=(uy,-ux) if area>0 else (-uy,ux)
+        f=Facade((a[0]+b[0])/2,(a[1]+b[1])/2,nx,ny,base)
+        f.b(0,-.01,height-.08,length+.12,.24,.16,ROOF)
+        f.b(0,.02,.18,length,.09,.36,GRANITE)
+        if ny<-.5 and length>7:
+            for u in (-length*.24,length*.24):
+                f.b(u,.034,1.12,1.02,.045,2.24,IRON)
+                f.b(u-.37,.073,1.08,.036,.04,.26,SASH)
+                f.b(u,.073,2.55,.95,.04,.25,SHADOW)
+                for z in (2.47,2.55,2.63):f.b(u,.10,z,.92,.045,.027,SASH)
+        elif length>5:
+            f.b(0,.04,2.60,min(1.65,length*.25),.04,.28,SHADOW)
+            for z in (2.50,2.60,2.70):f.b(0,.075,z,min(1.62,length*.25),.045,.025,SASH)
+
 def hayes_restaurants(f,height):
     """Original interiors/sign geometry from inspected Souvla/Patxi references.
     Positions follow business nodes within surveyed 511–529 Hayes footprint.
@@ -450,10 +483,15 @@ def parks(data,ground):
             ANCHORS.append({'x':round(x,3),'z':round(y,3),'y':round(ground(x,y)+.08,3),'scale':round(rng.uniform(.78,1.38),3),'yaw':round(rng.random()*math.tau,4),'kind':'park','park':name})
         # Simple real park furniture with open ironwork and timber slats.
         DETAIL='park furniture'
+        benches_added=0;benches_suppressed=[]
         for path in paths[::max(1,len(paths)//8)]:
             x,y=path[len(path)//2];x+=3.1
-            if inside(x,y,poly):bench(x,y,ground(x,y)+.10)
-        MODEL_LOG.append({'park':name,'surveyedBoundary':True,'pathCount':len(paths),'treeAnchors':len(candidate)})
+            if not inside(x,y,poly):continue
+            if name=='Alamo Square' and any(math.dist((x,y),p)<.025 for p in ALAMO_INTRUDING_BENCHES):
+                benches_suppressed.append({'x':round(x,3),'z':round(y,3),'reason':'interpreted furniture intersects active race asphalt'})
+                continue
+            bench(x,y,ground(x,y)+.10);benches_added+=1
+        MODEL_LOG.append({'park':name,'surveyedBoundary':True,'pathCount':len(paths),'treeAnchors':len(candidate),'benches':benches_added,'suppressedBenches':benches_suppressed})
 
 def main():
     global PART,DETAIL,BATCH,LOD_BATCH,GROUND_SAMPLE
@@ -530,6 +568,13 @@ def main():
         chosen.append((distance,building,poly,cx,cy))
     chosen.sort(key=lambda q:q[0]);print('NEIGHBORHOOD surveyed building count',len(chosen),flush=True)
     for index,(distance,b,poly,cx,cy) in enumerate(chosen):
+        if str(b['id'])==ALAMO_RESTROOM_ID:
+            PART='amenity / Alamo Square restroom';DETAIL='park restroom'
+            base=float(b['baseHeight'])+.04;height=float(b['height'])
+            alamo_restroom(poly,base,height)
+            high=BATCH;BATCH=LOD_BATCH;alamo_restroom(poly,base,height);LOD_BATCH=BATCH;BATCH=high
+            MODEL_LOG.append({'building':b['id'],'amenity':'toilets','height':height,'baseHeight':base,'surveyedFootprint':True,'sourceTags':{'amenity':'toilets','building':'yes'},'facadeReference':'interpreted low park restroom; muted stucco and flush metal doors'})
+            continue
         seed=int(str(b['id']).split('/')[-1]) if str(b['id']).split('/')[-1].isdigit() else index+9
         rng=random.Random(seed);height=max(3.8,float(b.get('height',10.8)));base=float(b.get('baseHeight',ground(cx,cy)))+.04
         detail=2 if distance<40 else 1 if distance<80 else 0

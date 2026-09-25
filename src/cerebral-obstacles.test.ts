@@ -4,8 +4,10 @@ import { COURSES } from './courses.ts';
 import { createCourseRoute } from './course-route.ts';
 import { DrivingSimulation, type DriveInput } from './driving.ts';
 import { parkedCarObstacles } from './cerebral-obstacles.ts';
+import { CEREBRAL_POINTS } from './cerebral-geography.ts';
 
-const course = COURSES.find(course => course.id === 'cerebral-valley')!;
+// Keep a repeated-street fixture even though the new adventure skips the lap.
+const course = { ...COURSES.find(course => course.id === 'cerebral-valley')!, points: CEREBRAL_POINTS, launches: [], boosts: [], widths: [] };
 const route = createCourseRoute(course);
 const scott = course.points.findIndex(point => point.label.includes('Hayes → Scott'));
 const progress = (route.anchorProgress[scott - 1] + route.anchorProgress[scott]) / 2;

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COURSES, courseById } from './courses.ts';
 import { createCourseRoute } from './course-route.ts';
+import { CEREBRAL_POINTS } from './cerebral-geography.ts';
 
 const near = (actual: number, expected: number, epsilon = 1e-5) => assert.ok(Math.abs(actual - expected) < epsilon, `${actual} differs from ${expected}`);
 
@@ -61,7 +62,7 @@ test('rounded roads preserve metres, tangent continuity, authored height, and us
 });
 
 test('overlapping lap locations keep separate ordered progress and can be disambiguated', () => {
-  const course = courseById('cerebral-valley')!, route = createCourseRoute(course);
+  const course = { ...courseById('cerebral-valley')!, points: CEREBRAL_POINTS, launches: [], boosts: [], widths: [] }, route = createCourseRoute(course);
   const outbound = course.points.findIndex(point => point.label.includes('Hayes → Scott'));
   const returning = course.points.findIndex(point => point.label.includes('lap complete'));
   const west = course.points[outbound], east = course.points[outbound - 1];
@@ -79,7 +80,8 @@ test('overlapping lap locations keep separate ordered progress and can be disamb
 test('Cerebral Valley visits 531 Page before Webster and detours on Waller to Réveille', () => {
   const labels = courseById('cerebral-valley')!.points.map(point => point.label);
   const at = (label: string) => labels.findIndex(candidate => candidate.includes(label));
-  assert.ok(at('Page & Pierce') < at('531 Page'));
+  for (const label of ['Steiner → Page', '531 Page', 'Page → Webster', 'Webster → Waller', 'Waller → Steiner', 'Café Réveille', 'Duboce Park']) assert.ok(at(label) >= 0, `${label} is visited`);
+  assert.ok(at('Steiner → Page') < at('531 Page'));
   assert.ok(at('531 Page') < at('Page → Webster'));
   assert.ok(at('Page → Webster') < at('Webster → Waller'));
   assert.ok(at('Webster → Waller') < at('Waller → Steiner'));

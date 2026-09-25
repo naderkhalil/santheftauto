@@ -5929,15 +5929,15 @@
   },
   {
     "building": "389112749",
-    "address": "",
-    "height": 11.0,
+    "amenity": "toilets",
+    "height": 3.35,
     "baseHeight": 79.00713225654732,
-    "detail": 2,
-    "distanceToRoute": 65.4,
-    "distanceToPark": 49.7,
-    "parkExtension": false,
     "surveyedFootprint": true,
-    "facadeReference": "interpreted neighborhood typology"
+    "sourceTags": {
+      "amenity": "toilets",
+      "building": "yes"
+    },
+    "facadeReference": "interpreted low park restroom; muted stucco and flush metal doors"
   },
   {
     "building": "1380022767",
@@ -18711,18 +18711,40 @@
     "park": "Duboce Park",
     "surveyedBoundary": true,
     "pathCount": 33,
-    "treeAnchors": 21
+    "treeAnchors": 21,
+    "benches": 9,
+    "suppressedBenches": []
   },
   {
     "park": "Alamo Square",
     "surveyedBoundary": true,
     "pathCount": 55,
-    "treeAnchors": 98
+    "treeAnchors": 98,
+    "benches": 7,
+    "suppressedBenches": [
+      {
+        "x": -1014.912,
+        "z": -91.004,
+        "reason": "interpreted furniture intersects active race asphalt"
+      },
+      {
+        "x": -1043.667,
+        "z": -134.586,
+        "reason": "interpreted furniture intersects active race asphalt"
+      },
+      {
+        "x": -813.772,
+        "z": -70.488,
+        "reason": "interpreted furniture intersects active race asphalt"
+      }
+    ]
   },
   {
     "park": "Patricia's Green",
     "surveyedBoundary": true,
     "pathCount": 21,
-    "treeAnchors": 8
+    "treeAnchors": 8,
+    "benches": 7,
+    "suppressedBenches": []
   }
 ]

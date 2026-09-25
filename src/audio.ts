@@ -71,10 +71,10 @@ export class GameAudio {
     this.tires?.gain.setTargetAtTime(drifting && velocity > 5 ? .09 + Math.min(.1, velocity / 400) : 0, t, .10);
   }
 
-  cue(kind: 'count' | 'go' | 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land'): void {
+  cue(kind: 'count' | 'go' | 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land' | 'boost-pad'): void {
     if (!this.context || !this.master || !this.ready) return;
     const ctx = this.context, t = ctx.currentTime;
-    const notes = kind==='launch'?[392,523]:kind==='land'?[220,440]:kind === 'finish' ? [523, 659, 784, 1047] : kind === 'checkpoint' ? [660, 880] : kind === 'go' ? [880] : kind === 'count' ? [440] : [75];
+    const notes = kind==='boost-pad'?[440,554,659,880]:kind==='launch'?[392,523]:kind==='land'?[220,440]:kind === 'finish' ? [523, 659, 784, 1047] : kind === 'checkpoint' ? [660, 880] : kind === 'go' ? [880] : kind === 'count' ? [440] : [75];
     notes.forEach((freq, index) => {
       const start = t + index * .10;
       const osc = ctx.createOscillator(); osc.type = kind === 'crash' ? 'sawtooth' : 'sine';

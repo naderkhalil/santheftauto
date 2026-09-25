@@ -35,11 +35,17 @@ export function courseMap(course: CourseDefinition, dotId?: string): string {
     const markers = [house,cafe].map(landmark => {
       const q = project(landmark); return `<circle cx="${q.x}" cy="${q.y}" r="2.5" fill="#607661" stroke="#fffdf3" stroke-width="1"/>`;
     }).join('');
-    return `<svg viewBox="0 0 360 216" role="img" aria-label="Cerebral Valley: real Hayes Valley streets, Alamo Square lap, Page Street and Duboce Park" class="course-map-svg" data-min-x="${minX}" data-max-x="${maxX}" data-min-z="${minZ}" data-max-z="${maxZ}" data-scale="${scale}">
+    const rainbow = (route.BOOST_ZONES ?? []).map(zone => ['#ec8d9c','#efd075','#8ccbba','#aba1db'].map((color,i) => {
+      const a=route.sampleRoute(zone.progress+(zone.end-zone.progress)*i/4),b=route.sampleRoute(zone.progress+(zone.end-zone.progress)*(i+1)/4);
+      return `<path d="${line([a,b])}" stroke="${color}" stroke-width="6"/>`;
+    }).join('')).join('');
+    const flight=route.LAUNCH_ZONES.map(zone=>`<path d="${line([route.sampleRoute(zone.progress),route.sampleRoute(zone.end)])}" fill="none" stroke="#fffbed" stroke-width="2.5" stroke-dasharray="2 2"/>`).join('');
+    return `<svg viewBox="0 0 360 216" role="img" aria-label="Cerebral Valley: real Hayes Valley streets, Alamo Square skyline glide, Page Street and Duboce Park" class="course-map-svg" data-min-x="${minX}" data-max-x="${maxX}" data-min-z="${minZ}" data-max-z="${maxZ}" data-scale="${scale}">
       <rect width="360" height="216" fill="#e7e4d9"/>
       ${parks}${streets}
       <path d="${path}" fill="none" stroke="#fffdf2" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
       <path d="${path}" fill="none" stroke="#86739c" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+      ${rainbow}${flight}
       ${label(-956,-18,'ALAMO SQUARE',7.8)}${label(-856,-817,'DUBOCE PARK',7.3)}
       ${label(-189,109,'HAYES VALLEY',7.5)}${label(house.x+40,house.z-58,'531 PAGE',6.6)}${label(cafe.x+245,cafe.z-53,'CAFÉ RÉVEILLE',6.4)}
       ${markers}<circle cx="${start.x}" cy="${start.y}" r="5" fill="#36564c" stroke="#fffdf2" stroke-width="2"/>

@@ -5,13 +5,15 @@ import type { DriveInput, DriveState, DrivingRoute } from './driving.ts';
 import { createCourseRoute } from './course-route.ts';
 import { COURSES } from './courses.ts';
 import { FogChallenge } from './fog-challenge.ts';
-import { cerebralGroundHeight } from './cerebral-geography.ts';
+import { CEREBRAL_POINTS, cerebralGroundHeight } from './cerebral-geography.ts';
 
 const clamp = (value: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, value));
 const angle = (value: number) => Math.atan2(Math.sin(value), Math.cos(value));
 
 test('Cerebral road-mode driving keeps the car on measured lateral ground after seeking and finishing', () => {
-  const route = createCourseRoute(COURSES.find(course => course.id === 'cerebral-valley')!);
+  // Preserve the measured Fulton cross-slope regression independently of the
+  // adventure's newer park shortcut, which no longer travels along Fulton.
+  const route = createCourseRoute({ ...COURSES.find(course => course.id === 'cerebral-valley')!, points: CEREBRAL_POINTS, launches: [], boosts: [], widths: [] });
   const stopped: DriveInput = { throttle: 0, brake: 0, steer: 0, drift: false, boost: false };
   const nearGround = (sim: DrivingSimulation) => {
     const position = sim.position;

@@ -2,7 +2,9 @@
 
 The Cerebral Valley race now has a dedicated geographic and Blender asset pipeline. Its road network, mapped building outlines, park boundaries, and underlying ground elevations follow real public data. Detailed landmarks and continuous neighborhood architecture replace the expansion's generic district scenery. This is a reference-informed game reconstruction, not a pixel-perfect photographic survey of every building.
 
-The route starts at Hayes/Octavia, climbs Hayes Street, completes Alamo Square's real perimeter, descends Scott to Page, passes Page/Pierce and 531 Page, turns south on Webster to **Waller**, passes Café Réveille at Steiner, and ends at Duboce Park. The source polyline is approximately **3.54 km** before the playable route's corner rounding.
+The playable race is now **2.533 km**. It starts at Hayes/Octavia, climbs Hayes with two rainbow accelerators, enters Alamo Square through the real southwest asphalt path, and climbs the western path to a third run-up accelerator. A **106.458 m fictional glide** crosses the lawn toward the Painted Ladies and downtown skyline, landing at the mapped southeast asphalt junction. The route descends Steiner to Page, passes 531 Page, turns south on Webster to **Waller**, passes Café Réveille, and ends at Duboce Park. It replaces the previous perimeter lap and Scott/Page/Pierce detour. The original geographic snapshot and its approximately 3.54 km source polyline remain intact for provenance.
+
+The park connector follows mapped asphalt entrances and paths rather than the central Hayes/Pierce or Steiner stairs. Its widened turning surface, accelerators and narrow asphalt connector beneath the airborne lawn crossing are deliberate game features; they do not represent a motor road through the park. [The route audit](../art/references/cerebral-skyline-route.md) records exact mapped path IDs, anchors, flight bearings and braking distances.
 
 ## What is sourced and what is interpreted
 
@@ -23,14 +25,17 @@ Data, licenses, links, and individual reference observations are in [the asset s
 | --- | --- |
 | [`src/cerebral-geography.ts`](../src/cerebral-geography.ts) | Shared origin, route anchors, map data, terrain grid, geographic projection, and `cerebralGroundHeight()` bilinear sampling. |
 | [`src/courses.ts`](../src/courses.ts), [`src/course-route.ts`](../src/course-route.ts) | The course definition, playable route, checkpoint ordering, and route sampling used by the shared driving simulation. |
+| [`src/cerebral-play-route.ts`](../src/cerebral-play-route.ts) | Named adventure anchors, three physical boost strips, the east-facing flight span, and changing park-path widths. The source geographic route remains separate. |
+| [`src/cerebral-race-art.ts`](../src/cerebral-race-art.ts) | Animated rainbow surfaces, passable turn chevrons, launch paint and an open landing guide. These follow the same route and feature ranges as the simulation. |
+| [`src/cerebral-skyline.ts`](../src/cerebral-skyline.ts) | Loads the Blender downtown landmarks at geographic positions and applies lighter distant haze so the Alamo reveal stays legible. |
 | [`src/course-experience.ts`](../src/course-experience.ts) | Selects the dedicated Cerebral world and presentation; owns race controls, timing, camera, minimap, neighborhood inspection UI, loading state, and this course's separate best-time version. Other expansion courses keep their existing scene path. |
-| [`src/cerebral-world.ts`](../src/cerebral-world.ts) | Loads layout and Blender assets; builds terrain, streets, curbs, crossing paint, signs, and race markings; instances street-life and vegetation prototypes; manages spatial visibility and neighborhood/tree detail levels; defines six inspection cameras. |
+| [`src/cerebral-world.ts`](../src/cerebral-world.ts) | Loads layout and Blender assets; builds terrain, streets, curbs, crossing paint, signs, and race markings; instances street-life and vegetation prototypes; manages spatial visibility and neighborhood/tree detail levels; defines seven inspection cameras. |
 | [`src/cerebral-presentation.ts`](../src/cerebral-presentation.ts) | Reuses the existing photographic sky and scanned road treatment, prepares local reflections and moving sun shadows, and configures ambient occlusion, subtle bloom, antialiasing, and output tone mapping. Low quality disables expensive effects and reduces detail distances. |
 | [`src/atmosphere.ts`](../src/atmosphere.ts), [`src/surfaces.ts`](../src/surfaces.ts) | Shared HDR sky, sun/reflection behavior, and credited asphalt material loading. |
 
 The model origin is **−122.42415 longitude, 37.77655 latitude**. Gameplay coordinates are **x east, z north, y elevation above sea level**. Native Blender uses **X east, Y north, Z elevation**. Standard glTF export produces **X east, Y elevation, negative Z north**. The Cerebral world is attached directly to the scene, outside the reflected root that still contains the vehicle. Do not mirror these GLBs again or add a second ground-height offset.
 
-The runtime loads `heroes.glb`, both neighborhood levels, the street-life kit, the existing jacaranda, the geometry-only canopy LOD, and vegetation anchors. Hero geometry is culled by property/material bounds; the generated `heroes-lod.glb` is available but is **not currently selected by the runtime**. Neighborhood meshes carry `spatial_block` metadata for visibility and detail changes. Cars, street furniture, and trees share geometry/materials through instances grouped into spatial cells. Published metadata counts describe complete assets, not the number of triangles or draw calls visible in one camera frame.
+The runtime loads `heroes.glb`, both neighborhood levels, `skyline.glb`, the street-life kit, the existing jacaranda, the geometry-only canopy LOD, and vegetation anchors. Hero geometry is culled by property/material bounds; the generated `heroes-lod.glb` is available but is **not currently selected by the runtime**. Neighborhood meshes carry `spatial_block` metadata for visibility and detail changes. Cars, street furniture, and trees share geometry/materials through instances grouped into spatial cells. Published metadata counts describe complete assets, not the number of triangles or draw calls visible in one camera frame.
 
 ## Asset and data ownership
 
@@ -38,6 +43,7 @@ The canonical geographic snapshot is [`art/references/cerebral-valley-layout.jso
 
 - **Heroes:** [`tools/blender/build_cerebral_heroes.py`](../tools/blender/build_cerebral_heroes.py) produces [`art/source/cerebral-heroes.blend`](../art/source/cerebral-heroes.blend), the full and reduced-detail hero GLBs, metadata, and six architectural review images. It models 710–722 Steiner as seven distinct properties, 531–535 Page, Café Réveille, Absinthe, and 450 Hayes/a Mano. Its glyph-face ray audit checks that modeled addresses and signs have clear space in front of their letters.
 - **Neighborhood and park grounds:** [`tools/blender/build_cerebral_neighborhood.py`](../tools/blender/build_cerebral_neighborhood.py) produces [`art/source/cerebral-neighborhood.blend`](../art/source/cerebral-neighborhood.blend), separate full and distant GLBs, vegetation anchors, metadata, and a per-building model log. The ten snapshot hero flags and the explicit 450 Hayes exclusion prevent duplicate ordinary buildings at those parcels.
+- **Downtown reveal:** [`tools/blender/build_cerebral_skyline.py`](../tools/blender/build_cerebral_skyline.py) produces [`art/source/cerebral-skyline.blend`](../art/source/cerebral-skyline.blend), the skyline GLB, metadata and two review images. Twenty named landmarks use published geographic centres and recognizable silhouettes. Heights are deliberately scaled by 1.12; footprint dimensions and façade details are approximations. Tower bases and surrounding terrain now sample a 144×144 USGS grid; 8,789 additional OSM building footprints ground the distant skyline. [The skyline audit](../art/references/cerebral-skyline.md) documents sources and visual adjustments.
 - **Street-life prototypes:** [`tools/blender/build_cerebral_streetlife.py`](../tools/blender/build_cerebral_streetlife.py) produces [`art/source/cerebral-streetlife.blend`](../art/source/cerebral-streetlife.blend), the instanced vehicle/furniture kit, metadata, and its review image. Prototype study-row offsets are stripped before instancing in the game.
 - **Canopy LOD:** [`tools/blender/build_cerebral_canopy.py`](../tools/blender/build_cerebral_canopy.py) simplifies the existing credited tree. It exports geometry without duplicating textures; runtime materials come from the original tree asset.
 
@@ -45,15 +51,16 @@ The surrounding park vistas include 1,668 additional mapped building footprints 
 
 The detailed heroes contain original roughness/normal maps. Neighborhood materials include original clapboard, stucco, brick, roof, grass, and path maps. The sky, jacaranda texture set, and scanned asphalt retain their existing [shared credits](../public/assets/CREDITS.md).
 
-## Six in-game inspection views
+## Seven in-game inspection views
 
-Open Cerebral Valley from the race picker and choose **Explore the Neighborhood** before starting the race. The six buttons use the same loaded scene and rendering pipeline as gameplay; **Back to the Race** returns to the starting preview.
+Open Cerebral Valley from the race picker and choose **Explore the Neighborhood** before starting the race. The seven buttons use the same loaded scene and rendering pipeline as gameplay; **Back to the Race** returns to the starting preview.
 
 | View | What to inspect |
 | --- | --- |
 | Hayes Valley | Continuous mixed storefronts, the contemporary 450 Hayes building, the actual rotated street grid, parked vehicles, and the westward climb. |
 | Alamo Square | The real park boundary, varied ground elevation, open lawn, mapped paths, and surrounding street-wall continuity. |
 | Painted Ladies | The west-facing sequence of six gables plus the separate 722 turreted house, individual colors and rooflines, windows, stairs, porches, and clear lawn sightline. |
+| Skyline Glide | The east-facing elevated view over the lawn, with the Painted Ladies in the foreground and geographically placed downtown silhouettes beyond. |
 | 531 Page | The narrow north-facing twin square-bay façade on its actual south-side Page parcel, readable address, and street-grade agreement. |
 | Café Réveille | The northwest Waller/Steiner corner, white shopfront, pink signs, upper bays, furniture, and the southbound continuation toward Duboce. |
 | Duboce Park | The approach and finish, open sloping park ground, path network, trees, and residential edges. |
@@ -68,6 +75,7 @@ The generators were run with official **Blender 4.5.9 LTS**. They use Blender's 
 CEREBRAL_BLENDER=/absolute/path/to/blender
 "$CEREBRAL_BLENDER" --background --factory-startup -t 4 --python tools/blender/build_cerebral_heroes.py
 "$CEREBRAL_BLENDER" --background --factory-startup -t 4 --python tools/blender/build_cerebral_neighborhood.py
+"$CEREBRAL_BLENDER" --background --factory-startup -t 4 --python tools/blender/build_cerebral_skyline.py
 "$CEREBRAL_BLENDER" --background --factory-startup -t 4 --python tools/blender/build_cerebral_streetlife.py
 "$CEREBRAL_BLENDER" --background --factory-startup -t 4 --python tools/blender/build_cerebral_canopy.py
 ```
@@ -84,4 +92,4 @@ npm run build
 npm run dev
 ```
 
-The geographic tests cover the origin, terrain agreement, source/runtime snapshot agreement, route ordering, full Alamo lap, and key landmark orientations. Review all six in-game viewpoints and a driven route after geometry or data changes; a passing TypeScript build cannot detect a mirrored façade, an obstructed sign, a floating curb, or an incorrect visual silhouette. The hero metadata currently records **2,408 glyph-face samples with zero blocked samples**. That geometric check verifies visibility, not photographic exactness or business-logo identity.
+The geographic tests cover the origin, terrain agreement, source/runtime snapshot agreement, preserved original lap data, and key landmark orientations. Adventure tests cover the current 2.533 km route, mapped asphalt anchors, east-facing flight corridor and touchdown, actual steering through a complete run at 30/60/120 Hz, physical pad collection/bypass, braking cancellation and recovery. Review all seven in-game viewpoints and a driven route after geometry or data changes; a passing TypeScript build cannot detect a mirrored façade, an obstructed sign, a floating curb, or an incorrect visual silhouette. The hero metadata currently records **2,408 glyph-face samples with zero blocked samples**. That geometric check verifies visibility, not photographic exactness or business-logo identity.

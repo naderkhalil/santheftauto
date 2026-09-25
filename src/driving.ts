@@ -2,6 +2,8 @@ import * as defaultRoute from './route.ts';
 import type { LaunchZone, Obstacle } from './route.ts';
 import { PLAYGROUND_BOUNDS, PLAYGROUND_COLLIDERS, playgroundHeight } from './playground.ts';
 
+export type BoostZone = { progress: number; end: number; label: string; speed: number; duration: number; halfWidth: number };
+
 /** Geometry and gates are injected together so each race owns its full course. */
 export type DrivingRoute = Pick<typeof defaultRoute,
   'glideSlope' | 'routeCurvature' | 'routePoint' | 'routeProgressAt' | 'routeSlope' | 'routeYaw' | 'sampleGlidePath' | 'sampleRoute'> & {
@@ -11,6 +13,8 @@ export type DrivingRoute = Pick<typeof defaultRoute,
   readonly START_PROGRESS: number;
   readonly TRACK_LENGTH: number;
   readonly checkpointLabels?: readonly string[];
+  readonly BOOST_ZONES?: readonly BoostZone[];
+  roadHalfWidth?(progress: number): number;
 };
 
 export type DriveInput = { throttle: number; brake: number; steer: number; drift: boolean; boost: boolean };
@@ -25,6 +29,8 @@ export type DriveState = {
   surfaceRoll: number;
   elapsed: number;
   boost: number;
+  /** Seconds remaining in a collected road accelerator; separate from Shift fuel. */
+  surge: number;
   driftAngle: number;
   y: number;
   verticalVelocity: number;
@@ -40,7 +46,7 @@ export type DriveState = {
   collisions: number;
   distanceDrifted: number;
 };
-export type RaceEvent = 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land';
+export type RaceEvent = 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land' | 'boost-pad';
 export type PropImpact = { id: string; x: number; y: number; z: number; vx: number; vz: number; speed: number };
 
 const STEP = 1 / 120;
@@ -56,7 +62,7 @@ const inputNumber = (value: number, min: number, max: number) => Number.isFinite
 
 function initialState(route: DrivingRoute): DriveState {
   return {
-    progress: route.START_PROGRESS, lateral: 0, speed: 0, heading: route.routeYaw(route.START_PROGRESS), surfacePitch: 0, surfaceRoll: 0, elapsed: 0, boost: 1,
+    progress: route.START_PROGRESS, lateral: 0, speed: 0, heading: route.routeYaw(route.START_PROGRESS), surfacePitch: 0, surfaceRoll: 0, elapsed: 0, boost: 1, surge: 0,
     driftAngle: 0, y: route.sampleRoute(route.START_PROGRESS).y, verticalVelocity: 0,
     airborne: false, glide: 0, altitude: 0, airTime: 0, totalAirTime: 0, launches: 0, finished: false, checkpoint: 0, collisions: 0, distanceDrifted: 0,
   };
@@ -139,7 +145,14 @@ export class DrivingSimulation {
   state: DriveState;
   private readonly route: DrivingRoute;
   private readonly customRoute: boolean;
-  private readonly edge: number;
+  private get edge(): number {
+    const road = this.route.roadHalfWidth?.(this.state.progress) ?? this.route.ROAD_HALF_WIDTH;
+    const launch = this.activeLaunch;
+    const blend = launch ? clamp((launch.end - this.state.progress) / 24, 0, 1) : 0;
+    const landing = launch ? this.route.roadHalfWidth?.(launch.end + 6) ?? road : road;
+    const width = launch?.halfWidth === undefined ? road : landing + (launch.halfWidth - landing) * blend;
+    return Math.max(0, width - CAR_HALF_WIDTH);
+  }
   private obstacles: Obstacle[];
   private lateralVelocity = 0;
   private steering = 0;
@@ -148,6 +161,8 @@ export class DrivingSimulation {
   private activeLaunch: LaunchZone | undefined;
   private liftBias = 0;
   private launchedZones = new Set<number>();
+  private collectedBoosts = new Set<number>();
+  private surgeSpeed = 0;
   private boostLocked = false;
   private lastBoosting = false;
   private hitObstacles = new Set<number>();
@@ -182,7 +197,6 @@ export class DrivingSimulation {
   constructor(obstacles: Obstacle[] = [], options: { exploration?: boolean; route?: DrivingRoute } = {}) {
     this.route = options.route ?? defaultRoute;
     this.customRoute = options.route !== undefined;
-    this.edge = Math.max(0, this.route.ROAD_HALF_WIDTH - CAR_HALF_WIDTH);
     this.state = initialState(this.route);
     const start = this.route.sampleRoute(this.route.START_PROGRESS);
     this.worldX = start.x; this.worldZ = start.z;
@@ -210,6 +224,7 @@ export class DrivingSimulation {
     this.activeLaunch = undefined;
     this.liftBias = 0;
     this.launchedZones.clear();
+    this.collectedBoosts.clear();this.surgeSpeed = 0;
     this.boostLocked = false;
     this.lastBoosting = false;
     this.hitObstacles.clear();
@@ -244,10 +259,11 @@ export class DrivingSimulation {
   /** Reposition for a retry without erasing race time, earned gates, or statistics. */
   seek(progress: number, lateral = 0) {
     const s = this.state;
+    this.activeLaunch = undefined;
     s.progress = clamp(Number.isFinite(progress) ? progress : this.route.START_PROGRESS, 0, this.route.TRACK_LENGTH);
     s.lateral = clamp(Number.isFinite(lateral) ? lateral : 0, -this.edge, this.edge);
     const p = this.route.routePoint(s.progress, s.lateral);
-    s.speed = 0; s.heading = this.route.routeYaw(s.progress);
+    s.speed = 0; s.surge = 0; this.surgeSpeed = 0; s.heading = this.route.routeYaw(s.progress);
     s.finished = false;
     s.y = p.y; s.surfacePitch = Math.atan(this.route.routeSlope(s.progress)); s.surfaceRoll = 0;
     s.airborne = false; s.glide = 0; s.altitude = 0; s.airTime = 0; s.verticalVelocity = 0; s.driftAngle = 0;
@@ -258,6 +274,7 @@ export class DrivingSimulation {
     this.plazaHop = false;
     this.scrapeNormals.clear();
     for (const index of this.launchedZones) if (this.route.LAUNCH_ZONES[index].progress >= s.progress) this.launchedZones.delete(index);
+    for (const index of this.collectedBoosts) if (this.route.BOOST_ZONES![index].end >= s.progress) this.collectedBoosts.delete(index);
   }
 
   update(dt: number, input: DriveInput): RaceEvent[] {
@@ -489,8 +506,13 @@ export class DrivingSimulation {
       s.boost = Math.min(1, s.boost + dt * .1);
     }
 
-    const terminalSpeed = boosting ? 58 : 44;
-    const engine = (boosting ? 28 : 19) * input.throttle;
+    if (input.brake > .2) s.surge = 0;
+    s.surge = Math.max(0, s.surge - dt);
+    const surging = s.surge > 0;
+    this.lastBoosting = boosting || surging;
+    const terminalSpeed = surging ? this.surgeSpeed : boosting ? 58 : 44;
+    const previousSpeed = s.speed;
+    const engine = (surging ? 50 : boosting ? 28 : 19) * input.throttle;
     const rollingResistance = s.speed > 0 ? .6 + .015 * s.speed : 0;
     const drag = .003 * s.speed * s.speed;
     // Engine braking is noticeable when the pedal is released. On a flat road
@@ -499,9 +521,11 @@ export class DrivingSimulation {
     const driftDrag = input.drift && !s.airborne ? 3.8 + .045 * s.speed : 0;
     const downhill = s.speed > .5 && !s.airborne ? -this.route.routeSlope(s.progress) * 4 : 0;
     s.speed += (engine - rollingResistance - drag - coastDrag - input.brake * 34 - driftDrag + downhill) * dt;
-    if (s.speed > terminalSpeed) s.speed = Math.max(terminalSpeed, s.speed - 24 * dt);
+    if (s.speed > terminalSpeed) s.speed = surging
+      ? Math.min(s.speed, Math.max(terminalSpeed, previousSpeed - 24 * dt))
+      : Math.max(terminalSpeed, s.speed - 24 * dt);
     // Lift keeps forward motion even if the driver releases the accelerator in flight.
-    s.speed = clamp(s.speed, s.airborne ? 18 : 0, 60);
+    s.speed = clamp(s.speed, s.airborne ? 18 : 0, Math.max(60, this.surgeSpeed));
 
     this.steering += (input.steer - this.steering) * (1 - Math.exp(-10 * dt));
     let forwardSpeed: number;
@@ -529,6 +553,21 @@ export class DrivingSimulation {
     }
     s.lateral += this.lateralVelocity * dt;
     s.progress = Math.max(0, s.progress + forwardSpeed * dt);
+
+    // Pads are physical strips: the swept wheel corridor must cross the color.
+    // Crossing elsewhere in the street cannot collect a boost, nor can flight.
+    if (!s.airborne && s.progress > oldProgress && input.brake < .2) {
+      this.route.BOOST_ZONES?.forEach((zone, index) => {
+        if (this.collectedBoosts.has(index)) return;
+        if (!intersectsObstacle(oldProgress, oldLateral, s.progress, s.lateral, {
+          progress: (zone.progress + zone.end) / 2, lateral: 0,
+          width: zone.halfWidth * 2, length: zone.end - zone.progress, kind: 'barrier',
+        })) return;
+        this.collectedBoosts.add(index);this.surgeSpeed = zone.speed;s.surge = zone.duration;
+        s.speed = Math.max(s.speed, zone.speed * .85);this.lastBoosting = true;
+        events.push('boost-pad');
+      });
+    }
 
     if (Math.abs(s.lateral) > this.edge) {
       const side = Math.sign(s.lateral);
@@ -577,8 +616,8 @@ export class DrivingSimulation {
     const ground = this.customRoute
       ? this.route.routePoint(s.progress, s.lateral).y
       : this.route.sampleRoute(s.progress).y;
-    if (!s.airborne && s.speed >= MIN_LAUNCH_SPEED && input.brake < .4) {
-      const index = this.route.LAUNCH_ZONES.findIndex((zone, i) => !this.launchedZones.has(i) && oldProgress <= zone.progress && s.progress >= zone.progress);
+    if (!s.airborne && input.brake < .4) {
+      const index = this.route.LAUNCH_ZONES.findIndex((zone, i) => !this.launchedZones.has(i) && s.speed >= (zone.minSpeed ?? MIN_LAUNCH_SPEED) && Math.abs(s.lateral) <= (zone.halfWidth ?? this.route.ROAD_HALF_WIDTH) && oldProgress <= zone.progress && s.progress >= zone.progress);
       if (index !== -1) {
         this.activeLaunch = this.route.LAUNCH_ZONES[index];
         this.liftBias = 0;

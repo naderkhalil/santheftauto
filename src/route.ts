@@ -207,7 +207,7 @@ export const DISTRICTS = [
   { name: 'THE EMBARCADERO', street: 'SAN FRANCISCO WATERFRONT', at: routeProgressAt(590, 682) },
   { name: 'MARKET STREET', street: 'THE FERRY BUILDING', at: routeProgressAt(608, 250) },
 ];
-export type LaunchZone = { progress: number; end: number; label: string };
+export type LaunchZone = { progress: number; end: number; label: string; height?: number; minSpeed?: number; halfWidth?: number };
 export const LAUNCH_ZONES: readonly LaunchZone[] = [
   { progress: routeProgressAt(-75, 188), end: routeProgressAt(-75, 275), label: 'POWELL HILL LIFT-OFF' },
   { progress: routeProgressAt(175, 476), end: routeProgressAt(175, 610), label: 'GRANT AVENUE SKYWAY' },

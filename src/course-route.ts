@@ -1,4 +1,4 @@
-import type { CourseDefinition, CoursePoint } from './courses.ts';
+import type { CourseDefinition, CoursePoint, CourseRange } from './courses.ts';
 import type { DrivingRoute } from './driving.ts';
 import type { LaunchZone } from './route.ts';
 
@@ -74,6 +74,23 @@ export function createCourseRoute(course: CourseDefinition): CourseRoute {
   // retain the normal 14.8 m carriageway and a positive inner lane radius.
   const ROAD_HALF_WIDTH = Math.min(course.roadHalfWidth??7.4, minimumRadius * (course.roadHalfWidth ? .58 : .45));
   const START_PROGRESS = Math.min(12, TRACK_LENGTH * .02);
+  const resolveRange = <T extends CourseRange>(range: T) => {
+    const progress = anchorProgress[range.from] + (range.startOffset ?? 0);
+    const end = anchorProgress[range.to] + (range.endOffset ?? 0);
+    if (!Number.isFinite(progress) || !Number.isFinite(end) || progress < 0 || end <= progress || end > TRACK_LENGTH)
+      throw new Error(`${course.name}: invalid course feature range`);
+    return { ...range, progress, end };
+  };
+  const LAUNCH_ZONES = (course.launches ?? []).map(resolveRange);
+  const BOOST_ZONES = (course.boosts ?? []).map(resolveRange);
+  const widths = (course.widths ?? []).map(resolveRange);
+  const roadHalfWidth = (progress: number) => {
+    const range = widths.find(r => progress >= r.progress && progress <= r.end);
+    if (!range) return ROAD_HALF_WIDTH;
+    // Ease each surface change over six metres so a lane never snaps inward.
+    const blend = smooth(clamp(Math.min(progress - range.progress, range.end - progress) / 6, 0, 1));
+    return ROAD_HALF_WIDTH + (range.halfWidth - ROAD_HALF_WIDTH) * blend;
+  };
 
   const planAt = (distance: number) => {
     const progress = clamp(distance, 0, TRACK_LENGTH);
@@ -144,14 +161,14 @@ export function createCourseRoute(course: CourseDefinition): CourseRoute {
     return heightAt(zone.progress) + (heightAt(zone.end) - heightAt(zone.progress)) * smooth(u)
       + routeSlope(zone.progress) * span * u * (1 - u) ** 2
       + routeSlope(zone.end) * span * u * u * (u - 1)
-      + Math.sin(Math.PI * u) ** 2 * Math.min(28, span * .13);
+      + Math.sin(Math.PI * u) ** 2 * (zone.height ?? Math.min(28, span * .13));
   };
   const glideSlope = (distance: number, zone: LaunchZone) => (sampleGlidePath(distance + .02, zone) - sampleGlidePath(distance - .02, zone)) / .04;
 
   return {
     TRACK_LENGTH, ROAD_HALF_WIDTH, START_PROGRESS,
     CHECKPOINTS: anchorProgress.slice(1), checkpointLabels: points.slice(1).map(point => point.label),
-    LAUNCH_ZONES: [], sampleRoute, routePoint, routeYaw, routeSlope, routeCurvature,
+    LAUNCH_ZONES, BOOST_ZONES, roadHalfWidth, sampleRoute, routePoint, routeYaw, routeSlope, routeCurvature,
     routeProgressAt, sampleGlidePath, glideSlope, anchorProgress,
     groundHeight: (x, z) => course.terrainHeight?.(x, z) ?? heightAt(routeProgressAt(x, z)),
   };

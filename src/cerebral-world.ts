@@ -6,10 +6,12 @@ import { cerebralGroundHeight as ground, CEREBRAL_GROUND_GRID, type CerebralLayo
 import type { CourseRoute } from './course-route';
 import { createCerebralBackground } from './cerebral-background';
 import { parkedCarObstacles } from './cerebral-obstacles';
+import { CEREBRAL_PLAY_ANCHORS as A } from './cerebral-play-route';
+import { createCerebralSkyline } from './cerebral-skyline';
 
 type Point={x:number;y:number;z:number};
 type Placement=Point&{yaw:number;scale?:number};
-export type CerebralView={name:string;eye:Point;look:Point;progress:number};
+export type CerebralView={name:string;eye:Point;look:Point;progress:number;glide?:boolean};
 const rand=(n:number)=>{const x=Math.sin(n*127.17+78.3)*43758.5453;return x-Math.floor(x);};
 const distance=(a:{x:number;z:number},b:{x:number;z:number})=>Math.hypot(a.x-b.x,a.z-b.z);
 
@@ -106,6 +108,26 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
       for(const side of [-1,1])curbSection(a,b,side*(street.width/2+.12),street.name,curb,.15);
     }
   }
+  // The measured southwest entrance and southeast exit get a modestly widened
+  // asphalt racing surface. A narrow fictional connector under the glide keeps
+  // a slow approach playable without cutting an invisible track across grass.
+  const parkStart=route.anchorProgress[A.parkEntrance]-8,parkEnd=route.anchorProgress[A.steinerDescent]+6;
+  const launch=route.LAUNCH_ZONES[0];
+  const parkVertices:number[]=[],parkUvs:number[]=[],parkIndices:number[]=[];
+  const parkSteps=Math.ceil((parkEnd-parkStart)/1.5);
+  for(let i=0;i<=parkSteps;i++){
+    const s=THREE.MathUtils.lerp(parkStart,parkEnd,i/parkSteps);
+    let half=THREE.MathUtils.lerp(6.4,4.4,THREE.MathUtils.smoothstep(s,parkStart,parkStart+20));
+    if(launch){
+      half=THREE.MathUtils.lerp(half,2.8,THREE.MathUtils.smoothstep(s,launch.progress-6,launch.progress+12));
+      half=THREE.MathUtils.lerp(half,4.6,THREE.MathUtils.smoothstep(s,launch.end-12,launch.end+8));
+    }
+    half=THREE.MathUtils.lerp(half,6.4,THREE.MathUtils.smoothstep(s,parkEnd-20,parkEnd));
+    for(const side of [-1,1]){const p=route.routePoint(s,half*side);parkVertices.push(p.x,ground(p.x,p.z)+.13,-p.z);parkUvs.push(p.x/12,-p.z/12);}
+    if(i){const n=i*2;parkIndices.push(n-2,n-1,n,n-1,n+1,n);}
+  }
+  const parkSurface=new THREE.BufferGeometry();parkSurface.setAttribute('position',new THREE.Float32BufferAttribute(parkVertices,3));parkSurface.setAttribute('uv',new THREE.Float32BufferAttribute(parkUvs,2));parkSurface.setIndex(parkIndices);parkSurface.computeVertexNormals();
+  batch(parkSurface,asphalt,-950,-65);
   // Distinct street edges and markings follow the measured, tilted grid.
   const placements:Record<string,Placement[]>={Sedan:[],Hatchback:[],Estate:[],ParkingMeter:[],Hydrant:[],Bicycle:[],LitterBin:[]};
   const trees:Placement[]=[];
@@ -151,7 +173,10 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
   const unique=new Set<string>();
   layout.route.forEach((p,index)=>{
     const key=`${Math.round(p.x)},${Math.round(p.z)}`;if(unique.has(key)||p.label.includes('531'))return;unique.add(key);
-    const progress=route.anchorProgress[index],yaw=route.routeYaw(Math.max(0,progress-20)),dx=Math.sin(yaw),dz=Math.cos(yaw);
+    const before=layout.route[Math.max(0,index-1)],after=layout.route[Math.min(layout.route.length-1,index+1)];
+    const headingPoint=distance(before,p)>.1?before:after;
+    const yaw=headingPoint===before?Math.atan2(p.x-before.x,p.z-before.z):Math.atan2(after.x-p.x,after.z-p.z);
+    const dx=Math.sin(yaw),dz=Math.cos(yaw);
     for(const s of [-1,1])for(let j=-5;j<=5;j++){
       const cx=p.x+dx*s*9+dz*j*.95,cz=p.z+dz*s*9-dx*j*.95;
       strip([{x:cx-dx*1.25,z:cz-dz*1.25},{x:cx+dx*1.25,z:cz+dz*1.25}],-.28,.28,.065,white);
@@ -180,7 +205,7 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
     }
   });
   // Sparse yellow dashes guide a race without replacing real streets with a track.
-  for(let s=15;s<route.TRACK_LENGTH;s+=9){const p=route.sampleRoute(s),q=route.sampleRoute(s+2.8);strip([p,q],-.10,.10,.075,yellow);}
+  for(let s=15;s<route.TRACK_LENGTH;s+=9){const p=route.sampleRoute(s),q=route.sampleRoute(s+2.8);strip([p,q],-.10,.10,s>parkStart&&s<parkEnd?.155:.075,yellow);}
   for(const s of [route.START_PROGRESS-5,route.TRACK_LENGTH-1]){
     const yaw=route.routeYaw(s);for(let row=0;row<2;row++)for(let i=-6;i<=6;i++){
       const p=route.routePoint(s+row*.65,i*.85);strip([{x:p.x-Math.sin(yaw)*.3,z:p.z-Math.cos(yaw)*.3},{x:p.x+Math.sin(yaw)*.3,z:p.z+Math.cos(yaw)*.3}],-.42,.42,.08,(i+row)%2?white:metal);
@@ -199,9 +224,10 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
     loader.loadAsync('/assets/vegetation/jacaranda.glb'),
     loader.loadAsync('/assets/cerebral-valley/canopy-lod.glb'),
     fetch('/assets/cerebral-valley/vegetation-anchors.json').then(r=>r.json()),
-    createCerebralBackground()
+    createCerebralBackground(),createCerebralSkyline()
   ]);
-  const [heroes,nearBuildings,farBuildings,streetlife,treeSource,treeLOD,anchors,background]=assets;
+  const [heroes,nearBuildings,farBuildings,streetlife,treeSource,treeLOD,anchors,background,skyline]=assets;
+  group.add(skyline);
   background.userData.cerebralSkipAO=true;
   group.add(background);background.children.forEach(o=>register(o,0,1100));
   for(const [asset,near,far] of [[heroes,0,650],[nearBuildings,0,low?80:125],[farBuildings,low?80:125,650]] as const){
@@ -270,6 +296,8 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
     // The familiar eastern Alamo lawn is open: retain mature perimeter trees
     // without planting an invented screen across the Painted Ladies panorama.
     if(p.park==='Alamo Square'&&p.x>-925&&p.z<55&&p.z>-108)continue;
+    const onRoute=route.routeProgressAt(p.x,p.z),near=route.sampleRoute(onRoute);
+    if(p.park==='Alamo Square'&&onRoute>parkStart-10&&onRoute<parkEnd+10&&distance(p,near)<10)continue;
     trees.push({...p,scale:11*(p.scale??1)});
   }
   const treePlacements=trees.map(p=>{const scale=(p.scale??9)/treeHeight;return {...p,y:p.y-treeBounds.min.y*scale,scale};});
@@ -280,11 +308,12 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
   const view=(name:string,x:number,z:number,ex:number,ez:number,rise:number,progress:number):CerebralView=>({name,look:{x,y:ground(x,z)+5,z},eye:{x:ex,y:ground(ex,ez)+rise,z:ez},progress});
   const views=[
     view('Hayes Valley',-145,-1,15,23,4.5,route.START_PROGRESS),
-    view('Alamo Square',-941,-30,-1050,-153,11,at(6)),
-    view('Painted Ladies',-757,-34,-809,-48,4,at(8)+145),
-    view('531 Page',-475,-401,-493,-377,3.5,at(17)),
-    view('Café Réveille',-705,-608,-676,-627,3.7,at(22)),
-    view('Duboce Park',-835,-782,-665,-786,5,at(23)),
+    view('Alamo Square',-941,-30,-1050,-153,11,at(A.parkEntrance)),
+    view('Painted Ladies',-757,-34,-809,-48,4,at(A.landing)),
+    {...view('Skyline Glide',-757,-34,-913,-61,22,at(A.launchCrest)),glide:true},
+    view('531 Page',-475,-401,-493,-377,3.5,at(A.page531)),
+    view('Café Réveille',-705,-608,-676,-627,3.7,at(A.reveille)),
+    view('Duboce Park',-835,-782,-665,-786,5,at(A.duboce)),
   ];
   const obstacles=parkedCarObstacles(route,[...placements.Sedan,...placements.Hatchback,...placements.Estate]);
   decoder.dispose();

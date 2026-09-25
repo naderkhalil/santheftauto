@@ -1,38 +1,59 @@
 {
-  "triangles": 3025855,
-  "lodTriangles": 561883,
-  "meshes": 834,
-  "lodMeshes": 605,
-  "spatialBlocks": 41,
+  "triangles": 3022723,
+  "lodTriangles": 561547,
+  "meshes": 840,
+  "lodMeshes": 611,
+  "spatialBlocks": 42,
   "buildings": 1559,
   "parkFeatures": [
     {
       "park": "Duboce Park",
       "surveyedBoundary": true,
       "pathCount": 33,
-      "treeAnchors": 21
+      "treeAnchors": 21,
+      "benches": 9,
+      "suppressedBenches": []
     },
     {
       "park": "Alamo Square",
       "surveyedBoundary": true,
       "pathCount": 55,
-      "treeAnchors": 98
+      "treeAnchors": 98,
+      "benches": 7,
+      "suppressedBenches": [
+        {
+          "x": -1014.912,
+          "z": -91.004,
+          "reason": "interpreted furniture intersects active race asphalt"
+        },
+        {
+          "x": -1043.667,
+          "z": -134.586,
+          "reason": "interpreted furniture intersects active race asphalt"
+        },
+        {
+          "x": -813.772,
+          "z": -70.488,
+          "reason": "interpreted furniture intersects active race asphalt"
+        }
+      ]
     },
     {
       "park": "Patricia's Green",
       "surveyedBoundary": true,
       "pathCount": 21,
-      "treeAnchors": 8
+      "treeAnchors": 8,
+      "benches": 7,
+      "suppressedBenches": []
     }
   ],
   "vegetationAnchors": 127,
-  "bytes": 35900196,
-  "lodBytes": 12547920,
+  "bytes": 36397908,
+  "lodBytes": 12770776,
   "coordinates": "+X east, glTF -Z north, +Y altitude, no parent reflection",
   "origin": {
     "longitude": -122.42415,
     "latitude": 37.77655
   },
-  "geometrySource": "OSM mapped building footprints/heights and USGS elevation raster; facade ornament/paint reference-informed",
-  "terrainFootings": true
+  "geometrySource": "OSM mapped building footprints/heights and USGS elevation raster; facade ornament/paint reference-informed"
 }

@@ -23,6 +23,10 @@ The final park-perimeter pass adds surveyed background footprints within 55 metr
 
 Building wall bottoms extend down to the sampled terrain at each footprint vertex, while the surveyed roof elevation and horizontal floors remain fixed. This creates the exposed lower wall/foundation that anchors wide parcels on the steep park slopes. The final source and both detail levels include these terrain footings.
 
+Alamo Square way **389112749** is tagged `amenity=toilets`, `building=yes` in the original OSM extract. It is a park restroom, not residential infill. Its exact footprint now receives a dedicated low amenity model in both detail levels: interpreted 3.35 m total height, muted stucco, flush metal doors and high ventilation. The source and published layout explicitly record that the height is interpreted because OSM supplies no height; the former 11 m Victorian default was incorrect. The model has no bay windows, stoop, residential cornice or chimney.
+
+The playable Alamo path has a wider asphalt footprint than the mapped footpath. Three procedurally placed benches intruded into it, at semantic coordinates **(−1014.912, −91.004)**, **(−1043.667, −134.586)** and **(−813.772, −70.488)**. These interpreted seats are omitted in both detail levels. Their centres were respectively 1.223 m, 0.957 m and 1.604 m from the live rounded race route, inside the 4.2–4.4 m road half-width. The remaining seven Alamo benches and all other park furniture are retained. Suppressions are recorded in the model log and use position matching so unrelated paths cannot silently inherit an exclusion after a source ordering change.
+
 The ten original hero parcels are excluded using the shared layout's `hero: true` flag. The additional 450 Hayes/a Mano parcel (OSM 28015901) is explicitly reserved for its accurate contemporary hero model. Separately modeled Painted Ladies, 531 Page Street, Café Réveille, Absinthe and 450 Hayes assets occupy their surveyed locations.
 
 ## Technical construction
