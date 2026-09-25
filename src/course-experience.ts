@@ -20,7 +20,7 @@ const clamp=THREE.MathUtils.clamp;
 export async function bootCourseRace(app:HTMLElement, course:CourseDefinition) {
   document.title=`Whimsical SF — ${course.name}`;
   const cerebral=course.id==='cerebral-valley';
-  const route=createCourseRoute(course), bestKey=`whimsical-sf-${course.id}-best-${cerebral?'skyline-v3':'v1'}`;
+  const route=createCourseRoute(course), bestKey=`whimsical-sf-${course.id}-best-${cerebral?'hayes-v4':'v1'}`;
   const destination=course.points.at(-1)!.label.split(' · ')[0];
   let best=Number(read(bestKey))||0;
   app.className=`course-app${cerebral?' cerebral-course':''}`;
@@ -153,7 +153,7 @@ export async function bootCourseRace(app:HTMLElement, course:CourseDefinition) {
     requestAnimationFrame(frame);const dt=clamp((now-last)/1000,0,.1);last=now;elapsed+=dt;
     frameMs+=(Math.min((now-lastFrame)/1,150)-frameMs)*.04;lastFrame=now;
     const drive=input();
-    if(phase==='countdown'){const previous=Math.ceil(countdown);countdown-=dt;el('course-count').textContent=String(Math.max(1,Math.ceil(countdown)));if(Math.ceil(countdown)!==previous)audio.cue(countdown<=0?'go':'count');if(countdown<=0){phase='racing';sync();toast(course.fog?'THE BRIDGE HAS A SECRET. FOLLOW THE BEACONS.':'FIND YOUR LINE. MAKE IT A GOOD ONE.');}}
+    if(phase==='countdown'){const previous=Math.ceil(countdown);countdown-=dt;el('course-count').textContent=String(Math.max(1,Math.ceil(countdown)));if(Math.ceil(countdown)!==previous)audio.cue(countdown<=0?'go':'count');if(countdown<=0){phase='racing';sync();toast(course.fog?'THE BRIDGE HAS A SECRET. FOLLOW THE BEACONS.':cerebral&&!practice?'PATRICIA’S GREEN ON YOUR LEFT · ANINA ON YOUR RIGHT':'FIND YOUR LINE. MAKE IT A GOOD ONE.',cerebral&&!practice?4:2.4);}}
     if(phase==='racing'){
       const previous=sim.state.progress,previousLateral=sim.state.lateral;const events=sim.update(dt,drive);topSpeed=Math.max(topSpeed,sim.state.speed);
       const result=fog?.update(previous,sim.state.progress,sim.state.lateral,previousLateral);
@@ -172,8 +172,13 @@ export async function bootCourseRace(app:HTMLElement, course:CourseDefinition) {
     }else car.group.rotation.set(-Math.atan(route.routeSlope(s.progress)),yaw+s.driftAngle,0,'YXZ');
     if(phase!=='paused')car.update(dt,{speed:s.speed,steer:drive.steer,braking:drive.brake>.1,boosting:sim.boosting,time:elapsed,glide:s.glide,airborne:s.airborne,altitude:s.altitude});
     const scenicGlide=scenic&&!!scenicViews[selectedView]?.glide;
-    const preview=phase==='preview'&&!scenicGlide;const flight=s.airborne&&cerebral;const distance=preview?25:flight?17:cameraMode?7:11;
-    const desiredEye=new THREE.Vector3(p.x-Math.sin(yaw)*distance+(preview?Math.cos(yaw)*14:0),p.y+(preview?14:flight?6.5:cameraMode?3:5.4),p.z-Math.cos(yaw)*distance-(preview?Math.sin(yaw)*14:0));
+    const preview=phase==='preview'&&!scenicGlide;const flight=s.airborne&&cerebral;
+    // A little more height and width lets the Hayes opening read as a place:
+    // Patricia's Green on the left and Anina's open patio on the right. Ease
+    // back into the normal chase before Laguna; steering remains unchanged.
+    const hayesReveal=cerebral&&!preview&&!flight&&!cameraMode?1-THREE.MathUtils.smoothstep(s.progress,175,250):0;
+    const distance=preview?25:flight?17:cameraMode?7:11+hayesReveal*3;
+    const desiredEye=new THREE.Vector3(p.x-Math.sin(yaw)*distance+(preview?Math.cos(yaw)*14:0),p.y+(preview?14:flight?6.5:cameraMode?3:5.4+hayesReveal*2.4),p.z-Math.cos(yaw)*distance-(preview?Math.sin(yaw)*14:0));
     const portraitFlight=clamp((1.1-camera.aspect)/.65,0,1);
     const flightYaw=yaw-.13-.10*portraitFlight;
     const ahead=route.sampleRoute(Math.min(route.TRACK_LENGTH,s.progress+16));const desiredLook=new THREE.Vector3(preview?p.x:p.x+Math.sin(flight?flightYaw:yaw)*(flight?50:14),preview?p.y+3:flight?p.y+.5:Math.max(p.y+1.5,ahead.y+1.5),preview?p.z:p.z+Math.cos(flight?flightYaw:yaw)*(flight?50:14));
@@ -186,7 +191,8 @@ export async function bootCourseRace(app:HTMLElement, course:CourseDefinition) {
       desiredLook.set(vista.x,vista.y+3,vista.z);
     }
     if(!cameraReady){eye.copy(desiredEye);look.copy(desiredLook);cameraReady=true;}else if(phase!=='paused'){eye.lerp(desiredEye,1-Math.exp(-8*dt));look.lerp(desiredLook,1-Math.exp(-9*dt));}
-    setCameraFromCity(camera,eye,look);camera.fov=THREE.MathUtils.damp(camera.fov,preview?58:flight?56+18*portraitFlight:s.surge>0?77:62+Math.min(s.speed*.12,6),5,dt);camera.updateProjectionMatrix();
+    const previewFov=cerebral?THREE.MathUtils.lerp(58,scenicViews[scenic?selectedView:0].portraitFov??58,portraitFlight):58;
+    setCameraFromCity(camera,eye,look);camera.fov=THREE.MathUtils.damp(camera.fov,preview?previewFov:flight?56+18*portraitFlight:s.surge>0?77:62+Math.min(s.speed*.12,6)+hayesReveal*6,5,dt);camera.updateProjectionMatrix();
     sun.position.set(p.x-65,p.y+140,-p.z+75);sun.target.position.set(p.x,p.y,-p.z);
     const fogActive=fog?.active&&!fog.complete;if(!cerebral){const fogMaterial=scene.fog as THREE.FogExp2;fogMaterial.density=THREE.MathUtils.damp(fogMaterial.density,fogActive?.022:.00058,2,dt);(scene.background as THREE.Color).lerp(fogActive?new THREE.Color('#d6e3df'):sky,1-Math.exp(-dt*2));}
     const nextBeacon=fog?.nextBeacon;beacon.visible=!!nextBeacon&&s.progress>nextBeacon.progress-180&&phase!=='preview';if(nextBeacon){const q=route.routePoint(nextBeacon.progress,nextBeacon.lateral);beacon.position.set(q.x,q.y+2.7,q.z);beacon.rotation.y=route.routeYaw(nextBeacon.progress);beacon.scale.setScalar(1+Math.sin(elapsed*3)*.035);}

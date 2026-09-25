@@ -10,8 +10,8 @@ import { CEREBRAL_PLAY_ANCHORS as A } from './cerebral-play-route';
 import { createCerebralSkyline } from './cerebral-skyline';
 
 type Point={x:number;y:number;z:number};
-type Placement=Point&{yaw:number;scale?:number};
-export type CerebralView={name:string;eye:Point;look:Point;progress:number;glide?:boolean};
+type Placement=Point&{yaw:number;scale?:number;scaleXZ?:number};
+export type CerebralView={name:string;eye:Point;look:Point;progress:number;glide?:boolean;portraitFov?:number};
 const rand=(n:number)=>{const x=Math.sin(n*127.17+78.3)*43758.5453;return x-Math.floor(x);};
 const distance=(a:{x:number;z:number},b:{x:number;z:number})=>Math.hypot(a.x-b.x,a.z-b.z);
 
@@ -131,6 +131,9 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
   // Distinct street edges and markings follow the measured, tilted grid.
   const placements:Record<string,Placement[]>={Sedan:[],Hatchback:[],Estate:[],ParkingMeter:[],Hydrant:[],Bicycle:[],LitterBin:[]};
   const trees:Placement[]=[];
+  // Keep the Hayes/Octavia opening legible. Dedicated landmark furniture and
+  // planting replace procedural cars/trees directly across these frontages.
+  const landmarkFrontage=(x:number,z:number)=>x>-53&&x<8&&z>-10&&z<45;
   const usedParked:Point[]=[];
   let serial=0;
   for(const street of layout.streets){
@@ -145,12 +148,12 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
         if(near<130&&street.width>=9&&roadDistance(cx,cz,street.name)>street.width/2+7){
           for(const side of [-1,1]){
             const x=cx+dz*side*(street.width/2-1.12),z=cz-dx*side*(street.width/2-1.12);
-            if(usedParked.some(p=>distance(p,{x,z})<6.5)||rand(seed+side*4)<.2)continue;
+            if(landmarkFrontage(x,z)||usedParked.some(p=>distance(p,{x,z})<6.5)||rand(seed+side*4)<.2)continue;
             const p={x,z,y:ground(x,z)+.045,yaw:yaw+(side===1?0:Math.PI)};
             placements[['Sedan','Hatchback','Estate'][seed%3]].push(p);usedParked.push(p);
             const sx=cx+dz*side*(street.width/2+1),sz=cz-dx*side*(street.width/2+1);
             if(seed%3===0)placements.ParkingMeter.push({x:sx,z:sz,y:ground(sx,sz)+.05,yaw});
-            if(seed%5===0&&roadDistance(sx,sz)>0&&!(sx>-795&&sx<-750&&sz>-90&&sz<20)){
+            if(seed%5===0&&!landmarkFrontage(sx,sz)&&roadDistance(sx,sz)>0&&!(sx>-795&&sx<-750&&sz>-90&&sz<20)){
               trees.push({x:sx,z:sz,y:ground(sx,sz),yaw:rand(seed)*Math.PI*2,scale:6.8+rand(seed+12)*3});
               box(metal,sx,sz,ground(sx,sz)+.015,1.25,.07,1.25);
             }
@@ -224,9 +227,14 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
     loader.loadAsync('/assets/vegetation/jacaranda.glb'),
     loader.loadAsync('/assets/cerebral-valley/canopy-lod.glb'),
     fetch('/assets/cerebral-valley/vegetation-anchors.json').then(r=>r.json()),
-    createCerebralBackground(),createCerebralSkyline()
+    createCerebralBackground(),createCerebralSkyline(),
+    loader.loadAsync('/assets/cerebral-valley/patricias-green.glb'),
+    fetch('/assets/cerebral-valley/patricias-green.meta.json').then(r=>r.json()),
+    loader.loadAsync('/assets/cerebral-valley/anina.glb'),
   ]);
-  const [heroes,nearBuildings,farBuildings,streetlife,treeSource,treeLOD,anchors,background,skyline]=assets;
+  const [heroes,nearBuildings,farBuildings,streetlife,treeSource,treeLOD,anchors,background,skyline,green,greenDetails,anina]=assets;
+  configure(green.scene);group.add(green.scene);register(green.scene,0,500);
+  configure(anina.scene);group.add(anina.scene);register(anina.scene,0,400);
   group.add(skyline);
   background.userData.cerebralSkipAO=true;
   group.add(background);background.children.forEach(o=>register(o,0,1100));
@@ -272,15 +280,17 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
         const geo=o.geometry.clone().applyMatrix4(o.matrixWorld);const mesh=new THREE.InstancedMesh(geo,o.material,points.length);mesh.name=`${name} / ${o.name}`;
         mesh.castShadow=!low&&near===0;mesh.receiveShadow=true;
         points.forEach((p,i)=>{
-          transform.position.set(p.x,p.y,-p.z);const dx=Math.sin(p.yaw),dz=Math.cos(p.yaw);const pitch=isTree?0:Math.atan((ground(p.x+dx,p.z+dz)-ground(p.x-dx,p.z-dz))/2);transform.rotation.set(pitch,-p.yaw,0,'YXZ');transform.scale.setScalar(p.scale??1);transform.updateMatrix();mesh.setMatrixAt(i,transform.matrix);
+          transform.position.set(p.x,p.y,-p.z);const dx=Math.sin(p.yaw),dz=Math.cos(p.yaw);const pitch=isTree?0:Math.atan((ground(p.x+dx,p.z+dz)-ground(p.x-dx,p.z-dz))/2);transform.rotation.set(pitch,-p.yaw,0,'YXZ');transform.scale.set(p.scaleXZ??p.scale??1,p.scale??1,p.scaleXZ??p.scale??1);transform.updateMatrix();mesh.setMatrixAt(i,transform.matrix);
           if(!isTree&&o.material instanceof THREE.MeshStandardMaterial&&o.material.name.includes('car paint'))mesh.setColorAt(i,new THREE.Color(['#adbfc7','#ece8dd','#3c484d','#718080','#8a4d40','#c5bb9f','#546477'][Math.abs(Math.floor(p.x+p.z))%7]));
         });mesh.computeBoundingSphere();cell.add(mesh);
       });group.add(cell);register(cell,near,far);
     }
   }
   for(const [name,points] of Object.entries(placements)){
+    // Filter before rendering AND deriving collision records below.
+    placements[name]=points.filter(p=>!landmarkFrontage(p.x,p.z));
     const prototype=streetlife.scene.getObjectByName(name);if(!prototype)throw new Error(`Street-life prototype missing: ${name}`);
-    const model=prototype.clone(true);model.position.set(0,0,0);configure(model);instanceModel(model,points,name,0,['Sedan','Hatchback','Estate'].includes(name)?200:150);
+    const model=prototype.clone(true);model.position.set(0,0,0);configure(model);instanceModel(model,placements[name],name,0,['Sedan','Hatchback','Estate'].includes(name)?200:150);
   }
   const source=treeSource.scene;source.updateMatrixWorld(true);
   const treeBounds=new THREE.Box3().setFromObject(source),treeHeight=treeBounds.max.y-treeBounds.min.y;
@@ -293,6 +303,7 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
   });
   treeLOD.scene.traverse(o=>{if(o instanceof THREE.Mesh){const mat=treeMaterials.get(o.name);if(!mat)throw new Error(`Missing scanned canopy material ${o.name}`);if(mat instanceof THREE.MeshStandardMaterial&&o.name.includes('leaves')){const leaves=mat.clone();leaves.alphaTest=.26;o.material=leaves;}else o.material=mat;}});
   for(const p of anchors.anchors as Array<Placement&{park?:string}>){
+    if(p.park==="Patricia's Green"||landmarkFrontage(p.x,p.z))continue;
     // The familiar eastern Alamo lawn is open: retain mature perimeter trees
     // without planting an invented screen across the Painted Ladies panorama.
     if(p.park==='Alamo Square'&&p.x>-925&&p.z<55&&p.z>-108)continue;
@@ -303,11 +314,26 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
   const treePlacements=trees.map(p=>{const scale=(p.scale??9)/treeHeight;return {...p,y:p.y-treeBounds.min.y*scale,scale};});
   if(!low)instanceModel(source,treePlacements,'Scanned mature canopy',0,40,true);
   instanceModel(treeLOD.scene,treePlacements,'Distant mature canopy',low?0:40,low?240:380,true);
+  const treeWidth=Math.max(treeBounds.max.x-treeBounds.min.x,treeBounds.max.z-treeBounds.min.z);
+  const greenTrees=(greenDetails.treeAnchors as Array<Point&{height:number;canopyWidth:number}>).map(p=>{
+    const scale=p.height/treeHeight;
+    return {x:p.x,z:p.z,y:p.y-treeBounds.min.y*scale,yaw:rand(p.x+p.z)*Math.PI*2,scale,scaleXZ:p.canopyWidth/treeWidth};
+  });
+  // Six park trees retain their fine canopy in the opening and inspection
+  // views, with authored narrow crowns that keep the north plaza visible.
+  const greenCanopy=(low?treeLOD.scene:source).clone(true);
+  greenCanopy.traverse(o=>{if(o instanceof THREE.Mesh){
+    const soften=(m:THREE.Material)=>{if(!(m instanceof THREE.MeshStandardMaterial)||!m.name.includes('leaves'))return m;const leaves=m.clone();leaves.alphaTest=.12;return leaves;};
+    o.material=Array.isArray(o.material)?o.material.map(soften):soften(o.material);
+  }});
+  instanceModel(greenCanopy,greenTrees,'Patricia’s Green / slender park canopy',0,250,true);
 
   const at=(index:number)=>route.anchorProgress[index];
   const view=(name:string,x:number,z:number,ex:number,ez:number,rise:number,progress:number):CerebralView=>({name,look:{x,y:ground(x,z)+5,z},eye:{x:ex,y:ground(ex,ez)+rise,z:ez},progress});
   const views=[
-    view('Hayes Valley',-145,-1,15,23,4.5,route.START_PROGRESS),
+    {...view('Hayes Valley',-38,-5,18,34,17,route.START_PROGRESS),portraitFov:72},
+    {name:'Patricia’s Green',eye:{x:-8,y:ground(-8,27)+20,z:27},look:{x:-26,y:ground(-26,-18)+1.5,z:-18},progress:route.routeProgressAt(-32,17),portraitFov:70},
+    {...view('Anina',-14,37,4,17,9,route.routeProgressAt(-13,27)),portraitFov:74},
     view('Alamo Square',-941,-30,-1050,-153,11,at(A.parkEntrance)),
     view('Painted Ladies',-757,-34,-809,-48,4,at(A.landing)),
     {...view('Skyline Glide',-757,-34,-913,-61,22,at(A.launchCrest)),glide:true},

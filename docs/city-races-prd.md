@@ -28,17 +28,17 @@ The first release uses compact authored courses of roughly 1.6–3.4 game kilome
 
 ## 2. Cerebral Valley
 
-**Updated:** The original stylized map described below is superseded by the [dedicated geographic and Blender rebuild](cerebral-valley-rebuild.md). It uses uncompressed geographic metres and a shared measured terrain surface.
+**Updated:** The original stylized map is superseded by the [dedicated geographic and Blender rebuild](cerebral-valley-rebuild.md). The current 2.622 km race uses uncompressed geographic metres, a shared measured terrain surface, and the Alamo skyline glide.
 
-**Pitch:** Hayes Valley’s climb, an Alamo Square lap, and a neighborhood descent connecting the user’s specific stops.
+**Pitch:** Approach Patricia’s Green and Anina, sprint up Hayes, glide toward the Painted Ladies and skyline, then descend through the neighborhood’s specific stops.
 
-**Itinerary:** Hayes/Octavia → Hayes west past Webster and Steiner to Scott → north on Scott → east on Fulton → south on Steiner → west on Hayes to Scott to complete the Alamo Square lap → south on Scott to Page → east through Page/Pierce → 531 Page Street → Webster → south to Waller → west to Steiner → south past Café Réveille → Duboce Park.
+**Itinerary:** Hayes between Gough and Octavia → Anina on the right and Patricia’s Green on the left → Octavia → Hayes west past Laguna, Webster and Steiner to Scott → southwest Alamo asphalt entrance → western climbing path → east-facing skyline glide → southeast asphalt landing and Painted Ladies exit → south on Steiner across Fell and Oak → east on Page → 531 Page Street → Webster → south to Waller → west to Steiner → south past Café Réveille → Duboce Park.
 
-**Route decisions:** “Walker” is interpreted as **Waller**. The café stop is authored at **201 Steiner**, so the route needs a Waller-to-Steiner turn after Webster. Scott-to-Page allows an eastbound run through Page/Pierce and 531 Page without a U-turn. The 531 Page checkpoint occurs before the turn south onto Webster.
+**Route decisions:** “Walker” is interpreted as **Waller**. The café stop is authored at **201 Steiner**, so the route needs a Waller-to-Steiner turn after Webster. The new Hayes approach between Gough and Octavia begins before both opening landmarks, which the old Octavia start had already passed. The Alamo climb uses mapped asphalt paths and avoids the central Hayes/Pierce and Steiner stairs. The glide, accelerators and widened park asphalt are explicit game features. Steiner-to-Page replaces the earlier park perimeter lap and Scott/Page/Pierce detour. The 531 Page checkpoint occurs before the turn south onto Webster.
 
-**Look and feel:** Pastel Victorians, Painted Ladies, rising streets, a large Alamo Square green, a clearly signed Page address, a neighborhood café, and a Duboce Park finish.
+**Look and feel:** Patricia’s Green and Anina’s outdoor patio establish the opening block, followed by detailed Victorians, rising streets, an open Alamo lawn, the Painted Ladies against the distant skyline, a clearly signed Page address, the Réveille corner, and a Duboce Park finish.
 
-**Acceptance:** Complete all four park sides; Page/Pierce precedes 531 Page; 531 Page precedes Webster; the café follows Waller/Steiner and precedes the finish. Show the full street name Waller in checkpoint guidance.
+**Acceptance:** Start east of Anina and Patricia’s Green and show them on the correct sides before the first Laguna accelerator. Follow the southwest asphalt entry, complete the east-facing glide and southeast landing, then descend Steiner to Page. 531 Page precedes Webster; the café follows Waller/Steiner and precedes the finish. Show the full street name Waller in checkpoint guidance. Provide nine inspection views, including Patricia’s Green and Anina.
 
 ## 3. Golden Gate Surfride
 

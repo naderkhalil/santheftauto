@@ -56,8 +56,8 @@ export const COURSES: readonly CourseDefinition[] = [
   },
   {
     id: 'cerebral-valley', name: 'Cerebral Valley', subtitle: 'HAYES VALLEY → DUBOCE PARK', theme: 'victorian', accent: '#d0b2ff', difficulty: 'HILLS & CORNERS',
-    description: 'Catch a rainbow rush up Hayes. Climb into Alamo Square, fly toward the Painted Ladies and skyline, then roll down Steiner to Page, Réveille, and Duboce.',
-    highlights: ['Hayes rainbow rush', 'Painted Ladies skyline glide', '531 Page Street', 'Café Réveille → Duboce'],
+    description: 'Cruise past Patricia’s Green and Anina’s sunny patio, then catch a rainbow rush up Hayes. Fly over Alamo Square toward the Painted Ladies and skyline, and roll down to Page, Réveille, and Duboce.',
+    highlights: ['Patricia’s Green & Anina', 'Hayes rainbow rush', 'Painted Ladies skyline glide', '531 Page → Réveille → Duboce'],
     points: CEREBRAL_PLAY_POINTS,
     ...CEREBRAL_PLAY_FEATURES,
     cornerRadius: 12, roadHalfWidth: 6.4, terrainHeight: cerebralGroundHeight,

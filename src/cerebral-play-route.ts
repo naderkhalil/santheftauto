@@ -12,7 +12,12 @@ const street = (index: number, label = CEREBRAL_POINTS[index].label): CoursePoin
  * over the open lawn to the real southeast asphalt junction. It avoids the
  * central Hayes/Pierce stair entrance and the east-side Steiner stairs. */
 export const CEREBRAL_PLAY_POINTS: readonly CoursePoint[] = [
-  street(0),
+  // Interpolated mapped Hayes centreline between Gough and Octavia
+  // (OSM way 26988058), close enough to frame both opening landmarks.
+  // Starting east of Octavia puts Patricia's Green ahead-left and Anina's
+  // north-side patio ahead-right, before the first Laguna boost. Keep the
+  // same anchor count so the park mechanics retain their named stations.
+  point(44, 28.437098, 'Hayes Street · Patricia’s Green approach'),
   street(1, 'Hayes Street · Laguna boost'),
   street(2),
   street(3, 'Hayes Street · Webster boost'),

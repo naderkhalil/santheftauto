@@ -1,0 +1,91 @@
+{
+  "name": "Anina \u00b7 482 Hayes and east patio",
+  "buildingId": "60824061",
+  "origin": [
+    -16.106,
+    28.639,
+    21.68669157221604
+  ],
+  "angle": 0.16091752938795872,
+  "coordinates": "Blender X east/Y north/Z elevation; glTF X east/Y elevation/negative Z north",
+  "patioPolygon": [
+    {
+      "x": -10.805536925598826,
+      "z": 29.500389689344868
+    },
+    {
+      "x": -3.4134698068235787,
+      "z": 30.657727890356913
+    },
+    {
+      "x": 4.919154729329533,
+      "z": 51.59733926066413
+    },
+    {
+      "x": -13.788362073909884,
+      "z": 48.66911641113323
+    }
+  ],
+  "triangles": 29766,
+  "materialBatches": 30,
+  "signs": [
+    {
+      "text": "BRASS TACKS",
+      "position": [
+        -19.312924738637115,
+        27.986747195699955,
+        24.676691572216043
+      ],
+      "normal": [
+        0.16022394947042137,
+        -0.9870806887058929,
+        0
+      ]
+    },
+    {
+      "text": "ANINA",
+      "position": [
+        -12.80056654242943,
+        28.87161482664062,
+        24.736691572216042
+      ],
+      "normal": [
+        0.16022394947042137,
+        -0.9870806887058929,
+        0
+      ]
+    },
+    {
+      "text": "482",
+      "position": [
+        -14.630957795181775,
+        28.726467102415636,
+        24.556691572216042
+      ],
+      "normal": [
+        0.16022394947042137,
+        -0.9870806887058929,
+        0
+      ]
+    }
+  ],
+  "signAudit": [
+    {
+      "text": "BRASS TACKS",
+      "glyphSamples": 760,
+      "blocked": 0
+    },
+    {
+      "text": "ANINA",
+      "glyphSamples": 40,
+      "blocked": 0
+    },
+    {
+      "text": "482",
+      "glyphSamples": 135,
+      "blocked": 0
+    }
+  ],
+  "source": "art/references/cerebral-anina.md",
+  "note": "Whole 482\u2013488 building; Anina east bay, Brass Tacks west bay. Patio in east map gap; rear opaque turquoise fence only. No street parklet in driving lane."
+}

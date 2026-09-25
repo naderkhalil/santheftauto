@@ -22,7 +22,7 @@ The menu's **Explore the City** postcard opens an illustrated downtown map with 
 | Race | Route |
 | --- | --- |
 | VC Circle | Salesforce Tower → SoMa → a complete South Park lap |
-| Cerebral Valley | Hayes Valley → Alamo Square lap → Page & Pierce → 531 Page → Webster → Waller/Steiner and Café Réveille → Duboce Park |
+| Cerebral Valley | Hayes between Gough and Octavia → Anina and Patricia’s Green → Alamo Square skyline glide → Steiner and Page → 531 Page → Webster → Waller/Steiner and Café Réveille → Duboce Park |
 | Golden Gate Surfride | Panhandle → Golden Gate Park → Irving → Mollusk → Hook Fish → Ocean Beach |
 | Lands End | Legion of Honor → coastal trail → Sutro Baths → Cliff House → Ocean Beach |
 | Presidio Run | Arguello Gate → Inspiration Point → coastal overlook → Crissy Field |
@@ -30,7 +30,7 @@ The menu's **Explore the City** postcard opens an illustrated downtown map with 
 
 The bridge race includes **The Fog Run**: steer through three glowing beacons before continuing to Marin. A missed beacon returns to the fog entrance while retaining race time. Q recovers to the road, Escape pauses, and R restarts the selected race. Keyboard, touch, and standard gamepad controls work on the new courses; Auto Accelerate remains optional. Each new race can be opened directly with `?race=vc-circle`, `cerebral-valley`, `golden-gate-surfride`, `lands-end`, `presidio`, or `hawk-hill`.
 
-**Cerebral Valley** has a dedicated rebuild with real OpenStreetMap street/building footprints, USGS hill elevations, Blender architecture and street furniture, mature scanned trees, and photographic daylight. **Explore the Neighborhood** opens six landmark views. Its 3.5 km route passes the seven Painted Ladies, 531 Page, and the actual Réveille corner. See [the rebuild notes](docs/cerebral-valley-rebuild.md) for asset regeneration and measured-versus-interpreted detail.
+**Cerebral Valley** has a dedicated rebuild with real OpenStreetMap street/building footprints, USGS hill elevations, Blender architecture and street furniture, mature scanned trees, and photographic daylight. **Explore the Neighborhood** opens nine landmark views. Its 2.622 km route starts before Patricia’s Green and Anina, climbs Hayes, glides across Alamo Square toward the seven Painted Ladies and downtown skyline, then passes 531 Page and the actual Réveille corner. See [the rebuild notes](docs/cerebral-valley-rebuild.md) for asset regeneration and measured-versus-interpreted detail.
 
 The five other new races remain their first playable versions, with procedural scenery and compressed geography. Their itineraries and future ideas are documented in [the race PRDs](docs/city-races-prd.md).
 

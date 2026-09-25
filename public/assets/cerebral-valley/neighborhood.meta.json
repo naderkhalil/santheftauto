@@ -1,10 +1,10 @@
 {
-  "triangles": 3022723,
-  "lodTriangles": 561547,
-  "meshes": 840,
-  "lodMeshes": 611,
-  "spatialBlocks": 42,
-  "buildings": 1559,
+  "triangles": 3016243,
+  "lodTriangles": 558891,
+  "meshes": 835,
+  "lodMeshes": 606,
+  "spatialBlocks": 41,
+  "buildings": 1558,
   "parkFeatures": [
     {
       "park": "Duboce Park",
@@ -37,19 +37,11 @@
           "reason": "interpreted furniture intersects active race asphalt"
         }
       ]
-    },
-    {
-      "park": "Patricia's Green",
-      "surveyedBoundary": true,
-      "pathCount": 21,
-      "treeAnchors": 8,
-      "benches": 7,
-      "suppressedBenches": []
     }
   ],
-  "vegetationAnchors": 127,
-  "bytes": 36397908,
-  "lodBytes": 12770776,
+  "vegetationAnchors": 119,
+  "bytes": 36325344,
+  "lodBytes": 12734276,
   "coordinates": "+X east, glTF -Z north, +Y altitude, no parent reflection",
   "origin": {
     "longitude": -122.42415,

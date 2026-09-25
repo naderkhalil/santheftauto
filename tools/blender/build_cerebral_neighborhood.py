@@ -434,6 +434,9 @@ def parks(data,ground):
     for park in data['parks']:
         name=park.get('name','')
         if not any(k in name.lower() for k in ('alamo','duboce','patricia')):continue
+        # Close Hayes landmark owns its exact lawn, paths and authored anchors.
+        # Avoid duplicate surfaces/furniture and the old oversized canopy row.
+        if name=="Patricia's Green":continue
         PART='park / '+name;DETAIL='landscape';poly=[(p['x'],p['z']) for p in park['polygon']]
         if len(poly)<3:continue
         minx,maxx=min(p[0] for p in poly),max(p[0] for p in poly);miny,maxy=min(p[1] for p in poly),max(p[1] for p in poly)
@@ -559,7 +562,7 @@ def main():
         # on actual drivable frontage. No empty vanishing wall at street ends.
         if distance>160:continue
         addr=building.get('address','');bid=building['id']
-        if building.get('hero') or str(bid)=='28015901':continue
+        if building.get('hero') or str(bid) in ('28015901','60824061'):continue
         if bid in reserved or str(bid) in reserved:continue
         if any(math.hypot(cx-r['x'],cy-r['z'])<r.get('radius',12) for r in reserve_regions):continue
         if isinstance(addr,dict):addr=' '.join(str(v) for v in addr.values())

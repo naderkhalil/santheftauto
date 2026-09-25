@@ -7308,18 +7308,6 @@
     "facadeReference": "interpreted neighborhood typology"
   },
   {
-    "building": "60824061",
-    "address": "482;484;486;488 Hayes Street",
-    "height": 11.0,
-    "baseHeight": 21.727,
-    "detail": 2,
-    "distanceToRoute": 38.4,
-    "distanceToPark": 766.7,
-    "parkExtension": false,
-    "surveyedFootprint": true,
-    "facadeReference": "interpreted neighborhood typology"
-  },
-  {
     "building": "261422820",
     "address": "644;646;648 Fillmore Street",
     "height": 16.0,
@@ -18738,13 +18726,5 @@
         "reason": "interpreted furniture intersects active race asphalt"
       }
     ]
-  },
-  {
-    "park": "Patricia's Green",
-    "surveyedBoundary": true,
-    "pathCount": 21,
-    "treeAnchors": 8,
-    "benches": 7,
-    "suppressedBenches": []
   }
 ]

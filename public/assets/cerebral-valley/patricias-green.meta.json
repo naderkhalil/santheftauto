@@ -1,0 +1,145 @@
+{
+  "parkId": "28015862",
+  "name": "Patricia's Green",
+  "footprint": [
+    {
+      "x": -28.059,
+      "z": -81.887
+    },
+    {
+      "x": -7.831,
+      "z": -78.67
+    },
+    {
+      "x": -22.085,
+      "z": 10.698
+    },
+    {
+      "x": -42.287,
+      "z": 7.481
+    },
+    {
+      "x": -28.059,
+      "z": -81.887
+    }
+  ],
+  "mappedPathCount": 21,
+  "meshes": 18,
+  "triangles": 38976,
+  "treeAnchors": [
+    {
+      "x": -28.148,
+      "z": -67.725,
+      "y": 21.322,
+      "height": 5.5,
+      "canopyWidth": 3.7,
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -12.149,
+      "z": -65.181,
+      "y": 21.173,
+      "height": 5.5,
+      "canopyWidth": 3.7,
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -32.711,
+      "z": -39.086,
+      "y": 21.67,
+      "height": 6.0,
+      "canopyWidth": 4.2,
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -16.712,
+      "z": -36.542,
+      "y": 21.622,
+      "height": 6.0,
+      "canopyWidth": 4.2,
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -36.173,
+      "z": -17.361,
+      "y": 21.854,
+      "height": 5.8,
+      "canopyWidth": 3.8,
+      "park": "Patricia's Green"
+    },
+    {
+      "x": -20.174,
+      "z": -14.816,
+      "y": 21.854,
+      "height": 5.8,
+      "canopyWidth": 3.8,
+      "park": "Patricia's Green"
+    }
+  ],
+  "benches": [
+    {
+      "x": -29.555,
+      "z": -59.848,
+      "length": 2.05,
+      "facing": 0.1577162626845967
+    },
+    {
+      "x": -31.6,
+      "z": -47.01,
+      "length": 2.05,
+      "facing": 0.1577162626845967
+    },
+    {
+      "x": -34.905,
+      "z": -26.272,
+      "length": 2.05,
+      "facing": 0.1577162626845967
+    },
+    {
+      "x": -36.794,
+      "z": -14.422,
+      "length": 2.05,
+      "facing": 0.1577162626845967
+    },
+    {
+      "x": -13.259,
+      "z": -57.257,
+      "length": 2.05,
+      "facing": -2.9838763909051966
+    },
+    {
+      "x": -15.305,
+      "z": -44.419,
+      "length": 2.05,
+      "facing": -2.9838763909051966
+    },
+    {
+      "x": -18.61,
+      "z": -23.68,
+      "length": 2.05,
+      "facing": -2.9838763909051966
+    },
+    {
+      "x": -20.498,
+      "z": -11.83,
+      "length": 2.05,
+      "facing": -2.9838763909051966
+    },
+    {
+      "x": -36.311,
+      "z": 2.565,
+      "length": 2.05,
+      "facing": -1.4130800641102998
+    },
+    {
+      "x": -26.336,
+      "z": 4.151,
+      "length": 2.05,
+      "facing": -1.4130800641102998
+    }
+  ],
+  "sculpture": "No installation asserted current; circular exhibition plaza kept open.",
+  "interpretation": "Furniture, sign typography, natural play stones, paving and low planting are authored from mapped park layout and public descriptions.",
+  "coordinates": "+X east, +Y elevation, glTF -Z north; no mirror",
+  "bytes": 5696356
+}

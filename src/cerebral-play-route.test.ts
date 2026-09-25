@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createCourseRoute } from './course-route.ts';
 import type { CourseDefinition } from './courses.ts';
-import { CEREBRAL_POINTS, CEREBRAL_LANDMARKS, cerebralGroundHeight } from './cerebral-geography.ts';
+import { CEREBRAL_POINTS, CEREBRAL_LANDMARKS, CEREBRAL_GROUND_GRID, cerebralGroundHeight, cerebralPosition } from './cerebral-geography.ts';
 import {
   CEREBRAL_PLAY_POINTS as points,
   CEREBRAL_PLAY_ANCHORS as A,
@@ -34,14 +34,53 @@ function inPark(point: { x:number; z:number }) {
   return inside;
 }
 
-test('the park adventure retains source geography and replaces the perimeter lap with a 2.53 km race', () => {
+test('the park adventure retains source geography and includes the Hayes opening in a 2.62 km race', () => {
   assert.equal(CEREBRAL_POINTS.length, 24, 'the source survey remains intact');
   assert.equal(points.length, 25);
-  assert.ok(route.TRACK_LENGTH > 2520 && route.TRACK_LENGTH < 2550);
+  assert.ok(route.TRACK_LENGTH > 2615 && route.TRACK_LENGTH < 2630);
   assert.ok(!points.some(point => point.label.includes('Pierce') || point.label.includes('Fulton')));
   assert.ok(A.landing < A.page && A.page < A.page531 && A.page531 < A.websterPage);
   assert.ok(A.websterPage < A.waller && A.waller < A.reveille && A.reveille < A.duboce);
   for (const point of points) near(point.y, cerebralGroundHeight(point.x, point.z), .000001);
+});
+
+test('the Hayes opening approaches Patricia’s Green and Anina on their correct sides before Laguna', () => {
+  const openingStreet = layout.streets.find((street: { id: string }) => street.id === '26988058');
+  const start = points[A.start];
+  const east = openingStreet.points.find((point: { x:number }) => point.x === 47.769);
+  const west = openingStreet.points.find((point: { x:number }) => point.x === 36.436);
+  near(start.x, 44);
+  near(start.z, east.z + (west.z - east.z) * (start.x - east.x) / (west.x - east.x));
+  near(openingStreet.width / 2, course.roadHalfWidth!);
+  assert.ok(points[A.start].x < CEREBRAL_GROUND_GRID.maxX, 'start stays inside the surveyed terrain grid');
+  const green = layout.parks.find((park: { name: string }) => park.name === "Patricia's Green");
+  const northEdge = green.polygon.filter((point: { z: number }) => point.z > 0);
+  const greenEntry = {
+    x: (northEdge[0].x + northEdge[1].x) / 2,
+    z: (northEdge[0].z + northEdge[1].z) / 2,
+  };
+  // Anina's mapped business node 9655241060, 482 Hayes, outdoor_seating=yes.
+  const anina = cerebralPosition(-122.4242970, 37.7768284);
+  for (const [landmark, side] of [[greenEntry, -1], [anina, 1]] as const) {
+    const station = route.routeProgressAt(landmark.x, landmark.z, 100);
+    assert.ok(station > route.START_PROGRESS + 35, 'the driver sees each landmark approaching after the start');
+    assert.ok(station < route.START_PROGRESS + 75, 'both landmarks are close enough to establish the opening view');
+    assert.ok(station < route.anchorProgress[A.laguna] - 100, 'both landmarks precede the Laguna boost');
+    const p = route.sampleRoute(station), yaw = route.routeYaw(station);
+    const right = (landmark.x - p.x) * Math.cos(yaw) - (landmark.z - p.z) * Math.sin(yaw);
+    assert.equal(Math.sign(right), side, 'Green is left and Anina is right while driving west');
+  }
+  assert.ok(route.sampleRoute(route.START_PROGRESS).x > 30, 'the actual car spawn remains east of both landmarks');
+  const hayes = layout.streets.filter((street: { name: string }) => street.name === 'Hayes Street');
+  for (let station = 0; station < route.anchorProgress[A.laguna] - 1; station += 2) {
+    const p = route.sampleRoute(station);
+    const nearest = Math.min(...hayes.flatMap((street: { points: { x:number; z:number }[] }) => street.points.slice(1).map((b, i) => {
+      const a = street.points[i], dx = b.x - a.x, dz = b.z - a.z;
+      const t = Math.min(1, Math.max(0, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)));
+      return distance(p, { x: a.x + dx * t, z: a.z + dz * t });
+    })));
+    assert.ok(nearest < .25, 'the extended opening follows the mapped Hayes centreline');
+  }
 });
 
 test('park climb, crest, landing and exit use real asphalt-path anchors', () => {

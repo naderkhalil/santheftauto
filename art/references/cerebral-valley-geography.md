@@ -16,11 +16,13 @@ Retrieved 24 September 2026. This rebuild uses actual map geometry and measured 
 2. [USGS 3DEP Elevation ImageServer](https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer): floating-point bare-earth raster, bilinear sampling, TIFF export. The requested bbox was longitude −122.4398 to −122.4229, latitude 37.7683 to 37.7803. The service expanded the latitude extent to preserve pixel aspect; the returned exact extent is saved in `cerebral-valley-dem-export.json` and its TIFF in `cerebral-valley-dem.tif`. Grid sampling is approximately **15.5 m east/west × 19.6 m north/south**. The downloaded image is a resampling of the USGS elevation mosaic, not an independent survey of every sidewalk step.
 3. [USGS Elevation Point Query Service](https://epqs.nationalmap.gov/v1/json?x=-122.4327&y=37.7764&units=Meters&wkid=4326&includeDate=false): an independent central Alamo Square control returned **60.656631470 m**, source resolution **1 m**. It checks the raster's elevation convention.
 4. [Café Réveille Lower Haight](https://www.cafereveille.com/lowerhaight): official location, **201 Steiner Street**. OSM places the cafe at **37.7710569, −122.4320710**, in the **northwest** corner building at Waller and Steiner. The previous course placed the cafe south of Waller, which was wrong.
-5. [Absinthe Brasserie & Bar](https://www.absinthe.com/): **398 Hayes Street**, at Gough, east of the Octavia starting line. It is a background landmark, not an invented stop on the westbound itinerary.
+5. [Absinthe Brasserie & Bar](https://www.absinthe.com/): **398 Hayes Street**, at Gough, near the eastern starting approach. It is a background landmark, not an invented stop on the westbound itinerary.
 
 Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/). USGS source information is publicly available US government elevation data.
 
-## Route and durable spatial facts
+## Retained source route and durable spatial facts
+
+The following 3.54 km polyline is the original geographic itinerary retained in `layout.json` and `CEREBRAL_POINTS`. The current race is authored separately in `src/cerebral-play-route.ts`: **2,621.65 m** after rounding, starting on Hayes between Gough and Octavia before Anina and Patricia’s Green, then following the western Alamo asphalt climb and skyline glide before descending Steiner to Page. See the [current route audit](cerebral-skyline-route.md) for playable anchors and stations. The original perimeter lap below remains provenance, not the active race.
 
 The polyline is **3,541.6 m** before playable corner rounding. It starts at the west side of Hayes/Octavia, climbs west on Hayes through Laguna, Buchanan, Webster and Fillmore, and reaches Steiner. It continues along Alamo Square's southern edge to Scott, goes north to Fulton, east to Steiner, south past the Painted Ladies, and west along Hayes again to Scott. That completes the entire real park perimeter.
 
