@@ -2,6 +2,15 @@
 
 A browser-playable arcade racer through a compact, recognizable San Francisco. Lap Union Square, climb Powell, enter Chinatown on Grant, and finish at the Ferry Building. Three exaggerated hills turn the coral coupe's wheels into hover pods for a glide over the city. Union Square also opens into a small driving playground, with reachable terraces and five postcards to discover.
 
+## Multiplayer
+
+**Race Friends** opens a private room for 2–8 racers. Choose a driver, car and
+placeholder sponsor, copy an invite link, and ready up for a shared start.
+The room server controls driving, checkpoints and finish times. Cars race
+without player-to-player contact. See [multiplayer setup](docs/multiplayer.md)
+for hosting, sponsor artwork, reconnects, and tests. Internet invitations require
+the game and its room server to be deployed together.
+
 ## Run
 
 ```sh
@@ -28,7 +37,7 @@ The menu's **Explore the City** postcard opens an illustrated downtown map with 
 | Presidio Run | Arguello Gate → Inspiration Point → coastal overlook → Crissy Field |
 | Golden Gate → Hawk Hill | Crissy Field → Fort Point → Golden Gate Bridge → Battery Spencer → Hawk Hill |
 
-The bridge race includes **The Fog Run**: steer through three glowing beacons before continuing to Marin. A missed beacon returns to the fog entrance while retaining race time. Q recovers to the road, Escape pauses, and R restarts the selected race. Keyboard, touch, and standard gamepad controls work on the new courses; Auto Accelerate remains optional. Each new race can be opened directly with `?race=vc-circle`, `cerebral-valley`, `golden-gate-surfride`, `lands-end`, `presidio`, or `hawk-hill`.
+The bridge race includes **The Fog Run**: steer through three glowing beacons before continuing to Marin. A missed beacon returns to the fog entrance while retaining race time. Q recovers to the road, Escape pauses, and R restarts the selected race. Keyboard, touch, and standard gamepad controls work on the new courses; Auto Accelerate remains optional. For this release, these six additional courses are marked **Coming soon** and cannot be launched, including through old direct links. Their source and assets are preserved for future releases.
 
 **Cerebral Valley** has a dedicated rebuild with real OpenStreetMap street/building footprints, USGS hill elevations, Blender architecture and street furniture, mature scanned trees, and photographic daylight. **Explore the Neighborhood** opens nine landmark views. Its 2.622 km route starts before Patricia’s Green and Anina, climbs Hayes, glides across Alamo Square toward the seven Painted Ladies and downtown skyline, then passes 531 Page and the actual Réveille corner. See [the rebuild notes](docs/cerebral-valley-rebuild.md) for asset regeneration and measured-versus-interpreted detail.
 
@@ -38,11 +47,11 @@ The five other new races remain their first playable versions, with procedural s
 
 - Hold W / Up: accelerate
 - A, D / Left, Right: steer on the street and in the sky
-- S / Down: brake; keep holding after stopping to reverse in the square; dive in flight
+- S / Down: brake; keep holding after stopping to reverse throughout City Loop; dive in flight
 - Shift: boost; gain lift in flight
 - Space: drift
 - C: change chase camera
-- Q / **Return to Street**: recover to the last earned street position
+- Q / **Unstick**: recover onto nearby clear pavement without losing time or earned progress
 - R: restart
 - Escape: pause
 - M: mute
@@ -57,7 +66,7 @@ Find **five golden postcards** on the square's paving. The local map shows build
 
 Temporary streetworks barricades mark the boundaries of this first explorable district. Powell remains connected to the racing course: head north to continue toward Chinatown, the three existing hill glides and the bay, or turn back before the climb to return to the square. This is a bounded playground around Union Square; the rest of the city retains the established racing corridor.
 
-The plaza is also open during a race. Street gates must be crossed in order on Stockton, Geary and Powell before subsequent race checkpoints count, so a detour across the square cannot silently complete the opening lap. Untimed exploration does not set a personal best.
+The plaza is also open during a race. Union Square shortcuts count toward a valid race. Cross the first Powell checkpoint, then the remaining checkpoints in order. Untimed exploration does not set a personal best.
 
 ## Course
 
@@ -81,11 +90,11 @@ The waterfront is built from original Blender assets. Market faces the Ferry Bui
 
 At the finish, the camera reveals the Ferry Building above animated turquoise water, with the silver Bay Bridge crossing south of it toward Yerba Buena Island. The bridge has four open steel towers, two suspension spans, a central anchorage and two road decks. Compact results preserve the view; portrait framing pulls back to retain the tower and wings. Bay movement, ferries and sailboats remain realtime Three.js effects.
 
-Races with the open square and ordered street gates use the separate local-storage key `whimsical-sf-playground-race-best-v3`. Earlier manual-driving records remain under `whimsical-sf-manual-driving-best-v2`, and records from the former guided handling remain under their older key. Reset Best affects the current course only.
+City Loop with valid plaza shortcuts uses the separate local-storage key `whimsical-sf-shortcuts-race-best-v4`. Older ordered-street-gate scores remain under `whimsical-sf-playground-race-best-v3`. Multiplayer does not update solo personal bests. Earlier manual-driving records remain under `whimsical-sf-manual-driving-best-v2`, and records from the former guided handling remain under their older key. Reset Best affects the current course only.
 
 ## Stack and assets
 
-TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. No backend or paid service is required. Local Blender GLBs supply the Westin, Post frontage and surrounding hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms, Powell cable car, street furniture, Ferry Building, Embarcadero piers and Bay Bridge. Major architectural groups have separate distant models with Draco compression. Plaza and waterfront palms and four CC0 jacarandas use instancing; the stepped plaza and its remaining furnishings use authored Three.js geometry. The wider city, player car, Chinatown, bay water and vessels still use procedural geometry or shaders. Labels and many material details are generated locally.
+TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. Solo play requires no backend. Private multiplayer rooms use the included Node server; no paid service is required. Local Blender GLBs supply the Westin, Post frontage and surrounding hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms, Powell cable car, street furniture, Ferry Building, Embarcadero piers and Bay Bridge. Major architectural groups have separate distant models with Draco compression. Plaza and waterfront palms and four CC0 jacarandas use instancing; the stepped plaza and its remaining furnishings use authored Three.js geometry. The wider city, player car, Chinatown, bay water and vessels still use procedural geometry or shaders. Labels and many material details are generated locally.
 
 The asphalt maps and photographic sky use CC0 source assets. Additional source assets from earlier prototypes remain in the repository; see [asset credits](public/assets/CREDITS.md) and the adjacent source notes. Google Fonts is optional; system fallbacks keep the game playable once local assets are available.
 

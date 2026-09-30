@@ -31,6 +31,7 @@ import { createPlayground, playgroundMapSvg, playgroundMapPoint } from './playgr
 import { playgroundHeight } from './playground';
 import './style.css';
 import { mountRacePicker } from './race-picker';
+import { Multiplayer } from './multiplayer';
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
 const muteIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9l6 6m0-6-6 6"/></svg>`;
@@ -197,6 +198,7 @@ async function boot() {
   type TourScene = 'square'|'westin'|'post';
   let tourArt:TourScene|null=null;
   const tourSceneNames:Record<TourScene,string>={square:'UNION SQUARE',westin:'THE WESTIN ST. FRANCIS',post:'POST STREET'};
+  let multiplayer:Multiplayer|null=null;
   let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0, freeDrive=false;
   let topSpeed=0, best=Number(safeRead('whimsical-sf-shortcuts-race-best-v4'))||0, muted=safeRead('sf-night-run-muted')==='true';
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
@@ -242,6 +244,7 @@ async function boot() {
   function announce(title:string, detail:string, duration=2){el('message').querySelector('strong')!.textContent=title;el('message').querySelector('span')!.textContent=detail;el('message').classList.remove('faded');el('message').setAttribute('aria-hidden','false');messageUntil=totalTime+duration;}
   function returnToStreet(){
     if((phase!=='racing'&&phase!=='paused')||totalTime<recoveryCooldown)return;
+    if(multiplayer?.active){multiplayer.recover();recoveryCooldown=totalTime+1;clearInputs();return;}
     if(phase==='paused'){if(previousPhase!=='racing')return;resume();}
     recoveryCooldown=totalTime+1;cameraReversing=false;
     clearInputs();sim.recover();cameraInitialized=false;shake=0;updateHud();canvas.focus();
@@ -251,9 +254,9 @@ async function boot() {
     const n=Math.max(1,Math.ceil(countdownLeft));
     if(n!==countdownNumber){countdownNumber=n;el('countdown').innerHTML=`<strong>${n}</strong><span>CITY LOOP · HILLS HAVE WINGS</span>`;audio.cue('count');}
   }
-  function start(){startRun(false);}
-  function startExploration(){startRun(true);}
-  function restartRun(){startRun(freeDrive);}
+  function start(){if(multiplayer?.active){multiplayer.open();return;}startRun(false);}
+  function startExploration(){if(multiplayer?.active){multiplayer.open();return;}startRun(true);}
+  function restartRun(){if(multiplayer?.active){multiplayer.open();return;}startRun(freeDrive);}
   function startRun(explore:boolean){
     clearInputs();freeDrive=explore;tourArt=null;sim.reset();if(explore)sim.explore(true);playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore?'racing':'countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';recoveryCooldown=0;cameraReversing=false;
     landmarks.resetProps();knockedProps=0;
@@ -261,12 +264,14 @@ async function boot() {
     el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.toggle('hidden',explore);el('drift-hint').classList.remove('active');
     void audio.unlock().then(()=>{if(!explore)audio.cue('count');});if(!explore)updateCountdown();syncPhase();updateHud();canvas.focus();
   }
-  function pause(){if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
+  function pause(){if(multiplayer?.active){clearInputs();multiplayer.open();return;}if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
-  function menu(){phase='menu';tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
+  function menu(){if(multiplayer?.active){void multiplayer.leave();return;}resetToMenu();}
+  function resetToMenu(){phase='menu';tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
-    const s=sim.state, isBest=!freeDrive&&(!best||s.elapsed<best);
+    if(multiplayer?.active)finishReveal=0;
+    const s=sim.state, isBest=!multiplayer?.active&&!freeDrive&&(!best||s.elapsed<best);
     if(isBest){best=s.elapsed;safeWrite('whimsical-sf-shortcuts-race-best-v4',String(best));}
     el('result-eyebrow').textContent=freeDrive?'FREE DRIVE / AT THE BAY':isBest?'NEW PERSONAL BEST / CITY LOOP':'SAN FRANCISCO / CITY LOOP';
     el('result-time').textContent=freeDrive?'UNTIMED':formatTime(s.elapsed);el('result-speed').textContent=`${Math.round(topSpeed*2.23694)} MPH`;el('result-drift').textContent=`${s.totalAirTime.toFixed(1)} SEC`;el('result-hits').textContent=String(s.collisions);
@@ -399,6 +404,7 @@ async function boot() {
   }
   const controls=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight']);
   window.addEventListener('keydown',event=>{
+    if(multiplayer?.blocking||['INPUT','TEXTAREA','SELECT'].includes((event.target as HTMLElement)?.tagName))return;
     if(controls.has(event.code)&&(phase==='racing'||phase==='countdown')){event.preventDefault();keys.add(event.code);}
     if(event.repeat)return;
     if(event.code==='Enter'&&el('help').classList.contains('hidden')&&el('city-map-dialog').classList.contains('hidden')){if(phase==='menu'&&document.activeElement?.tagName!=='BUTTON')start();else if(phase==='finished'&&document.activeElement?.tagName!=='BUTTON')restartRun();}
@@ -431,7 +437,7 @@ async function boot() {
   });
   function toggleSound(){muted=!muted;audio.setMuted(muted);safeWrite('sf-night-run-muted',String(muted));updateSoundButton();if(!muted&&(phase==='racing'||phase==='tour'&&!tour.paused))void audio.unlock();}
   function closeHelp(){modal('help',false);if(helpWasPaused){helpWasPaused=false;resume();}}
-  el('tour-start').onclick=()=>{phase='tour';tourArt=null;tourBayStarted=null;skyCourse.reset();tour.jump(START_PROGRESS);tour.paused=false;el('tour-pause').textContent='PAUSE';clearInputs();cameraInitialized=false;void audio.unlock();syncPhase();resize();};
+  el('tour-start').onclick=()=>{if(multiplayer?.active){multiplayer.open();return;}phase='tour';tourArt=null;tourBayStarted=null;skyCourse.reset();tour.jump(START_PROGRESS);tour.paused=false;el('tour-pause').textContent='PAUSE';clearInputs();cameraInitialized=false;void audio.unlock();syncPhase();resize();};
   el('tour-exit').onclick=menu;el('tour-race').onclick=start;el('tour-pause').onclick=()=>{if(tourArt){tour.orbit=0;cameraInitialized=false;}tourArt=null;if(tour.progress>=TRACK_LENGTH-1){tour.jump(START_PROGRESS);cameraInitialized=false;}tour.paused=!tour.paused;el('tour-pause').textContent=tour.paused?'RESUME':'PAUSE';if(tour.paused)audio.suspend();else void audio.unlock();};
   document.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(button=>button.onclick=()=>{const stop=Number(button.dataset.stop);tourBayStarted=null;tour.jump(stop);const scene=button.dataset.scene;tourArt=scene==='square'||scene==='westin'||scene==='post'?scene:null;if(tourArt){tour.paused=true;audio.suspend();}if(stop>=TRACK_LENGTH-1||button.dataset.pause==='true'){tour.paused=true;audio.suspend();}el('tour-pause').textContent=stop>=TRACK_LENGTH-1?'RUN AGAIN':tour.paused?'RESUME':'PAUSE';skyCourse.reset();cameraInitialized=false;});
   let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit+(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
@@ -452,13 +458,27 @@ async function boot() {
   updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);atmosphere.bakeCityReflections(car.group);composer.render();
   el('loading').classList.add('faded');setTimeout(()=>el('loading').classList.add('hidden'),650);
 
+  multiplayer=new Multiplayer(cityRoot,{
+    profile:profile=>car.customize(profile),
+    start:()=>{startRun(false);countdownLeft=5;updateCountdown();},
+    state:player=>{
+      const previousCheckpoint=sim.state.checkpoint,previousCollisions=sim.state.collisions;
+      sim.applyNetworkState(player.state,player.position,player.exploring);
+      if(player.state.checkpoint>previousCheckpoint&&!player.state.finished){audio.cue('checkpoint');announce('CHECKPOINT',`${player.state.checkpoint} OF 4`,1.2);}
+      if(player.state.collisions>previousCollisions){audio.cue('crash');shake=.5;flashUntil=totalTime+.16;}
+    },
+    finish:()=>finish(),
+    leave:()=>resetToMenu(),
+  });
+
   // Read-only diagnostics are handy when comparing browsers and performance settings.
   (window as typeof window&{sfNightRun?:unknown}).sfNightRun={get state(){return {...sim.state,phase};},get rendering(){return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};}};
   function frame(now:number){
     requestAnimationFrame(frame);
     const dt=Math.min((now-lastTime)/1000,.25);lastTime=now;totalTime+=dt;uiClock+=dt;
     performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
-    const input=readInput();
+    const input=multiplayer?.blocking?{throttle:0,brake:0,steer:0,drift:false,boost:false}:readInput();
+    multiplayer?.setInput(input);multiplayer?.update(dt,totalTime);
     canvas.dataset.throttle=String(input.throttle);canvas.dataset.steer=String(input.steer);
     canvas.dataset.speed=sim.state.speed.toFixed(2);canvas.dataset.heading=sim.state.heading.toFixed(4);
     canvas.dataset.worldX=sim.position.x.toFixed(2);canvas.dataset.worldZ=sim.position.z.toFixed(2);canvas.dataset.worldY=sim.position.y.toFixed(2);canvas.dataset.exploring=String(sim.exploring);canvas.dataset.freeDrive=String(freeDrive);canvas.dataset.postcards=String(playground.collected);
@@ -471,11 +491,11 @@ async function boot() {
       el('tour-mode').textContent=tourArt?'POSTCARD MODE / CITY PORTRAITS':tour.paused?'POSTCARD MODE / PAUSED':'POSTCARD MODE / AUTOPILOT';
     }
     if(phase==='countdown'){
-      countdownLeft-=dt;updateCountdown();audio.update(0,input.throttle*.25,false,false);
+      countdownLeft=multiplayer?.active?multiplayer.countdown:countdownLeft-dt;updateCountdown();audio.update(0,input.throttle*.25,false,false);
       if(countdownLeft<=0){raceDt=Math.max(0,-countdownLeft);phase='racing';audio.cue('go');el('countdown').innerHTML='<strong>GO.</strong><span>MAKE IT A GOOD ONE</span>';goUntil=totalTime+.8;syncPhase();}
     }
     if(phase==='racing'){
-      const events=sim.update(raceDt,input);topSpeed=Math.max(topSpeed,Math.abs(sim.state.speed));
+      const events=multiplayer?.active?[]:sim.update(raceDt,input);topSpeed=Math.max(topSpeed,Math.abs(sim.state.speed));
       const propImpacts=sim.drainPropImpacts();
       if(propImpacts.length){
         landmarks.knockProps(propImpacts);knockedProps+=propImpacts.length;

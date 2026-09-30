@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { CARS, DRIVERS, SPONSORS, type RacerProfile } from './racer-profile';
 
 export type CarState = {
   speed: number;
@@ -16,7 +17,7 @@ export type CarState = {
 type Section = [z: number, width: number, center: number, height: number];
 
 /** A small, original coachbuilt coupe. All geometry is local; +Z is forward. */
-export function createCar(): { group: THREE.Group; update: (dt: number, state: CarState) => void } {
+export function createCar(): { group: THREE.Group; update: (dt: number, state: CarState) => void; customize: (profile: RacerProfile) => void; dispose: () => void } {
   const group = new THREE.Group();
   group.name = 'Sundrop / transforming SF coupe';
   const body = new THREE.Group();
@@ -95,7 +96,7 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
     [-1.04, .7, .77, .04], [-.74, .71, .87, .19], [-.45, .65, .98, .32],
     [-.18, .65, 1, .32], [.26, .62, .98, .31], [.57, .7, .87, .17], [.86, .74, .77, .02],
   ];
-  loft(cabinSections, glass);
+  const cabin = loft(cabinSections, glass);
 
   // Rounded sheet-metal roof, left and right gutters, and narrow window pillars.
   const roofVerts: number[] = [], roofIndices: number[] = [];
@@ -122,7 +123,8 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   roofGeo.setAttribute('position', new THREE.Float32BufferAttribute(roofVerts, 3));
   roofGeo.setIndex(roofIndices);
   roofGeo.computeVertexNormals();
-  mesh(roofGeo, roofPaint);
+  const roof = mesh(roofGeo, roofPaint);
+  roof.userData.customizable = cabin.userData.customizable = true;
   for (const side of [-1, 1]) {
     rod(new THREE.Vector3(side * .45, 1.21, .26), new THREE.Vector3(side * .76, .78, .86), .033, paint);
     rod(new THREE.Vector3(side * .45, 1.23, -.45), new THREE.Vector3(side * .75, .78, -1.04), .053, paint);
@@ -283,7 +285,7 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   function mergeRigidParts(parent: THREE.Group, name: string) {
     const batches = new Map<THREE.Material, THREE.Mesh[]>();
     for (const child of parent.children) {
-      if (!(child instanceof THREE.Mesh) || Array.isArray(child.material) || child.material.transparent) continue;
+      if (!(child instanceof THREE.Mesh) || Array.isArray(child.material) || child.material.transparent || child.userData.customizable) continue;
       if (!batches.has(child.material)) batches.set(child.material, []);
       batches.get(child.material)!.push(child);
     }
@@ -321,7 +323,50 @@ export function createCar(): { group: THREE.Group; update: (dt: number, state: C
   let hover = 0;
   let wasAirborne = false;
   let landingBounce = 0;
+  const sport = new THREE.Group(), roadster = new THREE.Group();body.add(sport, roadster);
+  box(1.95,.10,.42,roofPaint,0,1.04,-1.65,sport);
+  for(const side of [-1,1]) {
+    box(.09,.45,.1,dark,side*.65,.8,-1.65,sport);
+    box(.11,.025,.7,roofPaint,side*.20,.79,1.22,sport);
+    const hoop=mesh(new THREE.TorusGeometry(.25,.045,8,18,Math.PI),metal,side*.4,1.02,-.4,roadster);
+    hoop.rotation.y=Math.PI;
+  }
+  const helmetPaint=new THREE.MeshStandardMaterial({color:'#ba96ff',roughness:.38});
+  const helmet=mesh(new THREE.SphereGeometry(.21,16,12),helmetPaint,-.34,1.15,-.07,roadster);
+  box(.32,.095,.08,glass,-.34,1.17,.11,roadster);
+  const decalCanvas=document.createElement('canvas');decalCanvas.width=512;decalCanvas.height=256;
+  const decalMap=new THREE.CanvasTexture(decalCanvas);decalMap.colorSpace=THREE.SRGBColorSpace;decalMap.repeat.x=-1;decalMap.offset.x=1;
+  const decalMaterial=new THREE.MeshStandardMaterial({map:decalMap,roughness:.5,transparent:true,polygonOffset:true,polygonOffsetFactor:-2});
+  const decals=new THREE.Group();body.add(decals);
+  const hood=mesh(new THREE.PlaneGeometry(1.05,.53),decalMaterial,0,.867,1.18,decals);hood.rotation.x=-Math.PI/2;
+  for(const side of [-1,1]){const door=mesh(new THREE.PlaneGeometry(.78,.34),decalMaterial,side*.921,.60,.05,decals);door.rotation.y=side*Math.PI/2;}
+  const driverCanvas=document.createElement('canvas');driverCanvas.width=256;driverCanvas.height=128;
+  const driverMap=new THREE.CanvasTexture(driverCanvas);driverMap.colorSpace=THREE.SRGBColorSpace;driverMap.repeat.x=-1;driverMap.offset.x=1;
+  const driverMaterial=new THREE.MeshStandardMaterial({map:driverMap,transparent:true,roughness:.5});
+  const badge=mesh(new THREE.PlaneGeometry(.63,.31),driverMaterial,0,.899,-1.3);badge.rotation.x=-Math.PI/2;badge.visible=false;
+  sport.visible=roadster.visible=decals.visible=false;
+  let currentSponsor = '';
+  let disposed = false;
+  function customize(profile:RacerProfile){
+    const style=CARS.find(c=>c.id===profile.car)??CARS[0],driver=DRIVERS.find(d=>d.id===profile.driver)??DRIVERS[0],sponsor=SPONSORS.find(s=>s.id===profile.sponsor)??SPONSORS[0];
+    paint.color.set(style.color);roofPaint.color.set(style.roof);helmetPaint.color.set(driver.color);
+    sport.visible=style.id==='comet';roadster.visible=style.id==='tide';roof.visible=cabin.visible=!roadster.visible;
+    decals.visible=!!sponsor.mark;
+    const ctx=decalCanvas.getContext('2d')!;ctx.clearRect(0,0,512,256);ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);
+    ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 86px sans-serif';ctx.fillText(sponsor.mark,256,112,470);ctx.font='700 23px sans-serif';ctx.fillText('DEMO SPONSOR',256,203);decalMap.needsUpdate=true;
+    currentSponsor=sponsor.id;
+    if(sponsor.logo){const image=new Image();image.onload=()=>{if(disposed||currentSponsor!==sponsor.id)return;ctx.clearRect(0,0,512,256);ctx.drawImage(image,0,0,512,256);decalMap.needsUpdate=true;};image.src=sponsor.logo;}
+    const dc=driverCanvas.getContext('2d')!;dc.fillStyle=driver.color;dc.fillRect(0,0,256,128);dc.fillStyle='#142d3f';dc.font='900 40px sans-serif';dc.textAlign='center';dc.textBaseline='middle';dc.fillText(driver.name.toUpperCase(),128,64);driverMap.needsUpdate=true;badge.visible=true;
+    group.userData.profile={...profile};
+  }
+  function dispose(){
+    disposed=true;
+    const materials=new Set<THREE.Material>(),textures=new Set<THREE.Texture>(),geometries=new Set<THREE.BufferGeometry>();
+    group.traverse(object=>{if(object instanceof THREE.Mesh){geometries.add(object.geometry);for(const mat of Array.isArray(object.material)?object.material:[object.material]){materials.add(mat);for(const value of Object.values(mat))if(value instanceof THREE.Texture)textures.add(value);}}});
+    geometries.forEach(g=>g.dispose());textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());group.removeFromParent();
+  }
   return {
+    customize, dispose,
     group,
     update(dt, state) {
       const step = Math.max(0, Math.min(dt, .1));

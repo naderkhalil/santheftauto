@@ -272,6 +272,13 @@ export class DrivingSimulation {
     this.seek(this.safeProgress);
   }
 
+  /** Render an authoritative multiplayer state; this client does not score it. */
+  applyNetworkState(state: DriveState, position: {x:number;z:number}, exploring: boolean) {
+    Object.assign(this.state, state);
+    this.worldX = position.x; this.worldZ = position.z;
+    this.explorationActive = exploring;
+  }
+
   /** Reposition for a retry without erasing race time, earned gates, or statistics. */
   seek(progress: number, lateral = 0) {
     const s = this.state;
