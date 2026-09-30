@@ -60,13 +60,13 @@ test('the solid monument stops a fast car, reverse backs out, and recovery prese
   assert.ok(sim.state.speed < -8);
   advance(sim, 5, neutral);
   assert.equal(sim.state.speed, 0, 'a reversing car also coasts to rest');
-  const { elapsed, collisions, checkpoint } = sim.state;
+  const { elapsed, collisions, checkpoint, progress } = sim.state;
   sim.recover();
   assert.equal(sim.state.elapsed, elapsed);
   assert.equal(sim.state.collisions, collisions);
   assert.equal(sim.state.checkpoint, checkpoint);
-  assert.equal(sim.state.progress, START_PROGRESS);
-  assert.deepEqual(sim.position, sampleRoute(START_PROGRESS));
+  assert.ok(sim.state.progress <= progress && sim.state.progress >= progress-84, 'recovery stays on nearby road');
+  assert.equal(sim.state.speed, 0);
 });
 
 test('parked cars stay solid on repeated contact and cannot be tunneled through at low frame rates', () => {
@@ -108,7 +108,7 @@ test('rolling off a terrace falls under gravity and settles without deploying ho
   assert.equal(events.includes('launch'), false);
 });
 
-test('plaza detours cannot reproject directly into earned race checkpoints', () => {
+test('a Union Square shortcut earns the Powell exit and can finish the race', () => {
   const sim = new DrivingSimulation([], { exploration: true });
   sim.explore();
   // Move east of the actual sidewalk lamp before backing out onto Geary.
@@ -124,15 +124,13 @@ test('plaza detours cannot reproject directly into earned race checkpoints', () 
   until(sim, () => sim.position.z >= 190, gas);
   assert.equal(sim.exploring, false, 'the shortcut may physically rejoin Powell');
   assert.ok(sim.state.progress > CHECKPOINTS[0], 'nearest route progress has moved past Powell');
-  assert.equal(sim.state.checkpoint, 0, 'the missing Stockton and Geary gates still matter');
-  assert.match(sim.nextRaceGate!.label, /Stockton/);
+  assert.equal(sim.state.checkpoint, 1, 'crossing Powell validates the plaza shortcut');
   const driver = new DemoAutopilot();
-  for (let i = 0; i < 120 * 90 && sim.state.progress < TRACK_LENGTH; i++) sim.update(1 / 120, driver.input(sim.state));
-  assert.equal(sim.state.progress, TRACK_LENGTH);
-  assert.equal(sim.state.finished, false, 'reaching the bay without ordered gates is not a completed race');
-  assert.equal(sim.state.checkpoint, 0);
-  sim.recover();
-  assert.equal(sim.state.progress, START_PROGRESS, 'recovery must make the missing gates attainable again');
+  const events: string[] = [];
+  for (let i = 0; i < 120 * 90 && !sim.state.finished; i++) events.push(...sim.update(1 / 120, driver.input(sim.state)));
+  assert.equal(events.includes('missed-gate'), false);
+  assert.equal(sim.state.finished, true);
+  assert.equal(sim.state.checkpoint, CHECKPOINTS.length);
 });
 
 test('the north Powell corridor can be driven back into the square', () => {
@@ -298,4 +296,42 @@ test('road-edge scrapes outside the square stay responsive and frame-rate indepe
   for (const state of states.slice(1)) for (const key of ['speed', 'progress', 'lateral', 'heading'] as const) {
     assert.ok(Math.abs(state[key] - states[0][key]) < 1e-8, `${key} changed with frame rate`);
   }
+});
+
+
+test('Ferry finish completes across lanes and frame rates, or recovers missing gates without resetting time', () => {
+  for (const hz of [30, 60, 120]) {
+    for (const lateral of [-5.5, 0, 5.5]) {
+      const sim = new DrivingSimulation([], { exploration: true }), driver = new DemoAutopilot();
+      for (let i = 0; i < hz * 100 && sim.state.checkpoint < 3; i++) sim.update(1 / hz, driver.input(sim.state));
+      assert.equal(sim.state.checkpoint, 3);
+      sim.seek(TRACK_LENGTH - 4, lateral);
+      sim.state.speed = 20;
+      const events: string[] = [];
+      for (let i = 0; i < hz * 2 && !sim.state.finished; i++) events.push(...sim.update(1 / hz, gas));
+      assert.equal(sim.state.finished, true, `${hz} Hz / lane ${lateral}`);
+      assert.equal(sim.state.checkpoint, 4);
+      assert.equal(events.filter(e => e === 'finish').length, 1);
+      assert.equal(events.includes('missed-gate'), false);
+    }
+  }
+  const sim = new DrivingSimulation([], { exploration: true });
+  sim.seek(TRACK_LENGTH - 1); sim.state.speed = 20; sim.state.elapsed = 50;
+  const events = sim.update(.1, gas);
+  assert.ok(events.includes('missed-gate'));
+  assert.equal(sim.state.finished, false);
+  assert.ok(sim.state.elapsed >= 50);
+  const driver = new DemoAutopilot();
+  for (let i = 0; i < 120 * 100 && !sim.state.finished; i++) sim.update(1 / 120, driver.input(sim.state));
+  assert.equal(sim.state.finished, true, 'a returned driver can complete the entire route');
+});
+
+test('untimed exploration can finish at the Ferry Building without race gates', () => {
+  const sim = new DrivingSimulation([], { exploration: true });
+  sim.explore(true); sim.seek(TRACK_LENGTH - 1); sim.state.speed = 20;
+  assert.ok(sim.update(.1, gas).includes('finish'));
+  assert.equal(sim.state.finished, true);
+  assert.equal(sim.state.checkpoint, 0);
+  sim.reset(); sim.seek(TRACK_LENGTH - 1); sim.state.speed = 20;
+  assert.ok(sim.update(.1, gas).includes('missed-gate'), 'reset restores race checkpoint rules');
 });

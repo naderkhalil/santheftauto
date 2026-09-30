@@ -110,18 +110,20 @@ test('boost effects reflect actual power after depletion, release, braking, rese
   assert.equal(sim.boosting, false);
 });
 
-test('obstacle collision is swept, costs speed, and allows recovery', () => {
+test('head-on obstacle contact stops the car without tunneling and permits reverse', () => {
   const sim = new DrivingSimulation([{ progress: 35, lateral: 0, width: 2, length: .1, kind: 'barrier' }]);
   sim.state.speed = 58;
   const events = sim.update(.5, neutral);
   assert.ok(events.includes('crash'));
   assert.equal(sim.state.collisions, 1);
-  assert.ok(sim.state.speed < 30);
-  assert.ok(Math.abs(sim.state.lateral) > 1.9);
-  drive(sim, 2.8);
-  assert.ok(sim.state.progress > 100);
-  assert.ok(sim.state.speed > 35);
-  assert.equal(sim.state.collisions, 1);
+  assert.equal(sim.state.speed, 0);
+  const impact = sim.state.progress;
+  assert.ok(impact < 32.86);
+  drive(sim, 2, throttle);
+  assert.ok(Math.abs(sim.state.progress-impact)<.01, 'holding gas cannot drive through the barrier');
+  assert.equal(sim.state.collisions, 1, 'continuous contact counts once');
+  drive(sim, 1.5, {...neutral,brake:1});
+  assert.ok(sim.state.progress < impact-8, 'holding brake backs away');
 });
 
 test('passing an obstacle in an adjacent lane does not collide', () => {
@@ -143,16 +145,17 @@ test('grounded curb impacts stay inside the road and the driver can steer away',
   assert.ok(sim.state.speed > 0);
 });
 
-test('brakes stop the car, and steering cannot move a stopped car sideways', () => {
+test('holding brake reverses; releasing pedals stops before stationary steering', () => {
   const sim = new DrivingSimulation();
   place(sim, ROUTE_STOPS.embarcadero, 0);
   drive(sim, 4);
   assert.ok(sim.state.speed > 40);
-  drive(sim, 2, { ...neutral, brake: 1 });
+  drive(sim, 3, { ...neutral, brake: 1 });
+  assert.ok(sim.state.speed < -8);
+  drive(sim, 6, neutral);
   assert.equal(sim.state.speed, 0);
-  const progress = sim.state.progress;
-  const lateral = sim.state.lateral;
-  drive(sim, 2, { ...neutral, steer: 1, brake: 1 });
+  const progress = sim.state.progress, lateral = sim.state.lateral;
+  drive(sim, 2, { ...neutral, steer: 1 });
   assert.equal(sim.state.progress, progress);
   assert.equal(sim.state.lateral, lateral);
 });
@@ -219,7 +222,7 @@ test('air steering is responsive, soft boundaries do not count as curb crashes, 
   const brakingEvents = drive(sim, 14, { ...neutral, brake: 1 });
   assert.ok(brakingEvents.includes('land'));
   assert.equal(sim.state.airborne, false);
-  assert.equal(sim.state.speed, 0);
+  assert.ok(sim.state.speed < 0, 'continued brake after landing engages reverse');
 });
 
 test('boost gains lift, braking dives, and both return smoothly to the same landing', () => {

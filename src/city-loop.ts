@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { CITY_BOUNDARY_SEGMENTS, CITY_CORRIDOR_START } from './city-boundaries';
+import { PLAYGROUND_COLLIDERS } from './playground';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createCableCarAsset } from './street-assets';
 import { CITY_AUTHORED_RESERVES, CITY_INFILL_PARCELS, ownsCityInfill } from './city-infill-layout';
@@ -60,6 +62,29 @@ export function createCityLoop(scene: THREE.Object3D) {
   terrain.computeVertexNormals();const land=new THREE.Mesh(terrain,mat('#b8b9a8'));land.receiveShadow=true;group.add(land);
   ribbon(-12.7,12.7,.05,curb,'continuous sidewalks');ribbon(-ROAD_HALF_WIDTH,ROAD_HALF_WIDTH,.13,asphalt,'powell-asphalt');
   ribbon(-7.6,-7.35,.20,cream,'west curb');ribbon(7.35,7.6,.20,cream,'east curb');
+
+  // Low gold rails make the road-mode limits visible, including side-street
+  // mouths. The open square and its shortcut paths remain unobstructed.
+  for(let s=CITY_CORRIDOR_START;s<TRACK_LENGTH;s+=3){
+    const end=Math.min(s+3,TRACK_LENGTH),mid=(s+end)/2,yaw=routeYaw(mid);
+    for(const side of [-1,1]){
+      const p=routePoint(mid,side*(ROAD_HALF_WIDTH+.12));
+      const pitch=-Math.atan(routeSlope(mid));
+      box(gold,p.x,p.y+.48,p.z,.16,.12,(end-s+.06)/Math.cos(pitch),yaw,pitch);
+      if(Math.floor((s-CITY_CORRIDOR_START)/3)%2===0)box(cream,p.x,p.y+.29,p.z,.20,.58,.20,yaw);
+    }
+  }
+  // Close the outer district where the otherwise open street grid stops.
+  for(const [ax,az,bx,bz] of CITY_BOUNDARY_SEGMENTS){
+    const length=Math.hypot(bx-ax,bz-az),count=Math.ceil(length/2.4),yaw=Math.atan2(bx-ax,bz-az);
+    for(let i=0;i<count;i++){
+      const t=(i+.5)/count,x=ax+(bx-ax)*t,z=az+(bz-az)*t,y=groundHeight(x,z);
+      if(PLAYGROUND_COLLIDERS.some(b=>!b.propId&&b.maxY>y+1&&x>b.minX&&x<b.maxX&&z>b.minZ&&z<b.maxZ))continue;
+      box(dark,x,y+.42,z,.22,.72,length/count+.03,yaw);
+      box(gold,x,y+.70,z,.25,.16,length/count-.08,yaw);
+      box(cream,x,y+.37,z,.25,.16,length/count*.43,yaw);
+    }
+  }
 
   const streetsX=[-75,75,175,300,410,500,590],streetsZ=[-65,65,185,300,400,500,600,700];
   // Cross streets establish the grid and give views into the rest of the city.

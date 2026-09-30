@@ -131,3 +131,6 @@ h1 span{color:#ffe15a}h1 i{font-size:.36em;line-height:1.8;letter-spacing:1px;co
 @media(max-width:760px){.turn-guide{top:168px;gap:11px;padding:9px 12px}.turn-guide strong{font-size:23px}.turn-guide svg{width:31px;height:31px}.turn-guide small{font-size:6px;letter-spacing:1.2px}.turn-guide>span{font-size:9px;padding-left:10px}.racing:not(.free-drive) .race-message{top:31%}}
 @media(max-width:400px){.turn-guide{max-width:calc(100vw - 32px)}.turn-guide strong{font-size:21px}.turn-guide>span{min-width:37px}.turn-guide{gap:9px}}
 @media(max-height:560px){.turn-guide{top:94px;padding:7px 11px}.turn-guide strong{font-size:19px}.turn-guide svg{width:27px;height:27px}.racing:not(.free-drive) .race-message{top:40%}}
+
+/* Keep recovery easy to read and tap at every viewport size. */
+.playground-controls #return-road{min-height:44px;font-size:10px;padding:11px 13px}

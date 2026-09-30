@@ -1,7 +1,7 @@
 {
-  "triangles": 3016243,
+  "triangles": 2438247,
   "lodTriangles": 558891,
-  "meshes": 835,
+  "meshes": 826,
   "lodMeshes": 606,
   "spatialBlocks": 41,
   "buildings": 1558,
@@ -40,7 +40,7 @@
     }
   ],
   "vegetationAnchors": 119,
-  "bytes": 36325344,
+  "bytes": 31331788,
   "lodBytes": 12734276,
   "coordinates": "+X east, glTF -Z north, +Y altitude, no parent reflection",
   "origin": {

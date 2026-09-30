@@ -338,6 +338,7 @@ export async function createCerebralWorld(scene:THREE.Scene,route:CourseRoute,lo
     view('Painted Ladies',-757,-34,-809,-48,4,at(A.landing)),
     {...view('Skyline Glide',-757,-34,-913,-61,22,at(A.launchCrest)),glide:true},
     view('531 Page',-475,-401,-493,-377,3.5,at(A.page531)),
+    view('Waller & Fillmore',-549,-599,-516,-594,4,at(A.fillmoreWaller)),
     view('Café Réveille',-705,-608,-676,-627,3.7,at(A.reveille)),
     view('Duboce Park',-835,-782,-665,-786,5,at(A.duboce)),
   ];

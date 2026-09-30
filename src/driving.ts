@@ -46,7 +46,7 @@ export type DriveState = {
   collisions: number;
   distanceDrifted: number;
 };
-export type RaceEvent = 'checkpoint' | 'finish' | 'crash' | 'launch' | 'land' | 'boost-pad';
+export type RaceEvent = 'checkpoint' | 'finish' | 'missed-gate' | 'crash' | 'launch' | 'land' | 'boost-pad';
 export type PropImpact = { id: string; x: number; y: number; z: number; vx: number; vz: number; speed: number };
 
 const STEP = 1 / 120;
@@ -67,13 +67,6 @@ function initialState(route: DrivingRoute): DriveState {
     airborne: false, glide: 0, altitude: 0, airTime: 0, totalAirTime: 0, launches: 0, finished: false, checkpoint: 0, collisions: 0, distanceDrifted: 0,
   };
 }
-
-/** Ordered physical gates keep plaza shortcuts from silently completing a lap. */
-export const SQUARE_RACE_GATES = [
-  { x: 75, z: 10, progress: defaultRoute.routeProgressAt(75, 10), label: 'Stockton Street · head south' },
-  { x: 0, z: -65, progress: defaultRoute.routeProgressAt(0, -65), label: 'Geary Street · head west' },
-  { x: -75, z: 0, progress: defaultRoute.routeProgressAt(-75, 0), label: 'Powell Street · head north' },
-] as const;
 
 type SolidBox = { id: string; propId?: string; minX: number; maxX: number; minZ: number; maxZ: number; minY: number; maxY: number };
 const DISTRICT_WALLS: readonly SolidBox[] = [
@@ -151,7 +144,11 @@ export class DrivingSimulation {
     const blend = launch ? clamp((launch.end - this.state.progress) / 24, 0, 1) : 0;
     const landing = launch ? this.route.roadHalfWidth?.(launch.end + 6) ?? road : road;
     const width = launch?.halfWidth === undefined ? road : landing + (launch.halfWidth - landing) * blend;
-    return Math.max(0, width - CAR_HALF_WIDTH);
+    const relative = this.state.heading - this.route.routeYaw(this.state.progress);
+    const halfWidth = !this.customRoute && !this.state.airborne && !this.explorationActive
+      ? Math.max(CAR_HALF_WIDTH, Math.abs(Math.cos(relative)) * CAR_HALF_WIDTH + Math.abs(Math.sin(relative)) * CAR_HALF_LENGTH)
+      : CAR_HALF_WIDTH;
+    return Math.max(0, width - halfWidth);
   }
   private obstacles: Obstacle[];
   private lateralVelocity = 0;
@@ -167,10 +164,10 @@ export class DrivingSimulation {
   private lastBoosting = false;
   private hitObstacles = new Set<number>();
   private explorationEnabled: boolean;
+  private untimed = false;
   private explorationActive = false;
   private worldX: number;
   private worldZ: number;
-  private squareGate = 0;
   private safeProgress: number;
   private playgroundObstacles: SolidBox[] = [];
   private plazaHop = false;
@@ -188,7 +185,6 @@ export class DrivingSimulation {
   }
   get groundHeight(): number { return this.explorationActive ? this.explorationSupportHeight() : this.route.sampleRoute(this.state.progress).y; }
   get nextRaceGate(): { x: number; z: number; progress: number; label: string } | undefined {
-    if (this.explorationEnabled && this.squareGate < SQUARE_RACE_GATES.length) return SQUARE_RACE_GATES[this.squareGate];
     const progress = this.route.CHECKPOINTS[this.state.checkpoint];
     if (progress === undefined) return;
     return { ...this.route.sampleRoute(progress), progress, label: this.route.checkpointLabels?.[this.state.checkpoint] ?? (this.customRoute ? `Checkpoint ${this.state.checkpoint + 1}` : ['Powell Street · climb the hill', 'Grant Avenue · Chinatown', 'The Embarcadero · waterfront', 'Market Street · finish'][this.state.checkpoint]) };
@@ -217,6 +213,7 @@ export class DrivingSimulation {
 
   reset() {
     this.state = initialState(this.route);
+    this.untimed = false;
     this.lateralVelocity = 0;
     this.steering = 0;
     this.wallBlocked = false;
@@ -231,16 +228,16 @@ export class DrivingSimulation {
     this.explorationActive = this.explorationEnabled;
     const start = this.route.sampleRoute(this.route.START_PROGRESS);
     this.worldX = start.x; this.worldZ = start.z;
-    this.squareGate = 0;
     this.safeProgress = this.route.START_PROGRESS;
     this.plazaHop = false;
     this.knockedProps.clear(); this.propImpacts.length = 0; this.scrapeNormals.clear();
   }
 
   /** Start the public-square playground without a race countdown. */
-  explore() {
+  explore(untimed = false) {
     this.reset();
     if (this.customRoute) return;
+    this.untimed = untimed;
     this.explorationEnabled = true;
     this.explorationActive = true;
     this.worldX = 0; this.worldZ = -44;
@@ -249,11 +246,30 @@ export class DrivingSimulation {
     this.projectExplorationPosition();
   }
 
-  /** Recover to the last earned street gate; race time and statistics survive. */
+  /** Nearby road recovery never awards gates or erases race statistics. */
   recover() {
     const finished = this.state.finished;
+    if (finished) return;
+    if (this.customRoute) { this.seek(this.safeProgress); return; }
+    const gate = this.untimed ? undefined : this.nextRaceGate?.progress;
+    let target = Math.max(this.route.START_PROGRESS, this.state.progress - 4);
+    if (gate !== undefined) target = Math.min(target, gate - 8);
+    // Recover before takeoff rather than dropping a grounded car into a flight.
+    const flight = this.route.LAUNCH_ZONES.find(z => target >= z.progress && target < z.end);
+    if (flight) target = flight.progress - 8;
+    for (let back = 0; back <= 80; back += 2) {
+      const progress = Math.max(this.route.START_PROGRESS, target - back);
+      for (const lateral of [0, -3.2, 3.2]) {
+        const p = this.route.routePoint(progress, lateral), yaw = this.route.routeYaw(progress);
+        const ex = Math.abs(Math.sin(yaw)) * CAR_HALF_LENGTH + Math.abs(Math.cos(yaw)) * CAR_HALF_WIDTH + .4;
+        const ez = Math.abs(Math.cos(yaw)) * CAR_HALF_LENGTH + Math.abs(Math.sin(yaw)) * CAR_HALF_WIDTH + .4;
+        const blocked = [...PLAYGROUND_COLLIDERS, ...this.playgroundObstacles].some(box => !box.propId
+          && p.y < box.maxY && p.y + 1.65 > box.minY
+          && p.x + ex > box.minX && p.x - ex < box.maxX && p.z + ez > box.minZ && p.z - ez < box.maxZ);
+        if (!blocked) { this.seek(progress, lateral); return; }
+      }
+    }
     this.seek(this.safeProgress);
-    this.state.finished = finished;
   }
 
   /** Reposition for a retry without erasing race time, earned gates, or statistics. */
@@ -273,6 +289,7 @@ export class DrivingSimulation {
     this.activeLaunch = undefined; this.liftBias = 0; this.lastBoosting = false;
     this.plazaHop = false;
     this.scrapeNormals.clear();
+    this.hitObstacles.clear();
     for (const index of this.launchedZones) if (this.route.LAUNCH_ZONES[index].progress >= s.progress) this.launchedZones.delete(index);
     for (const index of this.collectedBoosts) if (this.route.BOOST_ZONES![index].end >= s.progress) this.collectedBoosts.delete(index);
   }
@@ -336,22 +353,13 @@ export class DrivingSimulation {
     const p = this.route.sampleRoute(progress), yaw = this.route.routeYaw(progress), fx = Math.sin(yaw), fz = Math.cos(yaw);
     const a = (fromX - p.x) * fx + (fromZ - p.z) * fz;
     const b = (toX - p.x) * fx + (toZ - p.z) * fz;
-    if (a > 0 || b <= 0 || b - a < 1e-8) return false;
-    const t = -a / (b - a), x = fromX + (toX - fromX) * t, z = fromZ + (toZ - fromZ) * t;
+    if (a > 1e-7 || b < -1e-7 || b - a < 1e-8) return false;
+    const t = clamp(-a / (b - a), 0, 1), x = fromX + (toX - fromX) * t, z = fromZ + (toZ - fromZ) * t;
     return Math.abs((x - p.x) * fz - (z - p.z) * fx) <= this.route.ROAD_HALF_WIDTH + 1;
   }
 
   private scoreWorldGates(fromX: number, fromZ: number, toX: number, toZ: number, events: RaceEvent[]) {
     const s = this.state;
-    const square = SQUARE_RACE_GATES[this.squareGate];
-    if (square) {
-      if (this.crossedGate(fromX, fromZ, toX, toZ, square.progress)) {
-        this.squareGate++;
-        // Recover before the next gate so a missed crossing always remains attainable.
-        this.safeProgress = square.progress + 3;
-      }
-      return;
-    }
     const progress = this.route.CHECKPOINTS[s.checkpoint];
     if (progress !== undefined && this.crossedGate(fromX, fromZ, toX, toZ, progress)) {
       s.checkpoint++;
@@ -511,21 +519,35 @@ export class DrivingSimulation {
     const surging = s.surge > 0;
     this.lastBoosting = boosting || surging;
     const terminalSpeed = surging ? this.surgeSpeed : boosting ? 58 : 44;
-    const previousSpeed = s.speed;
-    const engine = (surging ? 50 : boosting ? 28 : 19) * input.throttle;
-    const rollingResistance = s.speed > 0 ? .6 + .015 * s.speed : 0;
-    const drag = .003 * s.speed * s.speed;
-    // Engine braking is noticeable when the pedal is released. On a flat road
-    // a short burst of throttle coasts to a stop instead of touring the city.
-    const coastDrag = s.airborne ? 0 : (1 - input.throttle) * (2.2 + .10 * s.speed);
-    const driftDrag = input.drift && !s.airborne ? 3.8 + .045 * s.speed : 0;
-    const downhill = s.speed > .5 && !s.airborne ? -this.route.routeSlope(s.progress) * 4 : 0;
-    s.speed += (engine - rollingResistance - drag - coastDrag - input.brake * 34 - driftDrag + downhill) * dt;
-    if (s.speed > terminalSpeed) s.speed = surging
-      ? Math.min(s.speed, Math.max(terminalSpeed, previousSpeed - 24 * dt))
-      : Math.max(terminalSpeed, s.speed - 24 * dt);
-    // Lift keeps forward motion even if the driver releases the accelerator in flight.
-    s.speed = clamp(s.speed, s.airborne ? 18 : 0, Math.max(60, this.surgeSpeed));
+    if (!this.customRoute && !s.airborne) {
+      const speed = Math.abs(s.speed), direction = Math.sign(s.speed);
+      const pedal = direction < 0 ? input.brake : input.throttle;
+      const resistance = speed > 0 ? .6 + .015 * speed + .003 * speed * speed
+        + (1 - pedal) * (2.2 + .1 * speed) + (input.drift ? 3.8 + .045 * speed : 0) : 0;
+      const drive = s.speed < -.05 ? -input.brake * 10 + input.throttle * 34
+        : s.speed > .05 ? input.throttle * (boosting ? 28 : 19) - input.brake * 34
+        : input.throttle * (boosting ? 28 : 19) - input.brake * 10;
+      const downhill = speed > .5 ? -this.route.routeSlope(s.progress) * Math.cos(s.heading-this.route.routeYaw(s.progress)) * 4 : 0;
+      let nextSpeed = s.speed + (drive - direction * resistance + downhill) * dt;
+      if (direction && Math.sign(nextSpeed) !== direction) nextSpeed = 0;
+      s.speed = clamp(nextSpeed, -10, Math.max(terminalSpeed, s.speed - 24 * dt));
+    } else {
+      const previousSpeed = s.speed;
+      const engine = (surging ? 50 : boosting ? 28 : 19) * input.throttle;
+      const rollingResistance = s.speed > 0 ? .6 + .015 * s.speed : 0;
+      const drag = .003 * s.speed * s.speed;
+      // Engine braking is noticeable when the pedal is released. On a flat road
+      // a short burst of throttle coasts to a stop instead of touring the city.
+      const coastDrag = s.airborne ? 0 : (1 - input.throttle) * (2.2 + .10 * s.speed);
+      const driftDrag = input.drift && !s.airborne ? 3.8 + .045 * s.speed : 0;
+      const downhill = s.speed > .5 && !s.airborne ? -this.route.routeSlope(s.progress) * 4 : 0;
+      s.speed += (engine - rollingResistance - drag - coastDrag - input.brake * 34 - driftDrag + downhill) * dt;
+      if (s.speed > terminalSpeed) s.speed = surging
+        ? Math.min(s.speed, Math.max(terminalSpeed, previousSpeed - 24 * dt))
+        : Math.max(terminalSpeed, s.speed - 24 * dt);
+      // Lift keeps forward motion even if the driver releases the accelerator in flight.
+      s.speed = clamp(s.speed, s.airborne ? 18 : 0, Math.max(60, this.surgeSpeed));
+    }
 
     this.steering += (input.steer - this.steering) * (1 - Math.exp(-10 * dt));
     let forwardSpeed: number;
@@ -541,10 +563,10 @@ export class DrivingSimulation {
     } else {
       // At a blocked curb, gas plus steering can turn the nose away at a crawl.
       // The curb never supplies a new heading or pushes progress around a bend.
-      const yawSpeed = this.wallBlocked ? Math.max(s.speed, input.throttle * (1 - input.brake) * 8) : s.speed;
-      s.heading += yawSpeed * this.steering * steeringCurvature(yawSpeed, input.drift) * dt;
+      const yawSpeed = this.wallBlocked ? (Math.abs(s.speed) > 8 ? s.speed : (input.throttle - input.brake) * 8) : s.speed;
+      s.heading += yawSpeed * this.steering * steeringCurvature(Math.abs(yawSpeed), input.drift) * dt;
       const relative = s.heading - this.route.routeYaw(s.progress);
-      if (Math.abs(s.lateral) < this.edge - .02 || Math.sin(relative) * Math.sign(s.lateral) <= 0) this.wallBlocked = false;
+      if (Math.abs(s.lateral) < this.edge - .02 || s.speed * Math.sin(relative) * Math.sign(s.lateral) <= 0) this.wallBlocked = false;
       this.lateralVelocity = s.speed * Math.sin(relative);
       // Frenet coordinates convert the driver's world velocity into road
       // progress. The offset-radius term keeps an unsteered car travelling
@@ -578,12 +600,12 @@ export class DrivingSimulation {
         this.edgeCooldown = .8;
       }
       if (!s.airborne && this.lateralVelocity * side > 0) {
-        const normalRatio = clamp(Math.abs(this.lateralVelocity) / Math.max(s.speed, 1e-8), 0, 1);
+        const normalRatio = clamp(Math.abs(this.lateralVelocity) / Math.max(Math.abs(s.speed), 1e-8), 0, 1);
         const tangentRatio = Math.sqrt(Math.max(0, 1 - normalRatio * normalRatio));
         if (tangentRatio < .12) s.speed = 0;
         else {
           if (!wasScraping) s.speed *= tangentRatio;
-          s.speed = Math.max(0, s.speed - (.35 + s.speed * .10 * normalRatio) * dt);
+          s.speed = Math.sign(s.speed) * Math.max(0, Math.abs(s.speed) - (.35 + Math.abs(s.speed) * .10 * normalRatio) * dt);
         }
         this.wallBlocked = true;
       }
@@ -592,11 +614,40 @@ export class DrivingSimulation {
 
     for (let i = 0; i < this.obstacles.length; i++) {
       const obstacle = this.obstacles[i];
-      if (this.hitObstacles.has(i) || obstacle.progress + obstacle.length / 2 + CAR_HALF_LENGTH < oldProgress) continue;
-      if (!intersectsObstacle(oldProgress, oldLateral, s.progress, s.lateral, obstacle)) continue;
+      // Contact immunity lasts only until the car leaves this obstacle.
+      const separated = Math.abs(oldProgress - obstacle.progress) > obstacle.length / 2 + CAR_HALF_LENGTH + .5
+        || Math.abs(oldLateral - obstacle.lateral) > obstacle.width / 2 + CAR_HALF_WIDTH + .5;
+      if (separated) this.hitObstacles.delete(i);
+      if (this.customRoute && this.hitObstacles.has(i)) continue;
+      if (this.customRoute && !intersectsObstacle(oldProgress, oldLateral, s.progress, s.lateral, obstacle)) continue;
       // A car airborne above the roof can clear it; small crest hops still collide.
       const clearance = obstacle.kind === 'cablecar' ? 3.8 : obstacle.kind === 'car' ? 1.6 : 1.2;
       if (s.y - this.route.sampleRoute(s.progress).y > clearance) continue;
+      if (!this.customRoute) {
+        const relative = s.heading - this.route.routeYaw(oldProgress);
+        const halfX = Math.abs(Math.cos(relative)) * CAR_HALF_WIDTH + Math.abs(Math.sin(relative)) * CAR_HALF_LENGTH;
+        const halfZ = Math.abs(Math.sin(relative)) * CAR_HALF_WIDTH + Math.abs(Math.cos(relative)) * CAR_HALF_LENGTH;
+        const dx = s.lateral - oldLateral, dz = s.progress - oldProgress;
+        const contact = sweepBox(oldLateral, oldProgress, dx, dz, {
+          id: `road-${i}`, minX: obstacle.lateral-obstacle.width/2, maxX: obstacle.lateral+obstacle.width/2,
+          minZ: obstacle.progress-obstacle.length/2, maxZ: obstacle.progress+obstacle.length/2, minY: 0, maxY: 10,
+        }, halfX, halfZ);
+        if (!contact) continue;
+        const t = Math.max(0, contact.time-.001);
+        const normalRatio = clamp(-(dx*contact.nx+dz*contact.nz)/Math.max(Math.hypot(dx,dz),1e-8),0,1);
+        s.lateral = oldLateral+dx*t+contact.nx*(contact.penetration+.002);
+        s.progress = Math.max(0,oldProgress+dz*t+contact.nz*(contact.penetration+.002));
+        // Keep the tangential part of the remaining movement along the bumper.
+        const into = dx*contact.nx+dz*contact.nz;
+        s.lateral += (dx-Math.min(0,into)*contact.nx)*(1-t);
+        s.progress = Math.max(0,s.progress+(dz-Math.min(0,into)*contact.nz)*(1-t));
+        if (!this.hitObstacles.has(i) && Math.abs(s.speed)*normalRatio>5) { s.collisions++; events.push('crash'); }
+        const retention = Math.sqrt(Math.max(0,1-normalRatio*normalRatio));
+        if (retention<.12) s.speed=0;
+        else if (!this.hitObstacles.has(i)) s.speed*=retention;
+        this.hitObstacles.add(i);this.wallBlocked=true;
+        continue;
+      }
       this.hitObstacles.add(i);
       const side = Math.abs(s.lateral - obstacle.lateral) > .05 ? Math.sign(s.lateral - obstacle.lateral) : obstacle.lateral >= 0 ? -1 : 1;
       s.lateral = clamp(obstacle.lateral + side * (obstacle.width / 2 + CAR_HALF_WIDTH + .25), -this.edge, this.edge);
@@ -698,9 +749,15 @@ export class DrivingSimulation {
       }
       s.speed = 0;
       this.lastBoosting = false;
-      if (!this.explorationEnabled || s.checkpoint >= this.route.CHECKPOINTS.length) {
+      if (this.untimed || !this.explorationEnabled || s.checkpoint >= this.route.CHECKPOINTS.length) {
         s.finished = true;
         events.push('finish');
+      } else {
+        // The route ends here, so clamping position and speed without finishing
+        // traps the driver at the Ferry Building forever. Restore the last
+        // earned gate, preserving the clock and ordered checkpoint requirement.
+        this.recover();
+        events.push('missed-gate');
       }
     }
   }

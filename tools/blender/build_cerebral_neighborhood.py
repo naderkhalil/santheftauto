@@ -12,6 +12,9 @@ from mathutils import Vector
 from mathutils.geometry import tessellate_polygon
 from pathlib import Path
 
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from facade_geometry import wall_frontages
+
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'public/assets/cerebral-valley'; SOURCE=ROOT/'art/source'; REVIEW=ROOT/'art/reviews'
 DATA=ROOT/'art/references/cerebral-valley-layout.json'
@@ -605,16 +608,20 @@ def main():
             facing=((q[0]-x)*nx+(q[1]-y)*ny)/max(.01,rd) if q else 0
             if rd<35 and facing>.67 and ln>4.8:candidate_edges.append((rd,f,ln,street))
         DETAIL='facade'
-        # OSM footprint edges are often tiny bay angles. Prefer survey-derived
-        # frontage from the principal street, while retaining its actual shell.
+        # Use the survey's street-facing direction, but anchor every decorative
+        # frontage to a real wall. Projected parcel spans can cross empty space.
         front=b.get('frontage')
         if front and detail>0:
-            nx,ny=front['nx'],front['nz'];ln=float(front['width'])
-            f=Facade(front['x'],front['z'],nx,ny,base)
+            nx,ny=front['nx'],front['nz']
             rd,q,street=nearest_segment(front['x'],front['z'],local_streets)
             commercial=street and street['name']=='Hayes Street' and front['x']>-350
-            if is_restaurants:hayes_restaurants(f,height)
-            elif ln>=4.5:f.frontage(min(ln,55),height,style,paint,trim,detail,seed,commercial)
+            if is_restaurants:
+                # This individually authored restaurant has a matching open shell.
+                hayes_restaurants(Facade(front['x'],front['z'],nx,ny,base),height)
+            else:
+                for wall in wall_frontages(poly,(nx,ny)):
+                    f=Facade(wall['x'],wall['z'],wall['nx'],wall['nz'],base)
+                    f.frontage(min(wall['width'],55),height,style,paint,trim,detail,seed,commercial)
             for erd,ff,ww,ss in sorted(candidate_edges,key=lambda c:c[0])[:3]:
                 if ff.nx*nx+ff.ny*ny>.4:continue
                 if ww>5 and erd<24:ff.frontage(min(ww,55),height,5,paint,trim,max(1,detail-1),seed+3,commercial)

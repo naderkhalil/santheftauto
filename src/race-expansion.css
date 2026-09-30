@@ -9,3 +9,5 @@
 @media(max-width:600px){.cerebral-views{bottom:30px;display:grid;grid-template-columns:repeat(3,1fr);width:calc(100% - 32px)}.cerebral-views button{padding:10px 7px;font-size:9px}.cerebral-tour-label{left:22px;bottom:155px}.cerebral-tour-label strong{font-size:44px}.cerebral-credit{font-size:6px;right:12px}.course-explore{font-size:8px;margin-top:14px}}
 
 @media(max-width:600px){.cerebral-glide-view .cerebral-tour-label{top:112px;bottom:auto}.cerebral-glide-view .cerebral-tour-label strong{font-size:38px}}
+
+.atlas-coming-soon{background:#ece9df}.atlas-coming-soon:hover{transform:none;box-shadow:none}.atlas-coming-soon .atlas-map{filter:grayscale(.8);opacity:.55}.atlas-coming-soon .atlas-card-copy>span{font-weight:700;color:#52665e;letter-spacing:1.6px}
