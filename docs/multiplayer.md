@@ -1,9 +1,17 @@
 # Private City Loop races
 
-The release offers one playable map. Create a room from **Race Friends**, choose
-a racer name, driver, car and sponsor, then copy the invite link. Friends open
-the link, choose their cosmetics, and join. Everyone marks Ready; the host starts
+**Start Race** opens directly on driver selection, followed by the car garage.
+Solo players do not need to enter a name. **Invite Friends** opens the optional
+nickname and room creation/join form; a room invite opens that form directly.
+Friends see each other's selections live. Everyone marks Ready; the host starts
 a shared five-second countdown. Rooms hold 2–8 racers.
+
+The Victorian garage is an art-direction study. The garage, new coupe, and Jensen
+are original Blender models in `art/source/victorian-garage.blend`, reproducible
+with `tools/blender/create_garage_study.py`. The other three founder models and
+in-race vehicles remain the previous versions while this direction is reviewed.
+Garage paint choices preview three finishes on one coupe; their stored car IDs
+still map to the existing race cars. The prototype is not a final asset rollout.
 
 Cars have equal handling and no player-to-player collisions. The starting grid
 uses join order. Union Square shortcuts remain valid; the ordered Powell,
@@ -59,8 +67,15 @@ invitations: anyone with a valid room code can join a lobby until it is full.
 
 ## Drivers, cars and sponsor artwork
 
-`src/racer-profile.ts` is the cosmetics catalogue. Four placeholder driver
-identities have distinctive helmet colors and in-game name badges. The Sundrop
+`src/racer-profile.ts` is the cosmetics catalogue. The four unofficial parody
+characters are Dario Amodei, Sam Altman, Elon Musk, and Jensen Huang. Original
+full-body 3D figures are authored in `src/founder-figures.ts`; outfits, props,
+poses and playful biographies distinguish them. All four stand in one frame,
+with named downward-pointing selection markers for the local player and friends.
+The markers update live and support multiple racers choosing the same founder.
+Saved IDs for the former four placeholders migrate to the new roster.
+`src/racer-showroom.ts` renders the lineup and a large, rotatable preview of the
+actual game car on asphalt. Sponsor changes update its hood and doors immediately. The Sundrop
 Coupe, Comet Sport (wing/stripes), and Tide Roadster (open roof/roll hoops) share
 physics. Each choice is sent to every racer and shown on their opponent cars.
 

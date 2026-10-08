@@ -80,3 +80,13 @@ test('eight racers have unique grid slots and all complete a server-simulated ra
   for(let now=6000;now<150000&&s.service.room(s.code).phase!=='results';now+=50){racers.forEach((p,i)=>{s.service.touch(s.code,p.token,now);s.service.command(s.code,p.token,{type:'input',sequence:now,input:pilots[i].input(s.service.auth(s.code,p.token).player.sim.state)},now);});s.service.tick(now);}
   const room=s.service.snapshot(s.service.room(s.code));assert.equal(room.phase,'results');assert.ok(room.players.every(p=>p.finishTime!==null&&!p.dnf&&p.state.checkpoint===4));
 });
+
+test('live founder selections reach both racers and changing a pick clears readiness',()=>{
+  const s=setup();s.service.command(s.code,s.a.token,{type:'ready',ready:true},1200);
+  s.service.command(s.code,s.a.token,{type:'profile',profile:{...DEFAULT_PROFILE,name:'Host',driver:'jensen'}},1250);
+  s.service.command(s.code,s.b.token,{type:'profile',profile:{...DEFAULT_PROFILE,name:'Friend',driver:'dario'}},1300);
+  const snapshot=s.service.snapshot(s.service.room(s.code),1400);
+  assert.equal(snapshot.players.find(p=>p.id===s.a.id)?.profile.driver,'jensen');
+  assert.equal(snapshot.players.find(p=>p.id===s.b.id)?.profile.driver,'dario');
+  assert.equal(snapshot.players.find(p=>p.id===s.a.id)?.ready,false);
+});

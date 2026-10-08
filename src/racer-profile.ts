@@ -1,9 +1,9 @@
 /** Public cosmetics catalogue. All sponsors are fictional placeholders. */
 export const DRIVERS = [
-  { id: 'nova', name: 'Nova', color: '#ba96ff', emoji: '🚀', bio: 'Always chasing the next launch.' },
-  { id: 'kai', name: 'Kai', color: '#62dcc8', emoji: '🌊', bio: 'Smooth corners. Ocean energy.' },
-  { id: 'sunny', name: 'Sunny', color: '#ffd15e', emoji: '☀️', bio: 'Here for the hills and good times.' },
-  { id: 'remy', name: 'Remy', color: '#ff9379', emoji: '⚡', bio: 'A shortcut around every corner.' },
+  { id: 'dario', name: 'Dario Amodei', short: 'Dario', color: '#f3aa7d', emoji: '◈', title: 'THE SAFETY DRIVER', bio: 'Ran 47 evals on this left turn.', move: 'Constitutional cornering', stat: 'CAUTION 99 · VIBES 100' },
+  { id: 'sam', name: 'Sam Altman', short: 'Sam', color: '#b8a3ff', emoji: '✳', title: 'THE LAUNCH GUY', bio: 'The next lap will change everything.', move: 'One more launch', stat: 'HYPE 100 · ETA SOON' },
+  { id: 'elon', name: 'Elon Musk', short: 'Elon', color: '#80c8f8', emoji: '↗', title: 'THE ROCKET WILDCARD', bio: 'Missed the turn. Entered orbit.', move: 'Unscheduled space program', stat: 'THRUST 100 · CHILL 0' },
+  { id: 'jensen', name: 'Jensen Huang', short: 'Jensen', color: '#c4f36a', emoji: '▧', title: 'THE GPU DADDY', bio: 'The more you boost, the more you save.', move: 'Full leather acceleration', stat: 'JACKET 100 · VRAM 999' },
 ] as const;
 export const CARS = [
   { id: 'sundrop', name: 'Sundrop Coupe', color: '#ff5439', roof: '#ffe4aa', description: 'The original city flyer' },
@@ -17,11 +17,11 @@ export const SPONSORS: readonly {id:string;name:string;mark:string;color:string;
   { id: 'spark', logo: '/assets/sponsors/spark.svg', name: 'Spark / demo', mark: 'SPARK', color: '#331e16', background: '#ffd363' },
 ] as const;
 export type RacerProfile = { name: string; driver: string; car: string; sponsor: string };
-export const DEFAULT_PROFILE: RacerProfile = { name: 'Racer', driver: 'nova', car: 'sundrop', sponsor: 'orbit' };
+export const DEFAULT_PROFILE: RacerProfile = { name: 'Racer', driver: 'dario', car: 'sundrop', sponsor: 'orbit' };
 export function normalizeProfile(value: Partial<RacerProfile> = {}): RacerProfile {
   const pick = (list: readonly {id:string}[], id: unknown, fallback: string) => list.some(item => item.id === id) ? String(id) : fallback;
   return {
     name: typeof value.name === 'string' ? value.name.replace(/[<>\p{Cc}\p{Cf}]/gu, '').trim().slice(0, 24) || 'Racer' : 'Racer',
-    driver: pick(DRIVERS, value.driver, 'nova'), car: pick(CARS, value.car, 'sundrop'), sponsor: pick(SPONSORS, value.sponsor, 'none'),
+    driver: pick(DRIVERS, ({nova:'dario',kai:'sam',sunny:'elon',remy:'jensen'} as Record<string,string>)[value.driver??'']??value.driver, 'dario'), car: pick(CARS, value.car, 'sundrop'), sponsor: pick(SPONSORS, value.sponsor, 'none'),
   };
 }

@@ -51,7 +51,7 @@ app.innerHTML = `
   <div class="eyebrow">A SAN FRANCISCO DAYDREAM</div>
   <h1>HILLS.<br><span>THRILLS.</span><br><i>NO GRAVITY.</i></h1>
   <p class="intro-copy">Big hills. Little car. Wild imagination.<br>Find your line through Union Square. Climb Powell. Fly down Grant.<br>Fall in love with San Francisco all over again.</p>
-  <div class="intro-actions"><button class="primary" id="start">TAKE FLIGHT <span class="arrow">↗</span></button><button class="text-button" id="how">HOW TO PLAY</button></div>
+  <div class="intro-actions"><button class="primary" id="start">START RACE <span class="arrow">↗</span></button><button class="text-button" id="how">HOW TO PLAY</button></div>
   <div class="keyboard-note intro-mode-actions"><button class="text-button" id="explore-start">EXPLORE UNION SQUARE ↗</button><span></span><button class="text-button" id="tour-start">WATCH A RUN ↗</button></div>
 </main>
 <footer class="intro-bottom" id="intro-bottom">
@@ -67,7 +67,7 @@ app.innerHTML = `
     <div class="city-map-art">${cityMapSvg('expanded',true)}</div>
     <div class="city-map-pan-hint">SWIPE TO EXPLORE THE MAP <span>↔</span></div>
     <div class="city-map-itinerary" aria-label="Route highlights"><span><b>01</b> Union Square</span><i>→</i><span><b>02</b> Powell Street</span><i>→</i><span><b>03</b> Chinatown</span><i>→</i><span><b>04</b> The waterfront</span></div>
-    <footer class="city-map-footer"><div><strong><i></i> YOUR ROUTE THROUGH SAN FRANCISCO</strong><span>2.3 km of city streets. Three hills with wings.</span></div><button class="primary" id="city-map-play">TAKE FLIGHT <span class="arrow">↗</span></button></footer>
+    <footer class="city-map-footer"><div><strong><i></i> YOUR ROUTE THROUGH SAN FRANCISCO</strong><span>2.3 km of city streets. Three hills with wings.</span></div><button class="primary" id="city-map-play">START RACE <span class="arrow">↗</span></button></footer>
   </section>
 </div>
 <div class="edition" id="edition">WHIMSICAL SF &nbsp; / &nbsp; VOL. 001</div>
@@ -254,7 +254,7 @@ async function boot() {
     const n=Math.max(1,Math.ceil(countdownLeft));
     if(n!==countdownNumber){countdownNumber=n;el('countdown').innerHTML=`<strong>${n}</strong><span>CITY LOOP · HILLS HAVE WINGS</span>`;audio.cue('count');}
   }
-  function start(){if(multiplayer?.active){multiplayer.open();return;}startRun(false);}
+  function start(){if(multiplayer){multiplayer.openSetup();return;}startRun(false);}
   function startExploration(){if(multiplayer?.active){multiplayer.open();return;}startRun(true);}
   function restartRun(){if(multiplayer?.active){multiplayer.open();return;}startRun(freeDrive);}
   function startRun(explore:boolean){
@@ -460,6 +460,7 @@ async function boot() {
 
   multiplayer=new Multiplayer(cityRoot,{
     profile:profile=>car.customize(profile),
+    solo:()=>startRun(false),
     start:()=>{startRun(false);countdownLeft=5;updateCountdown();},
     state:player=>{
       const previousCheckpoint=sim.state.checkpoint,previousCollisions=sim.state.collisions;
@@ -541,7 +542,7 @@ async function boot() {
     world.update(totalTime,cityProgress,camera);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress,camera);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}
     heroFill.position.set(car.group.position.x-4,car.group.position.y+6,car.group.position.z-7);
-    renderer.info.reset();composer.render();
+    if(!multiplayer?.blocking){renderer.info.reset();composer.render();}
   }
   requestAnimationFrame(frame);
 }
