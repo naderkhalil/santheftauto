@@ -32,6 +32,9 @@ import { playgroundHeight } from './playground';
 import './style.css';
 import { mountRacePicker } from './race-picker';
 import { Multiplayer } from './multiplayer';
+import { initAnalytics } from './analytics';
+
+void initAnalytics();
 
 const speakerIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>`;
 const muteIcon = `<svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM16 9l6 6m0-6-6 6"/></svg>`;

@@ -12,6 +12,7 @@
     "test:multiplayer": "node --experimental-strip-types --test server/*.test.ts"
   },
   "dependencies": {
+    "posthog-js": "^1.438.3",
     "three": "^0.180.0"
   },
   "devDependencies": {

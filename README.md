@@ -19,6 +19,34 @@ for the full flow, hosting, sponsor artwork, reconnects and verification.
 Internet invitations require the game and its room server to run together on a
 public HTTPS origin; local play does not establish internet validation.
 
+## Usage analytics
+
+Production builds send anonymous page views, page leaves, and session IDs to
+[PostHog project 398694](https://us.posthog.com/project/398694). Open **Web analytics**
+there for unique visitors, visits (sessions), page views, and visit duration. In
+**Product analytics**, `$pageview` with **Unique users** counts visitors; unique
+`$session_id` values count sessions. Returning browsers retain an anonymous ID in
+local storage. These are browser-based estimates, not identified people; another
+device, cleared storage, or an ad blocker affects the counts.
+
+The supplied public project token is configured by default with the US ingestion
+host. If the project is in the EU, set `VITE_POSTHOG_HOST=https://eu.i.posthog.com`
+and use `https://eu.posthog.com/project/398694`. Optional build-time overrides are
+listed in [.env.example](.env.example); copy them into `.env.local` and rebuild.
+`VITE_POSTHOG_KEY` overrides the public project token. No personal API key or
+project ID is needed in the browser.
+
+Tracking is off in `npm run dev` and on in production builds, including
+`npm run preview`. Set `VITE_POSTHOG_ENABLED=false` to disable it, or `true` to
+explicitly enable development testing. After deploying, visit the site and check
+PostHog's **Activity** for `$pageview` events with a `$session_id`.
+
+Analytics loads independently of the game. It does not record replays, input
+values, driver names, or automatic button clicks. URL query strings and fragments
+(including private room codes) are removed from event URL/referrer properties
+before sending. Page-leave events provide visit-duration data when the browser
+can deliver them.
+
 ## Run
 
 ```sh
