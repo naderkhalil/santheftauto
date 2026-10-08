@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createCar } from './car';
+import { normalizeProfile } from './racer-profile';
 import { createCityRoot, setCameraFromCity, steeringFromControls } from './coordinates';
 import { DrivingSimulation, type DriveInput } from './driving';
 import { GameAudio } from './audio';
@@ -56,6 +57,8 @@ export async function bootCourseRace(app:HTMLElement, course:CourseDefinition) {
   const scenicViews:CerebralView[]='views' in world?world.views:[];
   let scenic=false,selectedView=0,frameMs=16.7,practice=false;
   const car=createCar();root.add(car.group);
+  try{car.customize(normalizeProfile(JSON.parse(read('sf-racer-profile')??'{}')));}catch{car.customize(normalizeProfile({}));}
+  await car.ready;
   const sim=new DrivingSimulation('obstacles' in world?world.obstacles:[],{route});
   const audio=new GameAudio();let muted=read('sf-night-run-muted')==='true';audio.setMuted(muted);
   const fog=course.fog?new FogChallenge(course.fog.start*route.TRACK_LENGTH,course.fog.end*route.TRACK_LENGTH):undefined;

@@ -1,76 +1,74 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { createFounder } from './founder-figures';
-import { CARS, DRIVERS, SPONSORS, type RacerProfile } from './racer-profile';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { createAtmosphere } from './atmosphere';
+import { createCar } from './car';
+import { cloneRacerPart, loadRacerKit, releaseRacerPart, RACER_ASSET_VERSION } from './racer-assets';
+import { DRIVERS, type RacerProfile } from './racer-profile';
 
-/** The first art study: an editable Blender garage, coupe and Jensen model. */
+/** Real map architecture and game lighting; the car is the same playable instance type. */
 export class RacerShowroom {
-  private renderer:THREE.WebGLRenderer;
-  private scene=new THREE.Scene();
-  private lineup=new THREE.Group();
-  private garage=new THREE.Group();
-  private car=new THREE.Group();
-  private founders:THREE.Group[]=[];
-  private camera=new THREE.PerspectiveCamera(38,1,.1,100);
-  private lineupCamera=new THREE.OrthographicCamera(-5,5,2,-2,.1,50);
-  private mode='driver';private selected='jensen';private rotation=-.22;private dragX:number|null=null;
-  private observer:ResizeObserver;private disposed=false;private profile:RacerProfile|null=null;
-  private environment:THREE.WebGLRenderTarget;
-  private decalMap:THREE.CanvasTexture;
-  private decals=new THREE.Group();
+  private renderer:THREE.WebGLRenderer;private composer:EffectComposer;private pass:RenderPass;private ao:GTAOPass;
+  private scene=new THREE.Scene();private lineup=new THREE.Group();private garage=new THREE.Group();private world=new THREE.Group();
+  private car=createCar();private founders:THREE.Object3D[]=[];
+  private camera=new THREE.PerspectiveCamera(42,1,.1,4200);
+  private lineupCamera=new THREE.OrthographicCamera(-5,5,2,-2,.1,4200);
+  private atmosphere:ReturnType<typeof createAtmosphere>;
+  private mode='driver';private selected='jensen';private rotation=.57;private dragX:number|null=null;private last=0;
+  private observer:ResizeObserver;private disposed=false;
   constructor(private canvas:HTMLCanvasElement){
-    this.renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'low-power'});
+    this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-    this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.15;
-    const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();this.environment=pmrem.fromScene(room,.04);this.scene.environment=this.environment.texture;this.scene.environmentIntensity=.65;room.dispose();pmrem.dispose();
-    this.scene.add(new THREE.HemisphereLight('#e7f0ee','#b5a68a',2));
-    const sun=new THREE.DirectionalLight('#fff2d3',3.4);sun.position.set(-5,9,7);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-12,right:12,top:10,bottom:-10});sun.shadow.normalBias=.025;this.scene.add(sun);
-    this.scene.add(this.lineup,this.garage,this.car);
-    DRIVERS.forEach((driver,index)=>{const holder=new THREE.Group();holder.add(createFounder(driver.id));this.lineup.add(holder);this.founders.push(holder);holder.userData.index=index;});
-    const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,12),new THREE.MeshStandardMaterial({color:'#d8d0b9',roughness:.93}));ground.rotation.x=-Math.PI/2;ground.position.y=-.02;ground.receiveShadow=true;this.lineup.add(ground);
-    const decalCanvas=document.createElement('canvas');decalCanvas.width=512;decalCanvas.height=256;this.decalMap=new THREE.CanvasTexture(decalCanvas);this.decalMap.colorSpace=THREE.SRGBColorSpace;
-    const decalMaterial=new THREE.MeshStandardMaterial({map:this.decalMap,roughness:.4,transparent:true,polygonOffset:true,polygonOffsetFactor:-2});
-    for(const side of [-1,1]){const badge=new THREE.Mesh(new THREE.PlaneGeometry(.55,.275),decalMaterial);badge.position.set(side*.902,.64,-.1);badge.rotation.y=side*Math.PI/2;this.decals.add(badge);}this.car.add(this.decals);
-    new GLTFLoader().load('/assets/models/victorian-garage.glb?v=3',asset=>{
+    this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.NeutralToneMapping;this.renderer.toneMappingExposure=1;
+    this.lineup.scale.z=-1;this.world.scale.z=-1;this.world.add(this.garage,this.car.group);this.scene.add(this.world,this.lineup);
+    this.atmosphere=createAtmosphere(this.renderer,this.scene,this.camera,{sampleRoute:()=>new THREE.Vector3(0,-18,0),shadowExtent:22,sunDirection:{x:-.57,y:.682,z:.461},reflectionPoints:[{x:0,y:1.5,z:0}]});
+    void this.atmosphere.loadPhotographicSky();this.atmosphere.update(0,0);
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(35,30),new THREE.MeshStandardMaterial({color:'#b9b3a5',roughness:.92}));floor.rotation.x=-Math.PI/2;floor.position.y=-.04;floor.receiveShadow=true;this.lineup.add(floor);
+    this.composer=new EffectComposer(this.renderer);this.pass=new RenderPass(this.scene,this.camera);this.composer.addPass(this.pass);
+    this.ao=new GTAOPass(this.scene,this.camera,640,360);this.ao.blendIntensity=.4;this.ao.updateGtaoMaterial({radius:.65,thickness:.6,distanceExponent:1.6,samples:8});this.ao.updatePdMaterial({radius:4,rings:2,samples:8});this.composer.addPass(this.ao);this.composer.addPass(new OutputPass());
+    const renderAO=this.ao.render.bind(this.ao);
+    this.ao.render=(renderer,write,read,dt,mask)=>{
+      const hidden:THREE.Mesh[]=[];this.scene.traverse(o=>{if(o instanceof THREE.Mesh&&o.visible){const materials=Array.isArray(o.material)?o.material:[o.material];if(materials.every(m=>m.transparent||m.alphaTest>0)){o.visible=false;hidden.push(o);}}});
+      const shadows=renderer.shadowMap.autoUpdate;renderer.shadowMap.autoUpdate=false;
+      try{renderAO(renderer,write,read,dt,mask);}finally{hidden.forEach(o=>o.visible=true);renderer.shadowMap.autoUpdate=shadows;}
+    };
+    loadRacerKit().then(kit=>{if(this.disposed)return;DRIVERS.forEach(driver=>{const actor=cloneRacerPart(kit,`Standing_${driver.id}`);actor.scale.setScalar(1.35);this.lineup.add(actor);this.founders.push(actor);});this.resize();}).catch(()=>{this.canvas.dataset.loaded='error';});
+    new GLTFLoader().load(`/assets/models/racer-garage.glb?v=${RACER_ASSET_VERSION}`,asset=>{
       if(this.disposed){this.release(asset.scene);return;}
-      asset.scene.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;}});
-      const garage=asset.scene.getObjectByName('Garage'),coupe=asset.scene.getObjectByName('Coupe'),jensen=asset.scene.getObjectByName('Jensen');
-      if(garage)this.garage.add(garage);if(coupe)this.car.add(coupe);
-      if(jensen){const holder=this.founders[3];for(const child of [...holder.children]){this.release(child);holder.remove(child);}jensen.scale.setScalar(1.32);holder.add(jensen);}
-      if(this.profile)this.setProfile(this.profile);
-      this.canvas.dataset.loaded='true';this.resize();
-    },undefined,()=>{this.canvas.dataset.loaded='error';this.canvas.setAttribute('aria-label','Garage preview unavailable. Reload to try again.');});
-    this.lineupCamera.position.set(0,2.8,10);this.lineupCamera.lookAt(0,1.3,0);
+      asset.scene.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;}});this.garage.add(asset.scene);this.canvas.dataset.loaded='true';this.resize();
+    },undefined,()=>{this.canvas.dataset.loaded='error';});
+    // Use the map's scanned asphalt on the road outside the garage.
+    const textureLoader=new THREE.TextureLoader();Promise.all(['asphalt-color.jpg','asphalt-normal.jpg','asphalt-roughness.jpg'].map(path=>textureLoader.loadAsync('/assets/'+path))).then(([color,normal,roughness])=>{
+      if(this.disposed){[color,normal,roughness].forEach(t=>t.dispose());return;}
+      color.colorSpace=THREE.SRGBColorSpace;for(const t of [color,normal,roughness]){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(7,3);}
+      const street=new THREE.Mesh(new THREE.PlaneGeometry(40,12),new THREE.MeshStandardMaterial({map:color,normalMap:normal,normalScale:new THREE.Vector2(.25,.25),roughnessMap:roughness,color:'#b2bbcb',roughness:.87}));street.rotation.x=-Math.PI/2;street.position.set(0,-.105,6);street.receiveShadow=true;this.garage.add(street);
+    }).catch(()=>{});
+    this.lineupCamera.position.set(0,2.7,-10);this.lineupCamera.lookAt(0,1.3,0);
     this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(canvas);
     canvas.addEventListener('pointerdown',event=>{if(this.mode!=='car')return;this.dragX=event.clientX;canvas.setPointerCapture(event.pointerId);});
-    canvas.addEventListener('pointermove',event=>{if(this.dragX===null)return;this.rotation=THREE.MathUtils.clamp(this.rotation+(event.clientX-this.dragX)*.006,-1.1,.65);this.dragX=event.clientX;this.resize();});
+    canvas.addEventListener('pointermove',event=>{if(this.dragX===null)return;this.rotation=THREE.MathUtils.clamp(this.rotation+(event.clientX-this.dragX)*.006,-.8,1.0);this.dragX=event.clientX;this.resize();});
     for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,()=>this.dragX=null);
     this.resize();
   }
   resize(){
     const width=this.canvas.clientWidth,height=this.canvas.clientHeight;if(!width||!height)return;
-    this.renderer.setSize(width,height,false);const aspect=width/height;this.camera.aspect=aspect;
-    const distance=aspect<1?7.7:5.8;
-    this.camera.position.set(Math.sin(this.rotation+.86)*distance,2.55,Math.cos(this.rotation+.86)*distance);this.camera.lookAt(0,.9,-.2);this.camera.updateProjectionMatrix();
-    const horizontal=Math.max(3.65,1.65*aspect),vertical=horizontal/aspect;
-    Object.assign(this.lineupCamera,{left:-horizontal,right:horizontal,top:vertical,bottom:-vertical});this.lineupCamera.updateProjectionMatrix();
-    this.founders.forEach((figure,i)=>figure.position.x=horizontal*[-.75,-.25,.25,.75][i]);
-    this.lineupCamera.updateMatrixWorld();const head=new THREE.Vector3(0,2.95,0).project(this.lineupCamera);
-    this.canvas.closest('dialog')?.style.setProperty('--tag-y',`${Math.max(0,(1-head.y)*height/2-32)}px`);
+    this.renderer.setSize(width,height,false);this.composer.setSize(width,height);this.ao.setSize(Math.ceil(width*.65),Math.ceil(height*.65));const aspect=width/height;this.camera.aspect=aspect;
+    const distance=aspect<1?8:5.6;this.camera.position.set(Math.sin(this.rotation)*distance,2.8,-Math.cos(this.rotation)*distance);this.camera.lookAt(0,1.2,.5);this.camera.updateProjectionMatrix();
+    const horizontal=Math.max(3.65,1.65*aspect),vertical=horizontal/aspect;Object.assign(this.lineupCamera,{left:-horizontal,right:horizontal,top:vertical,bottom:-vertical});this.lineupCamera.updateProjectionMatrix();
+    this.founders.forEach((actor,i)=>actor.position.x=-horizontal*[-.75,-.25,.25,.75][i]);
+    this.lineupCamera.updateMatrixWorld();const head=new THREE.Vector3(0,2.9,0).project(this.lineupCamera);this.canvas.closest('dialog')?.style.setProperty('--tag-y',`${Math.max(0,(1-head.y)*height/2-28)}px`);
   }
-  setMode(mode:string){this.mode=mode;this.lineup.visible=mode==='driver';this.garage.visible=this.car.visible=mode==='car';this.resize();}
-  setProfile(profile:RacerProfile){
-    this.profile=profile;this.selected=profile.driver;
-    const style=CARS.find(c=>c.id===profile.car)??CARS[0];
-    this.car.traverse(o=>{if(o instanceof THREE.Mesh){const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials)if(m.name==='Coupe paint'&&m instanceof THREE.MeshStandardMaterial)m.color.set(style.id==='sundrop'?'#427e7c':style.id==='comet'?'#b36b51':'#d9b66e');}});
-    const sponsor=SPONSORS.find(s=>s.id===profile.sponsor)??SPONSORS[0];this.decals.visible=!!sponsor.mark;
-    const canvas=this.decalMap.image as HTMLCanvasElement,ctx=canvas.getContext('2d')!;ctx.clearRect(0,0,512,256);ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 80px sans-serif';ctx.fillText(sponsor.mark,256,128,460);this.decalMap.needsUpdate=true;
+  setMode(mode:string){this.mode=mode;this.lineup.visible=mode==='driver';this.world.visible=mode==='car';this.resize();}
+  setProfile(profile:RacerProfile){this.selected=profile.driver;this.car.customize(profile);}
+  render(now:number){
+    const dt=this.last?Math.min(.05,(now-this.last)/1000):0;this.last=now;
+    this.founders.forEach((actor,i)=>actor.scale.setScalar(DRIVERS[i].id===this.selected?1.40:1.35));
+    this.car.update(dt,{speed:0,steer:0,braking:false,boosting:false,time:now/1000});
+    const camera=this.mode==='car'?this.camera:this.lineupCamera;this.pass.camera=camera;this.ao.camera=camera;this.composer.render();
   }
-  render(_now:number){
-    this.founders.forEach((figure,i)=>{const chosen=DRIVERS[i].id===this.selected;figure.scale.setScalar(chosen?1.04:1);});
-    this.renderer.render(this.scene,this.mode==='car'?this.camera:this.lineupCamera);
-  }
-  private release(root:THREE.Object3D){const materials=new Set<THREE.Material>(),geometries=new Set<THREE.BufferGeometry>();root.traverse(o=>{if(o instanceof THREE.Mesh){geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
-  dispose(){this.disposed=true;this.observer.disconnect();this.release(this.scene);this.environment.dispose();this.decalMap.dispose();this.renderer.dispose();}
+  private release(root:THREE.Object3D){const materials=new Set<THREE.Material>(),textures=new Set<THREE.Texture>();root.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material]){materials.add(m);for(const value of Object.values(m))if(value instanceof THREE.Texture)textures.add(value);}}});textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());}
+  dispose(){this.disposed=true;this.observer.disconnect();this.car.dispose();this.founders.forEach(actor=>{actor.removeFromParent();releaseRacerPart(actor);});this.release(this.garage);this.release(this.lineup);this.ao.dispose();this.composer.dispose();this.atmosphere.dispose();this.renderer.dispose();}
 }

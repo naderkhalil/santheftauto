@@ -6,12 +6,19 @@ nickname and room creation/join form; a room invite opens that form directly.
 Friends see each other's selections live. Everyone marks Ready; the host starts
 a shared five-second countdown. Rooms hold 2–8 racers.
 
-The Victorian garage is an art-direction study. The garage, new coupe, and Jensen
-are original Blender models in `art/source/victorian-garage.blend`, reproducible
-with `tools/blender/create_garage_study.py`. The other three founder models and
-in-race vehicles remain the previous versions while this direction is reviewed.
-Garage paint choices preview three finishes on one coupe; their stored car IDs
-still map to the existing race cars. The prototype is not a final asset rollout.
+The garage uses the same Victorian facade builders, timber PBR materials, HDR sky,
+Neutral tone mapping and ambient occlusion as the city. `racer-kit.glb` contains
+the playable open-cockpit car, four independent wheel pivots, and standing/seated
+models of all four drivers. Setup, solo races and remote multiplayer cars use
+that same kit. Paint and sponsor choices persist into gameplay. All three car
+choices share the open-cockpit chassis and equal physics; the distinction is paint.
+
+Editable source: `art/source/racers-and-garage.blend`. Rebuild with
+`tools/blender/build_racer_assets.py`; this reuses the actual architecture helpers
+from `build_cerebral_heroes.py`. The old art study remains in Git for comparison.
+The garage is a separate download, so racing peers do not load its buildings.
+If the new kit fails to load, the existing procedural car remains as a playable
+fallback and the console reports the failure.
 
 Cars have equal handling and no player-to-player collisions. The starting grid
 uses join order. Union Square shortcuts remain valid; the ordered Powell,

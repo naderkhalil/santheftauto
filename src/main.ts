@@ -126,7 +126,7 @@ async function boot() {
   const waterfront=createWaterfront(scene);
   await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready,squareStreetDetails.ready,waterfront.ready]);
   canvas.dataset.waterfrontAssets='blender';
-  const car = createCar(); cityRoot.add(car.group);
+  const car = createCar(); cityRoot.add(car.group);await car.ready;
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
   const sim = new DrivingSimulation(world.obstacles,{exploration:true});
   const playground = createPlayground(cityRoot);
@@ -372,7 +372,7 @@ async function boot() {
       const view=flightView(s,frame.slope*Math.cos(yaw-frame.yaw),sim.exploring?playgroundHeight(ahead.x,ahead.z):groundHeight(ahead.x,ahead.z));
       if(sim.exploring){view.pitch=-s.surfacePitch;view.bank=s.surfaceRoll-s.driftAngle*.1;view.lookHeight=s.y+1.2;}
       car.group.rotation.order='YXZ';car.group.rotation.x=THREE.MathUtils.damp(car.group.rotation.x,view.pitch,10,dt);car.group.rotation.y=yaw+s.driftAngle;car.group.rotation.z=THREE.MathUtils.damp(car.group.rotation.z,view.bank,7,dt);
-      const chaseDistance=cameraMode===1?6.3:9.4,chaseHeight=cameraMode===1?2.25:4.2;
+      const chaseDistance=cameraMode===1?6.3:7.8,chaseHeight=cameraMode===1?2.25:3.65;
       const back={x:here.x-forwardX*chaseDistance,z:here.z-forwardZ*chaseDistance};
       desiredCamera.set(back.x,Math.max(s.y+chaseHeight,(sim.exploring?playgroundHeight(back.x,back.z):groundHeight(back.x,back.z))+chaseHeight),back.z);
       lookAt.set(ahead.x,view.lookHeight,ahead.z);
@@ -533,7 +533,7 @@ async function boot() {
     const cityProgress=phase==='menu'?35:phase==='tour'?tour.progress:sim.state.progress;
     const showRaceGuidance=phase==='tour'?!tourArt&&tour.progress<TRACK_LENGTH-1:!freeDrive&&['countdown','racing','paused'].includes(phase);
     raceGuidance.update(cityProgress,showRaceGuidance);canvas.dataset.raceGuidance=String(showRaceGuidance);
-    canvas.dataset.heroAssets=String(!!landmarks.group.getObjectByName('Westin St. Francis / Blender landmark')?.userData.loaded);canvas.dataset.phase=phase;canvas.dataset.scenicView=phase==='tour'?(tourArt??'drive'):'';canvas.dataset.wheelFold=String(car.group.userData.wheelFoldDegrees??0);
+    canvas.dataset.heroAssets=String(!!landmarks.group.getObjectByName('Westin St. Francis / Blender landmark')?.userData.loaded);canvas.dataset.phase=phase;canvas.dataset.racerAsset=String(car.group.userData.asset??'loading');canvas.dataset.driverVisible=String(car.group.userData.driverVisible??false);canvas.dataset.scenicView=phase==='tour'?(tourArt??'drive'):'';canvas.dataset.wheelFold=String(car.group.userData.wheelFoldDegrees??0);
     if(phase==='tour'){canvas.dataset.progress=tour.progress.toFixed(1);canvas.dataset.airborne=String(tour.airborne);canvas.dataset.altitude=tour.altitude.toFixed(1);canvas.dataset.glide=tour.glide.toFixed(2);}
     const hits=skyCourse.update(totalTime,cityProgress,car.group.position,phase==='racing');
     const postcards=playground.update(totalTime,sim.position,phase==='racing'&&sim.exploring);

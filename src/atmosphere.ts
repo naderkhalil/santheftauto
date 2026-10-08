@@ -86,10 +86,11 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   let shadowExtent=0;
   const captureTarget=new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
   const captureCamera=new THREE.CubeCamera(.3,1800,captureTarget);scene.add(captureCamera);
-  let captured=false;
+  let captured=false;let disposed=false;
   async function loadPhotographicSky(){
     try{
       const photograph=await new HDRLoader().setDataType(THREE.HalfFloatType).loadAsync('/assets/sky/kloofendal_43d_clear_puresky_2k.hdr');
+      if(disposed){photograph.dispose();return;}
       photograph.wrapS=THREE.RepeatWrapping;
       skyMaterial.uniforms.photographicSky.value=photograph;
       skyMaterial.uniforms.usePhotographicSky.value=1;
@@ -131,6 +132,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     scene.environment=cityEnvironments[0].texture;scene.environmentIntensity=.58;environmentRegion=0;captured=true;
   }
   return {
+    dispose(){disposed=true;sky.geometry.dispose();skyMaterial.uniforms.photographicSky.value?.dispose();skyMaterial.dispose();skyEnvironment.dispose();cityEnvironments.forEach(t=>t.dispose());captureTarget.dispose();pmrem.dispose();sun.shadow.map?.dispose();},
     loadPhotographicSky,
     bakeCityReflections,
     update(time:number,progress:number){

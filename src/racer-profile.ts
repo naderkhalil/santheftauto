@@ -6,9 +6,9 @@ export const DRIVERS = [
   { id: 'jensen', name: 'Jensen Huang', short: 'Jensen', color: '#c4f36a', emoji: '▧', title: 'THE GPU DADDY', bio: 'The more you boost, the more you save.', move: 'Full leather acceleration', stat: 'JACKET 100 · VRAM 999' },
 ] as const;
 export const CARS = [
-  { id: 'sundrop', name: 'Sundrop Coupe', color: '#ff5439', roof: '#ffe4aa', description: 'The original city flyer' },
-  { id: 'comet', name: 'Comet Sport', color: '#8a78fa', roof: '#ebe7ff', description: 'Sport wing · racing stripes' },
-  { id: 'tide', name: 'Tide Roadster', color: '#39bfae', roof: '#142f48', description: 'Open roof · twin roll hoops' },
+  { id: 'sundrop', name: 'Sundrop Roadster', color: '#427e7c', roof: '#ffe4aa', description: 'The original city flyer' },
+  { id: 'comet', name: 'Comet Sport', color: '#b36b51', roof: '#ebe7ff', description: 'Terracotta open cockpit' },
+  { id: 'tide', name: 'Tide Roadster', color: '#d9b66e', roof: '#142f48', description: 'Buttercream open cockpit' },
 ] as const;
 export const SPONSORS: readonly {id:string;name:string;mark:string;color:string;background:string;logo?:string}[] = [
   { id: 'none', name: 'Independent', mark: '', color: '#153e54', background: '#fff6dc' },

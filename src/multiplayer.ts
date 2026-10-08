@@ -95,9 +95,9 @@ export class Multiplayer {
     this.dialog.querySelector('#mp-driver-number')!.textContent=`0${DRIVERS.indexOf(driver)+1} / 04`;
     this.dialog.querySelector('#mp-driver-move')!.textContent=driver.name;
     this.dialog.querySelector('#mp-driver-bio')!.textContent=driver.bio;
-    this.dialog.querySelector('#mp-driver-stat')!.textContent=driver.id==='jensen'?'NEW CHARACTER STUDY':'';
-    this.dialog.querySelector('#mp-car-title')!.textContent='Sundrop Coupe';
-    this.dialog.querySelector('#mp-car-description')!.textContent='Blender model study · '+(car.id==='sundrop'?'Juniper':car.id==='comet'?'Terracotta':'Buttercream');
+    this.dialog.querySelector('#mp-driver-stat')!.textContent='';
+    this.dialog.querySelector('#mp-car-title')!.textContent=car.name;
+    this.dialog.querySelector('#mp-car-description')!.textContent='Open cockpit · '+(car.id==='sundrop'?'Juniper':car.id==='comet'?'Terracotta':'Buttercream');
   }
   private renderLineup(){
     const racers=this.room?.players.map(p=>({id:p.id,name:p.profile.name,driver:p.id===this.id?this.profile.driver:p.profile.driver,connected:p.connected}))??[{id:'local',name:this.profile.name,driver:this.profile.driver,connected:true}];
