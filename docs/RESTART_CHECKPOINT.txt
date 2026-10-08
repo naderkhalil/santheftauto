@@ -28,3 +28,10 @@ Running commands / restart
 - After restarting, run npm start in /Users/naderkhalil/Projects/SF1 and open
   http://localhost:3000/. If dist is missing, run npm run build first.
 - No deployment or push was performed. Source and generated models are in Git.
+
+Resume update
+- User resumed; saved work and server were intact. Reopened the garage with the
+  saved Jensen / Buttercream / Sprout selection.
+- Corrected camera distance for the narrower restored app window so the whole
+  car stays visible. Production build and browser framing check passed.
+- Implementation is saved; next step remains the user's visual review.

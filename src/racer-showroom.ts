@@ -201,7 +201,7 @@ export class RacerShowroom {
     this.canvas.dataset.renderSize = `${this.canvas.width}×${this.canvas.height}`;
     const aspect = width / height;
     this.camera.aspect = aspect;
-    const distance = aspect < 1 ? 8.5 : 5.25;
+    const distance = Math.max(5.25, 8.2 / aspect);
     this.camera.position.set(Math.sin(this.rotation) * distance, aspect < 1 ? 2.2 : 2.0, -Math.cos(this.rotation) * distance);
     this.camera.lookAt(0, .92, .15);
     this.camera.updateProjectionMatrix();
