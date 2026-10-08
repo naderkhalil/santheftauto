@@ -1,0 +1,30 @@
+SF1 restart checkpoint — 2026-10-08
+
+Paused at the user's request. Do not begin new work until they resume.
+
+Finished
+- Latest implementation commit: d3402c7 (Sculpt coherent racers and polish garage rendering).
+- Rebuilt four Blender characters, detailed Victorian garage, open cockpit,
+  fitted windscreen, bucket seats and centered steering pivot.
+- Fixed showroom antialiasing, overlapping floors, camera projection in ambient
+  occlusion, reflection capture and texture filtering. Menu renders on changes.
+- Selected car, seated driver, paint and sponsor remain visible in gameplay.
+- Compressed assets exported; editable source is art/source/racers-and-garage.blend.
+- Production build, 146 gameplay/asset tests and 9 multiplayer tests passed.
+- Browser checks covered lineup, garage rotation, paint/sponsors, narrow layout
+  and a live race. No browser errors observed.
+- User preview selection: Nader / Jensen / Buttercream / Sprout.
+- Screenshots preserved in docs/checkpoints/2026-10-08/ (not dependent on /tmp).
+
+What remains
+- No unfinished implementation or active build. Await the user's visual review
+  and next instructions; do not assume the subjective art direction is approved.
+- Continue from d3402c7, not the older garage study. Earlier checkpoints are
+  a14990c (Blender gameplay integration) and dd39342 (pre-Blender checkpoint).
+
+Running commands / restart
+- SF1 local server: npm start, Node PID 89514 at checkpoint time, localhost:3000.
+  It is safe for the reboot to stop this; no Blender or build jobs are running.
+- After restarting, run npm start in /Users/naderkhalil/Projects/SF1 and open
+  http://localhost:3000/. If dist is missing, run npm run build first.
+- No deployment or push was performed. Source and generated models are in Git.
