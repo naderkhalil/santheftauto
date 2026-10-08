@@ -6,3 +6,6 @@ dist/
 # Blender keeps transient backup copies beside the editable sources.
 *.blend1
 *.blend2
+
+# Python caches from the Blender asset builders.
+__pycache__/

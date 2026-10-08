@@ -15,8 +15,12 @@ choices share the open-cockpit chassis and equal physics; the distinction is pai
 
 Editable source: `art/source/racers-and-garage.blend`. Rebuild with
 `tools/blender/build_racer_assets.py`; this reuses the actual architecture helpers
-from `build_cerebral_heroes.py`. The old art study remains in Git for comparison.
+from `build_cerebral_heroes.py`, detailed fixtures from `racer_garage.py`, and
+continuous character sculpts from `racer_characters.py`. The old art study remains
+in Git for comparison.
 The garage is a separate download, so racing peers do not load its buildings.
+Both models use Draco compression with the existing local decoder; geometry
+keeps 16-bit positions and 12-bit normals for close-up detail.
 If the new kit fails to load, the existing procedural car remains as a playable
 fallback and the console reports the failure.
 
@@ -76,15 +80,19 @@ invitations: anyone with a valid room code can join a lobby until it is full.
 
 `src/racer-profile.ts` is the cosmetics catalogue. The four unofficial parody
 characters are Dario Amodei, Sam Altman, Elon Musk, and Jensen Huang. Original
-full-body 3D figures are authored in `src/founder-figures.ts`; outfits, props,
-poses and playful biographies distinguish them. All four stand in one frame,
+full-body Blender sculpts are authored in `tools/blender/racer_characters.py`;
+face proportions, shaped hair, tailored outfits and biographies distinguish them. All four stand in one frame,
 with named downward-pointing selection markers for the local player and friends.
 The markers update live and support multiple racers choosing the same founder.
 Saved IDs for the former four placeholders migrate to the new roster.
 `src/racer-showroom.ts` renders the lineup and a large, rotatable preview of the
-actual game car on asphalt. Sponsor changes update its hood and doors immediately. The Sundrop
-Coupe, Comet Sport (wing/stripes), and Tide Roadster (open roof/roll hoops) share
-physics. Each choice is sent to every racer and shown on their opponent cars.
+actual game car on asphalt. The portrait lineup has a seamless warm backdrop;
+the garage uses the city's Pacific daylight and local building reflections.
+Native-resolution multisampling, SMAA and projection-correct ambient occlusion
+keep close-up silhouettes, glass and trim smooth. The menu redraws when a model,
+selection, sponsor or camera changes, rather than continuously rendering a static
+scene. Sponsor changes update the hood and doors immediately. Sundrop Roadster,
+Comet Sport and Tide Roadster share one open cockpit body and equal physics. Each choice is sent to every racer and shown on their opponent cars.
 
 Fictional Orbit, Sprout and Spark logos live in `public/assets/sponsors` and are
 explicitly labeled demo sponsors. Replace or add approved local SVG/PNG artwork,

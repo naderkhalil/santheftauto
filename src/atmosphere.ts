@@ -85,7 +85,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   let environmentRegion=-1;
   let shadowExtent=0;
   const captureTarget=new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
-  const captureCamera=new THREE.CubeCamera(.3,1800,captureTarget);scene.add(captureCamera);
+  const captureCamera=new THREE.CubeCamera(.3,6000,captureTarget);scene.add(captureCamera);
   let captured=false;let disposed=false;
   async function loadPhotographicSky(){
     try{

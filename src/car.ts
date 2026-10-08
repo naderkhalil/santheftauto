@@ -23,13 +23,14 @@ export function createCar(){
   const glowMaterial=new THREE.MeshStandardMaterial({color:'#86f4e2',emissive:'#27d7cf',emissiveIntensity:0,transparent:true,opacity:0});
   const glows:THREE.Mesh[]=[];
   function customize(next:RacerProfile){
+    group.userData.visualRevision=(group.userData.visualRevision??0)+1;
     profile=normalizeProfile(next);fallback?.customize(profile);group.userData.profile={...profile};
     const car=CARS.find(c=>c.id===profile.car)??CARS[0];
     model?.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m instanceof THREE.MeshStandardMaterial&&m.name==='Coupe paint')m.color.set(car.color);});
     for(const [id,driver] of drivers)driver.visible=id===profile.driver;
     const sponsor=SPONSORS.find(s=>s.id===profile.sponsor)??SPONSORS[0];decals.visible=!!model&&!!sponsor.mark;
     const ctx=decalCanvas.getContext('2d')!;ctx.clearRect(0,0,512,256);if(sponsor.mark){ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 80px sans-serif';ctx.fillText(sponsor.mark,256,128,460);}decalMap.needsUpdate=true;
-    if(sponsor.logo){const id=sponsor.id,image=new Image();image.onload=()=>{if(disposed||profile.sponsor!==id)return;ctx.clearRect(0,0,512,256);ctx.drawImage(image,0,0,512,256);decalMap.needsUpdate=true;};image.src=sponsor.logo;}
+    if(sponsor.logo){const id=sponsor.id,image=new Image();image.onload=()=>{if(disposed||profile.sponsor!==id)return;ctx.clearRect(0,0,512,256);ctx.drawImage(image,0,0,512,256);decalMap.needsUpdate=true;group.userData.visualRevision=(group.userData.visualRevision??0)+1;};image.src=sponsor.logo;}
     group.userData.driverVisible=!!model;
   }
   const ready=loadRacerKit().then(kit=>{
@@ -41,7 +42,7 @@ export function createCar(){
       wheels.push({mount,fold,steer,spin:wheel,side,front:axle==='F'});
       const glow=new THREE.Mesh(new THREE.TorusGeometry(.25,.019,8,32),glowMaterial);glow.rotation.y=Math.PI/2;glow.position.x=side*.14;steer.add(glow);glows.push(glow);
     }
-    for(const d of DRIVERS){const driver=cloneRacerPart(kit,`Seated_${d.id}`);driver.scale.setScalar(.88);driver.position.set(-.35,.30,-.37);body.add(driver);drivers.set(d.id,driver);}
+    for(const d of DRIVERS){const driver=cloneRacerPart(kit,`Seated_${d.id}`);driver.scale.multiplyScalar(.88);driver.position.set(-.35,.30,-.37);body.add(driver);drivers.set(d.id,driver);}
     fallback?.dispose();fallback=null;customize(profile);group.userData.asset='blender';
   }).catch(error=>{group.userData.asset='fallback';console.warn('Blender racer unavailable; keeping the playable fallback.',error);});
   function update(dt:number,state:CarState){

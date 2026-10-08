@@ -9,6 +9,8 @@ test('playable Blender kit has four independently animated wheels and all seated
   const nodes=kit.nodes.filter((n:{name:string})=>n.name===name);assert.equal(nodes.length,1,`${name} must have one unambiguous runtime node`);assert.ok(nodes[0].children?.length,`${name} must contain visible geometry`);
  }
  for(const name of ['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR']){const wheel=kit.nodes.find((n:{name:string})=>n.name===name);assert.ok(Math.abs(Math.abs(wheel.translation[0])-.9)<.001);assert.ok(Math.abs(wheel.translation[1]-.4)<.001);}
+ const steering=kit.nodes.find((n:{name:string})=>n.name==='Steering');
+ for(const [axis,value] of [-.35,.99,.04].entries())assert.ok(Math.abs(steering.translation[axis]-value)<.001,'Steering must turn around its own hub');
  const wind=kit.materials.find((m:{name:string})=>m.name==='Windscreen');assert.equal(wind.alphaMode,'BLEND','The driver must not be hidden by opaque glazing');
  assert.ok(!kit.nodes.some((n:{name:string})=>n.name==='Ivory roof'||n.name==='Cabin glass'));
 });

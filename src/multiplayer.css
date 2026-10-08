@@ -28,3 +28,15 @@
 @media(max-width:760px){.mp-stage-heading h2{font-size:34px}.mp-stage-heading p{max-width:100%}.mp-stage-heading{display:flex;align-items:center;gap:10px}.mp-live-party{margin:0;font-size:6px}.mp-live-party button{font-size:7px;padding:8px}.mp-dialog[data-step=car] .mp-visual{top:87px;bottom:235px}.mp-car-stage{top:90px}.mp-car-caption{width:auto;left:8px;right:8px;top:8px;padding:10px 12px;background:#fff8e8e8}.mp-car-caption h3{font-size:23px;margin:0}.mp-car-caption p{font-size:8px;max-width:125px}.mp-car-caption>span{margin-top:6px}.mp-car-tabs{bottom:154px}.mp-car-option{padding:10px 5px;gap:4px}.mp-car-option>strong{font-size:8px}.mp-car-footer{padding-top:15px;padding-bottom:8px}.mp-name-stage{padding:30px 5px}.mp-driver-stage{top:106px}.mp-visual{top:106px}.mp-driver-bio strong{font-size:21px}.mp-stage-bottom{padding:4px 0}.mp-founder-caption strong{font-size:16px}}
 @media(min-width:761px){.mp-dialog[data-step=car] .mp-visual{top:120px}.mp-car-stage{top:132px}}
 .mp-dialog[data-step=name] #mp-invite-friends{display:none}
+
+/* Let the figures and coachwork fill the frame at laptop sizes. */
+@media(min-width:761px){
+  .mp-dialog[data-step=driver] .mp-visual{top:108px;bottom:148px}
+  .mp-dialog[data-step=driver] .mp-driver-stage{top:108px}
+  .mp-driver-bio{min-height:61px;padding:9px 4px}
+  .mp-stage-bottom{margin-top:9px}
+  .mp-dialog[data-step=driver] .mp-stage-heading h2{font-size:clamp(32px,3.8vw,50px)}
+  .mp-dialog[data-step=car] .mp-visual{top:108px;bottom:143px}
+  .mp-dialog[data-step=car] .mp-car-stage{top:120px}
+}
+.mp-dialog[data-step=driver] .mp-visual{border-radius:8px;overflow:hidden}
