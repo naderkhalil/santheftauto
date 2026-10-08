@@ -45,7 +45,7 @@ app.innerHTML = `
 <div class="shade"></div><div class="race-shade"></div><div class="speed-vignette"></div><div class="grain"></div>
 <header class="topbar">
   <button class="brand" id="home" aria-label="Return to main menu"><span class="brand-mark">SF</span><span class="brand-word">WHIMSICAL<br>SAN FRANCISCO</span></button>
-  <div class="top-actions"><span class="weather"><span class="weather-dot"></span> SUNSHINE <span style="opacity:.4">/</span> ZERO GRAVITY</span><button class="icon-button" id="sound" aria-label="Mute sound">${speakerIcon}</button><button class="icon-button hidden" id="pause" aria-label="Pause race">${pauseIcon}</button></div>
+  <div class="top-actions"><span class="weather"><span class="weather-dot"></span> SUNSHINE <span style="opacity:.4">/</span> ZERO GRAVITY</span><button class="text-button room-return hidden" id="return-room">RETURN TO ROOM ↗</button><button class="icon-button" id="sound" aria-label="Mute sound">${speakerIcon}</button><button class="icon-button hidden" id="pause" aria-label="Pause race">${pauseIcon}</button></div>
 </header>
 <main class="intro" id="intro">
   <div class="eyebrow">A SAN FRANCISCO DAYDREAM</div>
@@ -97,9 +97,38 @@ const formatTime = (seconds: number) => {
   const hundredths = Math.floor(seconds * 100);
   return `${String(Math.floor(hundredths / 6000)).padStart(2,'0')}:${String(Math.floor(hundredths / 100) % 60).padStart(2,'0')}.${String(hundredths % 100).padStart(2,'0')}`;
 };
+class StartupTimeoutError extends Error {}
+function loadingStage(message:string){
+  const loading=el('loading');loading.dataset.stage=message;
+  const caption=loading.querySelector('p');if(caption)caption.textContent=message;
+}
+function yieldForPaint(){
+  return new Promise<void>(resolve=>{
+    let frame=0;
+    const timer=setTimeout(finish,100);
+    function finish(){clearTimeout(timer);cancelAnimationFrame(frame);resolve();}
+    frame=requestAnimationFrame(finish);
+  });
+}
+async function waitForStartupAssets(tasks:readonly (readonly [string,Promise<unknown>])[]){
+  const pending=new Set(tasks.map(([name])=>name));let active=true;
+  const progress=()=>{
+    if(!active)return;
+    el('loading').dataset.pendingAssets=[...pending].join(', ');
+    loadingStage(pending.size?`Loading ${[...pending][0]} · ${pending.size} remaining`:'Preparing the race');
+  };
+  progress();
+  let timer:ReturnType<typeof setTimeout>|undefined;
+  const deadline=new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new StartupTimeoutError(`Loading ${[...pending].join(', ')} took too long. Check your connection and retry loading.`)),30000);});
+  try{
+    await Promise.race([Promise.all(tasks.map(([name,promise])=>promise.then(()=>{pending.delete(name);progress();}))),deadline]);
+  }finally{active=false;clearTimeout(timer);}
+}
 
 async function boot() {
-  await new Promise(resolve => requestAnimationFrame(resolve));
+  loadingStage('Starting the city');
+  // Hidden invitation tabs may not receive animation frames yet.
+  await yieldForPaint();
   const canvas = el<HTMLCanvasElement>('world');
   document.querySelectorAll<HTMLElement>('.progress-tick').forEach((tick,i)=>tick.style.left=`${CHECKPOINTS[i]/TRACK_LENGTH*100}%`);
   let renderer: THREE.WebGLRenderer;
@@ -113,6 +142,7 @@ async function boot() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.info.autoReset=false;
+  loadingStage('Building the city');
   const scene = new THREE.Scene();
   // The authored map/physics use north +Z; the visible city uses north -Z.
   // Reflect geometry once, while every camera remains outside this root.
@@ -124,9 +154,16 @@ async function boot() {
   // This new kit already uses the physical world axes and readable lettering.
   const squareStreetDetails=createSquareStreetDetails(scene);
   const waterfront=createWaterfront(scene);
-  await Promise.all([upgradeRoadSurface(scene,renderer),atmosphere.loadPhotographicSky(),landmarks.ready,world.ready,squareStreetDetails.ready,waterfront.ready]);
+  const car=createCar();cityRoot.add(car.group);
+  // Wait for the existing loaders and their approved fallbacks together. A
+  // timeout keeps setup blocked instead of admitting a racer to a partial map.
+  await waitForStartupAssets([
+    ['road textures',upgradeRoadSurface(scene,renderer)],['Pacific sky',atmosphere.loadPhotographicSky()],
+    ['Union Square',landmarks.ready],['city traffic',world.ready],['street details',squareStreetDetails.ready],
+    ['the waterfront',waterfront.ready],['drivers and cars',car.ready],
+  ]);
   canvas.dataset.waterfrontAssets='blender';
-  const car = createCar(); cityRoot.add(car.group);await car.ready;
+  loadingStage('Preparing the race');
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
   const sim = new DrivingSimulation(world.obstacles,{exploration:true});
   const playground = createPlayground(cityRoot);
@@ -200,6 +237,7 @@ async function boot() {
   const tourSceneNames:Record<TourScene,string>={square:'UNION SQUARE',westin:'THE WESTIN ST. FRANCIS',post:'POST STREET'};
   let multiplayer:Multiplayer|null=null;
   let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0, freeDrive=false;
+  let multiplayerDnf=false, roomUiActive=false, inputBlocked=false;
   let topSpeed=0, best=Number(safeRead('whimsical-sf-shortcuts-race-best-v4'))||0, muted=safeRead('sf-night-run-muted')==='true';
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
   let cinematicQuality=safeRead('sf-night-run-quality')==='cinematic';
@@ -227,12 +265,25 @@ async function boot() {
   }
   function modal(id:string, open:boolean){el(id).classList.toggle('hidden',!open);if(open){lastFocus=document.activeElement as HTMLElement;el(id).querySelector<HTMLButtonElement>('button')?.focus();}else if(lastFocus?.isConnected){lastFocus.focus();}}
   function clearInputs(){keys.clear();touch.clear();document.querySelectorAll('.touch-button').forEach(b=>b.classList.remove('pressed'));}
+  function openRoom(){clearInputs();multiplayer?.open();}
+  function syncRoomEntry(){
+    const active=!!multiplayer?.active;
+    if(active===roomUiActive)return;
+    roomUiActive=active;
+    el('return-room').classList.toggle('hidden',!active);
+    el('start').innerHTML=active?'RETURN TO ROOM <span class="arrow">↗</span>':'START RACE <span class="arrow">↗</span>';
+    el('home').setAttribute('aria-label',active?'Open race room':'Return to main menu');
+    el('pause').setAttribute('aria-label',active?'Open race room':freeDrive?'Pause exploration':'Pause race');
+    el('best').closest('.stat')?.classList.toggle('hidden',active);
+    el('choose-race')?.classList.toggle('hidden',active);
+  }
   function syncPhase(){
-    const inGame=phase!=='menu';app.classList.toggle('racing',inGame);app.classList.toggle('at-finish',phase==='finished');el('bay-caption').setAttribute('aria-hidden',String(phase!=='finished'));
+    const inGame=phase!=='menu';app.classList.toggle('racing',inGame);app.classList.toggle('at-finish',phase==='finished'&&!multiplayerDnf);el('bay-caption').setAttribute('aria-hidden',String(phase!=='finished'||multiplayerDnf));
+    document.querySelector<HTMLElement>('.touch-controls')!.classList.toggle('hidden',phase==='finished');
     app.classList.toggle('free-drive',freeDrive&&inGame&&phase!=='tour');
     el('explore-status').classList.toggle('hidden',!freeDrive||!['racing','paused'].includes(phase));
     el('restart').textContent=freeDrive?'RESTART EXPLORATION':'RESTART RACE';
-    el('pause').setAttribute('aria-label',freeDrive?'Pause exploration':'Pause race');
+    el('pause').setAttribute('aria-label',multiplayer?.active?'Open race room':freeDrive?'Pause exploration':'Pause race');
     el('pause-panel').querySelector('p')!.textContent=freeDrive?'Take your time. There’s no timer to beat.':'Your run is paused. The clock can wait.';
     ['intro','intro-bottom','edition'].forEach(id=>{el(id).setAttribute('aria-hidden',String(inGame));el(id).inert=inGame;});el('hud').setAttribute('aria-hidden',String(!inGame));
     ['intro','intro-bottom','edition'].forEach(id=>el(id).classList.toggle('faded',inGame));
@@ -254,23 +305,37 @@ async function boot() {
     const n=Math.max(1,Math.ceil(countdownLeft));
     if(n!==countdownNumber){countdownNumber=n;el('countdown').innerHTML=`<strong>${n}</strong><span>CITY LOOP · HILLS HAVE WINGS</span>`;audio.cue('count');}
   }
-  function start(){if(multiplayer){multiplayer.openSetup();return;}startRun(false);}
+  function start(){
+    if(multiplayer){
+      if(!multiplayer.active&&phase!=='menu')resetToMenu();
+      clearInputs();['help','city-map-dialog','results','pause-panel'].forEach(id=>el(id).classList.add('hidden'));
+      helpWasPaused=false;multiplayer.openSetup();return;
+    }
+    startRun(false);
+  }
   function startExploration(){if(multiplayer?.active){multiplayer.open();return;}startRun(true);}
   function restartRun(){if(multiplayer?.active){multiplayer.open();return;}startRun(freeDrive);}
-  function startRun(explore:boolean){
-    clearInputs();freeDrive=explore;tourArt=null;sim.reset();if(explore)sim.explore(true);playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore?'racing':'countdown';countdownLeft=3;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';recoveryCooldown=0;cameraReversing=false;
+  function startRun(explore:boolean,seconds=3){
+    clearInputs();freeDrive=explore;multiplayerDnf=false;tourArt=null;sim.reset();if(explore)sim.explore(true);playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore||seconds<=0?'racing':'countdown';countdownLeft=seconds;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';recoveryCooldown=0;cameraReversing=false;
     landmarks.resetProps();knockedProps=0;
     ['help','pause-panel','results','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));
-    el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.toggle('hidden',explore);el('drift-hint').classList.remove('active');
-    void audio.unlock().then(()=>{if(!explore)audio.cue('count');});if(!explore)updateCountdown();syncPhase();updateHud();canvas.focus();
+    el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('countdown').classList.toggle('hidden',phase!=='countdown');el('drift-hint').classList.remove('active');
+    void audio.unlock().then(()=>{if(phase==='countdown')audio.cue('count');});if(phase==='countdown')updateCountdown();syncPhase();updateHud();canvas.focus();
   }
   function pause(){if(multiplayer?.active){clearInputs();multiplayer.open();return;}if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
-  function menu(){if(multiplayer?.active){void multiplayer.leave();return;}resetToMenu();}
-  function resetToMenu(){phase='menu';tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
+  function menu(){if(multiplayer?.active){openRoom();return;}resetToMenu();}
+  function resetToMenu(){phase='menu';multiplayerDnf=false;tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
+    if(multiplayer?.active){
+      const racerId=multiplayer.id,racer=multiplayer.room?.players.find(player=>player.id===racerId);
+      multiplayerDnf=!!racer?.dnf;phase='finished';finishedAt=totalTime;
+      finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);
+      finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();if(!multiplayerDnf)audio.cue('finish');
+      ['help','pause-panel','results','countdown'].forEach(id=>el(id).classList.add('hidden'));
+      el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');syncPhase();return;
+    }
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
-    if(multiplayer?.active)finishReveal=0;
     const s=sim.state, isBest=!multiplayer?.active&&!freeDrive&&(!best||s.elapsed<best);
     if(isBest){best=s.elapsed;safeWrite('whimsical-sf-shortcuts-race-best-v4',String(best));}
     el('result-eyebrow').textContent=freeDrive?'FREE DRIVE / AT THE BAY':isBest?'NEW PERSONAL BEST / CITY LOOP':'SAN FRANCISCO / CITY LOOP';
@@ -299,7 +364,7 @@ async function boot() {
       gamepadRecoverDown=recoverDown;
     }else{gamepadPauseDown=false;gamepadRecoverDown=false;}
     if(autoThrottle&&brake>.1)throttle=0;
-    return{throttle,brake,steer,drift,boost};
+    return phase==='racing'||phase==='countdown'?{throttle,brake,steer,drift,boost}:{throttle:0,brake:0,steer:0,drift:false,boost:false};
   }
   function updateHud(){
     const s=sim.state;el('timer').textContent=formatTime(s.elapsed);el('speed').textContent=String(Math.round(Math.abs(s.speed)*2.23694));el('gear').textContent=s.airborne?'✧':s.speed<-.1?'R':s.speed<1?'N':String(Math.min(6,Math.floor(s.speed/10)+1));
@@ -332,7 +397,7 @@ async function boot() {
   }
   function updateCamera(dt:number){
     const s=sim.state,waterfrontView=waterfrontFinishView(camera.aspect);bayCamera.copy(waterfrontView.eye);
-    if(phase==='finished'){
+    if(phase==='finished'&&!multiplayerDnf){
       const here=sim.position;car.group.position.set(here.x,s.y+.03,here.z);car.group.rotation.set(-Math.atan(routeSlope(s.progress)),s.heading,0);
       const u=reduceMotion?1:THREE.MathUtils.clamp((totalTime-finishedAt)/4.2,0,1),ease=u*u*u*(u*(u*6-15)+10);
       desiredCamera.copy(finishCameraStart).lerp(bayCamera,ease);desiredCamera.y+=Math.sin(u*Math.PI)*7;lookAt.copy(finishLookStart).lerp(bayLook,ease);
@@ -411,7 +476,7 @@ async function boot() {
     if(event.code==='Escape'){
       if(!el('city-map-dialog').classList.contains('hidden')){modal('city-map-dialog',false);return;}
       if(!el('help').classList.contains('hidden')){closeHelp();return;}
-      if(phase==='tour')menu();else if(phase==='paused')resume();else if(phase==='racing'||phase==='countdown')pause();
+      if(phase==='tour')menu();else if(phase==='paused')resume();else if(phase==='racing'||phase==='countdown')pause();else if(multiplayer?.active)openRoom();
     }
     if(event.code==='KeyR'&&(phase==='racing'||phase==='countdown'||phase==='paused'||phase==='finished'))restartRun();
     if(event.code==='KeyQ'&&(phase==='racing'||phase==='paused'))returnToStreet();
@@ -442,6 +507,7 @@ async function boot() {
   document.querySelectorAll<HTMLButtonElement>('[data-stop]').forEach(button=>button.onclick=()=>{const stop=Number(button.dataset.stop);tourBayStarted=null;tour.jump(stop);const scene=button.dataset.scene;tourArt=scene==='square'||scene==='westin'||scene==='post'?scene:null;if(tourArt){tour.paused=true;audio.suspend();}if(stop>=TRACK_LENGTH-1||button.dataset.pause==='true'){tour.paused=true;audio.suspend();}el('tour-pause').textContent=stop>=TRACK_LENGTH-1?'RUN AGAIN':tour.paused?'RESUME':'PAUSE';skyCourse.reset();cameraInitialized=false;});
   let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit+(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
   el('start').onclick=start;el('again').onclick=restartRun;el('restart').onclick=restartRun;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
+  el('return-room').onclick=openRoom;
   el('explore-start').onclick=startExploration;el('return-road').onclick=returnToStreet;el('pause-unstick').onclick=returnToStreet;
   el('home').onclick=menu;el('pause-home').onclick=menu;el('result-home').onclick=menu;el('sound').onclick=toggleSound;
   el('how').onclick=()=>{helpWasPaused=phase==='racing'||phase==='countdown';if(helpWasPaused)pause();modal('help',true);};el('close-help').onclick=closeHelp;el('help-play').onclick=start;
@@ -455,13 +521,15 @@ async function boot() {
   el('quality').onclick=()=>{if(lowQuality){lowQuality=false;cinematicQuality=false;}else if(cinematicQuality){cinematicQuality=false;lowQuality=true;}else{cinematicQuality=true;}applyQuality();};
   el('fullscreen').onclick=()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});else void document.documentElement.requestFullscreen?.().catch(()=>{el('fullscreen').textContent='USE YOUR BROWSER’S FULLSCREEN';});};
   document.addEventListener('fullscreenchange',()=>el('fullscreen').textContent=document.fullscreenElement?'EXIT FULLSCREEN ↙':'FULLSCREEN ↗');
+  loadingStage('Lighting the city');await yieldForPaint();
   updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);atmosphere.bakeCityReflections(car.group);composer.render();
+  loadingStage('Ready to race');
   el('loading').classList.add('faded');setTimeout(()=>el('loading').classList.add('hidden'),650);
 
   multiplayer=new Multiplayer(cityRoot,{
     profile:profile=>car.customize(profile),
     solo:()=>startRun(false),
-    start:()=>{startRun(false);countdownLeft=5;updateCountdown();},
+    start:()=>startRun(false,multiplayer?.countdown??5),
     state:player=>{
       const previousCheckpoint=sim.state.checkpoint,previousCollisions=sim.state.collisions;
       sim.applyNetworkState(player.state,player.position,player.exploring);
@@ -478,7 +546,16 @@ async function boot() {
     requestAnimationFrame(frame);
     const dt=Math.min((now-lastTime)/1000,.25);lastTime=now;totalTime+=dt;uiClock+=dt;
     performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
-    const input=multiplayer?.blocking?{throttle:0,brake:0,steer:0,drift:false,boost:false}:readInput();
+    syncRoomEntry();
+    const blocked=!!multiplayer?.blocking||!!(multiplayer?.active&&!multiplayer.connected);
+    if(blocked!==inputBlocked){
+      clearInputs();inputBlocked=blocked;
+      // A controller button used in setup must be released before it can
+      // pause or recover the car after the shared countdown opens.
+      const pad=Array.from(navigator.getGamepads?.()??[]).find(p=>p?.connected&&p.mapping==='standard');
+      gamepadPauseDown=!!pad?.buttons[9]?.pressed;gamepadRecoverDown=!!pad?.buttons[3]?.pressed;
+    }
+    const input=blocked?{throttle:0,brake:0,steer:0,drift:false,boost:false}:readInput();
     multiplayer?.setInput(input);multiplayer?.update(dt,totalTime);
     canvas.dataset.throttle=String(input.throttle);canvas.dataset.steer=String(input.steer);
     canvas.dataset.speed=sim.state.speed.toFixed(2);canvas.dataset.heading=sim.state.heading.toFixed(4);
@@ -547,14 +624,21 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 // The first release includes City Loop only; keep unreleased course links
-// from booting their experiences, including bookmarked ?race= URLs.
+// from booting their experiences, including bookmarked ?race= URLs. Room
+// invitations always open City Loop setup without the coming-soon collection.
 const requestedRace = new URL(location.href);
-const showComingSoon = requestedRace.searchParams.has('race');
-if (showComingSoon) {
+const hasRoomInvite=!!requestedRace.searchParams.get('room')?.trim();
+const showComingSoon=requestedRace.searchParams.has('race')&&!hasRoomInvite;
+if (requestedRace.searchParams.has('race')) {
   requestedRace.searchParams.delete('race');
   history.replaceState(null, '', requestedRace.href);
 }
 const openRaceCollection = mountRacePicker(app);
 const launch = boot();
 if (showComingSoon) openRaceCollection();
-launch.catch(error=>{console.error(error);const loading=document.getElementById('loading');if(loading){loading.classList.remove('hidden','faded');loading.innerHTML='<div class="no-webgl"><h2>The city couldn’t load.</h2><p>Please reload to try again.</p><button class="primary" onclick="location.reload()">RELOAD ↗</button></div>';}});
+launch.catch(error=>{
+  console.error(error);const loading=document.getElementById('loading');if(!loading)return;
+  loading.classList.remove('hidden','faded');loading.dataset.stage='Loading failed';
+  loading.innerHTML='<div class="no-webgl"><h2>The city couldn’t load.</h2><p></p><button class="primary" onclick="location.reload()">RETRY LOADING ↗</button></div>';
+  loading.querySelector('p')!.textContent=error instanceof StartupTimeoutError?error.message:'Please check your connection and retry loading.';
+});

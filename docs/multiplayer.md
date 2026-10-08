@@ -1,10 +1,33 @@
 # Private City Loop races
 
-**Start Race** opens directly on driver selection, followed by the car garage.
-Solo players do not need to enter a name. **Invite Friends** opens the optional
-nickname and room creation/join form; a room invite opens that form directly.
-Friends see each other's selections live. Everyone marks Ready; the host starts
-a shared five-second countdown. Rooms hold 2–8 racers.
+**Start Race** opens **Single player** and **Multiplayer** choices. Single player
+continues through the existing driver selection and car garage, with remembered
+cosmetics and no required nickname or room service. Multiplayer creates a private
+City Loop room before selection so the host can share its URL immediately.
+Rooms hold **2–8 players, including the host**. A room invitation bypasses mode
+choice; opening the link does not consume a slot until the guest presses
+**Join room**. Old course parameters cannot redirect an invite to another race.
+
+The invite and party strip remain visible while choosing a driver and car.
+Friends see selected characters, cars and sponsors live, with distinct names
+and markers even when several players choose the same character. An editable
+nickname has a usable default. **Copy invite** confirms success or exposes a
+selectable link if clipboard access is unavailable.
+
+The multiplayer garage ends with **Ready to race**: it confirms the latest
+choices and enters the room without a second Ready step. Editing selections
+clears readiness. Required course and gameplay assets must be ready, with the
+existing playable fallback accepted; optional sponsor artwork and the cosmetic
+showroom do not block starting. The host presses **Start race · N players** when
+at least two players have joined and everyone in the room is connected and
+ready. The game does not guess how many friends were invited and never starts
+automatically. New joins after the shared five-second countdown begins must
+wait until the host reopens the room; there is no mid-race insertion or reserved
+next-race place.
+
+Closing setup retains membership. **Return to room** reopens it; leaving the
+room is an explicit action. The host can remove an unresponsive player from the
+lobby before starting. A room URL is still an invitation, so removal is not a ban.
 
 The garage uses the same Victorian facade builders, timber PBR materials, HDR sky,
 Neutral tone mapping and ambient occlusion as the city. `racer-kit.glb` contains
@@ -28,15 +51,33 @@ Cars have equal handling and no player-to-player collisions. The starting grid
 uses join order. Union Square shortcuts remain valid; the ordered Powell,
 Chinatown, waterfront and finish checkpoints still apply. Timing and simulation
 run on the server. A client submits controls, never its own location or result.
-Races end after five minutes, or one minute after the first finisher. Remaining
-racers receive DNF. The host can reopen the lobby for a rematch.
+Races end after five minutes, or at most one minute after the first finisher.
+A personal finish shows the recorded place and time while other players finish.
+The final table shows the winner, finishers in the server's order, gaps and
+DNFs with their reason and final progress. Equal recorded times share a place
+using competition ranks (1, 1, 3); an all-DNF race has no winner. Leaving after
+finishing preserves the result; leaving during the race records DNF instead of
+erasing the entrant.
 
-Q recovers onto the road. Escape opens the room menu without pausing the race.
-Changing tabs releases the controls. An interrupted connection can reconnect
-with the same identity; refreshing preserves the session in that tab. A racer
-missing for 30 seconds receives DNF. The host role passes to a connected racer
-when the current host disconnects. Empty rooms expire, with a two-hour maximum
-room lifetime. Rooms and results are held in memory and disappear on server restart.
+The host's **Race again** returns to the same room and invitation, retains
+cosmetics and resets readiness. Everyone confirms again before the host starts
+the next round. **Last results** preserves the most recent completed standings
+separately from the new lobby roster. Multiplayer never updates solo personal
+bests or displays a solo medal as the multiplayer result.
+
+Q recovers onto the road. Escape, R and the room button open the room menu
+without pausing or restarting the shared race. Changing tabs or losing the
+connection releases controls. Refreshing reconnects to the same racer in that
+tab, including during a race. Another tab taking over the same session releases
+the previous tab's controls; it does not create a second racing car.
+
+Disconnected lobby players retain their slot for 30 seconds and must confirm
+Ready again after reconnecting. A racer missing for 30 seconds after Start
+receives **DNF · Disconnected**, unless already finished. Rejoining does not
+undo a DNF. The host role passes to the earliest joined connected player when
+the host disconnects or leaves; reconnecting does not reclaim it automatically.
+Empty rooms expire, with a two-hour maximum room lifetime. Rooms and results
+are held in memory and disappear on server restart.
 
 ## Development and hosting
 
@@ -110,9 +151,21 @@ npm run test:multiplayer
 npm run build
 ```
 
-Room tests cover host authorization, capacity, readiness, cosmetic locking,
-input validation, token isolation, origin checks, shared countdown and timing,
-recovery, disconnects, host handoff, full simulated races, and rematches. The HTTP
-transport test opens a temporary localhost port. Browser validation uses two
-separate tabs as host and guest. Real remote-network latency and eight-device
-load testing remain release validation; local testing does not establish them.
+Room checks cover host authorization, capacity, readiness and profile revisions,
+cosmetic locking, input validation, token isolation, origin checks, shared
+countdown and timing, recovery, disconnects, host handoff, full simulated races,
+immutable results and rematches. The HTTP transport test opens a temporary
+localhost port.
+
+Validate the complete host/guest flow in independent browser sessions: early
+invitation, live selections, readiness, host Start, two separately controlled
+cars on the same map, personal finish, final standings and rematch. Include a
+refresh, a disconnect, late/full/expired invites, a failed clipboard copy and
+solo play with the room service unavailable. Check ties and departed racers in
+the final order. A simulated server race alone does not validate the rendered
+multiplayer experience.
+
+Real remote-network latency, eight-device load and public HTTPS deployment need
+separate release validation. Local tests and same-computer browser sessions do
+not establish them. The implementation decisions and acceptance criteria are in
+[the multiplayer flow PRD](multiplayer-flow-prd.md).

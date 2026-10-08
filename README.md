@@ -4,12 +4,20 @@ A browser-playable arcade racer through a compact, recognizable San Francisco. L
 
 ## Multiplayer
 
-**Race Friends** opens a private room for 2–8 racers. Choose a driver, car and
-placeholder sponsor, copy an invite link, and ready up for a shared start.
-The room server controls driving, checkpoints and finish times. Cars race
-without player-to-player contact. See [multiplayer setup](docs/multiplayer.md)
-for hosting, sponsor artwork, reconnects, and tests. Internet invitations require
-the game and its room server to be deployed together.
+**Start Race** offers **Single player** or **Multiplayer**. Multiplayer creates
+a private City Loop room for 2–8 players, including the host, before driver
+selection. Copy the invitation while choosing; friends see each other's driver,
+car and placeholder sponsor selections live. Each player confirms **Ready to
+race** from the garage, then the host starts everyone currently in the room.
+There is no expected invite count or automatic start.
+
+The room server controls driving, checkpoints and finish times. Selected cars
+and drivers race together without player-to-player contact. Results show the
+winner, shared finishing order and DNFs, retaining racers who left; the host can
+reopen the same room for another race. See [multiplayer setup](docs/multiplayer.md)
+for the full flow, hosting, sponsor artwork, reconnects and verification.
+Internet invitations require the game and its room server to run together on a
+public HTTPS origin; local play does not establish internet validation.
 
 ## Run
 
