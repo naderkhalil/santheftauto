@@ -109,6 +109,8 @@ spec=importlib.util.spec_from_file_location('racer_characters',ROOT/'tools/blend
 characters=importlib.util.module_from_spec(spec);spec.loader.exec_module(characters)
 print('Sculpting standing and seated drivers',flush=True)
 actors=characters.build_actors()
+from racer_surfaces import finalize_actors
+finalize_actors(actors)
 print('Finalizing and batching model surfaces',flush=True)
 # Convert curves, apply sculpt modifiers, then merge by material within rigid groups.
 for obj in list(bpy.context.scene.objects):

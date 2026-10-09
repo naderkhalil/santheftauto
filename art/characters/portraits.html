@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>San Theft Auto — Driver sculpt review</title>
+  <style>
+    * { box-sizing:border-box }
+    body { margin:0; background:#ece7da; color:#244b50; font:14px system-ui,sans-serif }
+    header { height:100px; display:flex; align-items:center; justify-content:space-between; padding:20px 36px; gap:24px }
+    h1 { font-size:22px; margin:0 0 8px; letter-spacing:-.5px }
+    p { margin:0; font-size:12px; color:#62736d }
+    nav { display:flex; gap:8px }
+    button { padding:10px 16px; border:1px solid #244b5040; border-radius:6px; background:transparent; color:#244b50; cursor:pointer }
+    button[aria-pressed=true] { background:#244b50; color:#faf5e7 }
+    canvas { display:block; width:100%; height:calc(100vh - 170px) }
+    footer { display:grid; grid-template-columns:repeat(4,1fr); height:70px; text-align:center; padding:10px 20px; gap:10px }
+    strong { font-size:16px } small { display:block; margin-top:6px; font-size:10px; letter-spacing:.3px; color:#62736d }
+  </style>
+</head>
+<body data-ready="loading">
+  <header><div><h1>San Theft Auto / Driver studies</h1><p>Actual exported Blender models · browser materials · shared standing and driving faces</p></div><nav><button id="front" aria-pressed="true">Front</button><button id="angle" aria-pressed="false">Three-quarter</button></nav></header>
+  <canvas id="portraits" aria-label="Four driver face and clothing studies"></canvas>
+  <footer><div><strong>Dario Amodei</strong><small>CURLS / PROMINENT NOSE / BEARD SHADING</small></div><div><strong>Sam Altman</strong><small>NARROW JAW / SWEPT HAIR / LONG NOSE</small></div><div><strong>Elon Musk</strong><small>BROAD JAW / HOODED EYES / FULL CHEEKS</small></div><div><strong>Jensen Huang</strong><small>CHEEKBONES / SILVER HAIR / LEATHER</small></div></footer>
+  <script type="module" src="./portraits.ts"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
-export const RACER_ASSET_VERSION='20261008-3';
+export const RACER_ASSET_VERSION='20261009-characters-1';
 let kit:Promise<THREE.Group>|null=null;
 let draco:DRACOLoader|null=null;
 export function createRacerLoader(){

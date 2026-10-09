@@ -207,7 +207,12 @@ unverified in the current environment.
 `src/racer-profile.ts` is the cosmetics catalogue. The four unofficial parody
 characters are Dario Amodei, Sam Altman, Elon Musk, and Jensen Huang. Original
 full-body Blender sculpts are authored in `tools/blender/racer_characters.py`;
-face proportions, shaped hair, tailored outfits and biographies distinguish them. All four stand in one frame,
+individually shaped jaws, noses, eyelids, mouths and hair distinguish them. Jensen's
+leather, Dario's jersey, Sam's shirt and Elon's twill use embedded color, normal
+and roughness maps, with garment folds and construction details in the geometry.
+Standing and seated versions use the same facial and material definitions. See
+the [driver art pipeline](../BLENDER_ASSETS.md#playable-drivers) for rebuilding and
+close-up review. All four stand in one frame,
 with named downward-pointing selection markers for the local player and friends.
 The markers update live and support multiple racers choosing the same founder.
 Saved IDs for the former four placeholders migrate to the new roster.

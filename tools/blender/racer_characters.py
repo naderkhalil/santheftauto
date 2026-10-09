@@ -8,6 +8,8 @@ import math
 import bpy
 import bmesh
 from mathutils import Vector, Matrix
+from racer_materials import build_character_materials
+from racer_surfaces import sculpt_garment, jacket_construction, sewn_collar
 
 TAU = math.tau
 
@@ -171,16 +173,24 @@ def gauss(x, center, width):
 
 SPECS = {
     'dario': dict(skin='#d8ae91', hair='#382c25', cloth='#324b60', pants='#555754', shoe='#e8e3d6',
-                  width=.140, jaw=.111, depth=.128, head=.447, nose=.063, brow=.008, stature=1.025,
+                  width=.145, jaw=.117, depth=.128, head=.454, nose=.077, brow=.0085, stature=1.025,
+                  eye_t=.601, eye_spacing=.066, eye_width=.0305, eye_height=.0092, brow_color='#3b3029',
+                  nose_bridge=.018, nose_tip=.022, nose_base=.026, mouth_t=.276, mouth_width=.046, cheek=.010,
                   shoulders=.247, waist=.199, eye='#58636a'),
     'sam': dict(skin='#d8b499', hair='#625044', cloth='#a5a79c', pants='#344352', shoe='#e9e5dc',
-                width=.143, jaw=.103, depth=.120, head=.432, nose=.054, brow=.0065, stature=1.0,
+                width=.141, jaw=.104, depth=.121, head=.453, nose=.074, brow=.0067, stature=1.0,
+                eye_t=.603, eye_spacing=.063, eye_width=.0305, eye_height=.0091, brow_color='#5b493e',
+                nose_bridge=.0165, nose_tip=.023, nose_base=.024, mouth_t=.269, mouth_width=.051, cheek=.008,
                 shoulders=.240, waist=.185, eye='#637369'),
     'elon': dict(skin='#deb49c', hair='#40332c', cloth='#262c32', pants='#32363b', shoe='#333438',
-                 width=.164, jaw=.138, depth=.137, head=.426, nose=.041, brow=.007, stature=1.04,
+                 width=.166, jaw=.145, depth=.139, head=.434, nose=.052, brow=.0071, stature=1.04,
+                 eye_t=.605, eye_spacing=.068, eye_width=.0285, eye_height=.0080, brow_color='#463a31',
+                 nose_bridge=.023, nose_tip=.028, nose_base=.031, mouth_t=.275, mouth_width=.037, cheek=.014,
                  shoulders=.280, waist=.233, eye='#60787e'),
     'jensen': dict(skin='#c59a7a', hair='#bac1bf', cloth='#252b2e', pants='#303b44', shoe='#ece8df',
-                   width=.153, jaw=.112, depth=.118, head=.395, nose=.030, brow=.006, stature=.967,
+                   width=.158, jaw=.119, depth=.122, head=.411, nose=.039, brow=.0055, stature=.967,
+                   eye_t=.609, eye_spacing=.068, eye_width=.0270, eye_height=.0072, brow_color='#696b62',
+                   nose_bridge=.024, nose_tip=.030, nose_base=.033, mouth_t=.291, mouth_width=.046, cheek=.018,
                    shoulders=.246, waist=.205, eye='#3d3933'),
 }
 
@@ -198,16 +208,12 @@ class Sculptor:
         self.lips = material(ident+' / natural lips', '#b68a79' if ident!='jensen' else '#a17a64', .64)
         self.hair = material(ident+' / sculpted hair', self.s['hair'], .84)
         self.hair.node_tree.nodes.get('Principled BSDF').inputs['Specular IOR Level'].default_value=.18
-        self.cloth = material(ident+' / tailored outerwear', self.s['cloth'], .59 if ident=='jensen' else .83)
-        if ident=='jensen':
-            p=self.cloth.node_tree.nodes.get('Principled BSDF')
-            p.inputs['Coat Weight'].default_value=.03
-            p.inputs['Specular IOR Level'].default_value=.29
-            p.inputs['Coat Roughness'].default_value=.52
-        self.pants = material(ident+' / woven trousers', self.s['pants'], .9)
+        wardrobe = build_character_materials(ident, self.s)
+        self.cloth, self.trim, self.seam = wardrobe['cloth'], wardrobe['trim'], wardrobe['seam']
+        self.pants = wardrobe['pants']
         self.shoes = material(ident+' / shoe leather', self.s['shoe'], .55)
         self.sole = material(ident+' / sole rubber', '#bfbdb3' if ident!='elon' else '#24272a', .87)
-        self.tee = material(ident+' / cotton tee', '#e1d9c7' if ident in ['dario','sam'] else '#343739', .9)
+        self.tee = wardrobe['tee']
         self.metal = material(ident+' / brushed hardware', '#999e9b', .3, .75)
         self.dark = material(ident+' / graphite detail', '#303332', .6)
         self.whites = material(ident+' / eye whites', '#e2dbcd', .48)
@@ -230,193 +236,430 @@ class Sculptor:
     def loft(self, name, rings, mat, subdivision=1):
         return loft(self.prefix+' / '+name, [(y+self.offset,w,d,x,z) for y,w,d,x,z in rings], mat, self.root, subdivision=subdivision)
 
-    def head_profile(self,t):
-        w=self.s['width'];j=self.s['jaw'];d=self.s['depth']
-        if self.id=='sam':
-            wp=[(0,.012),(.07,j*.59),(.18,j),(.36,w*.92),(.55,w*.96),(.74,w),(.84,w*.91),(.95,w*.54),(1,.001)]
-        elif self.id=='elon':
-            wp=[(0,.014),(.07,j*.72),(.19,j),(.35,w*.99),(.49,w),(.69,w*.96),(.84,w*.90),(.96,w*.50),(1,.001)]
-        elif self.id=='jensen':
-            wp=[(0,.010),(.07,j*.64),(.20,j),(.39,w),(.53,w*.99),(.70,w*.94),(.84,w*.86),(.96,w*.47),(1,.001)]
-        else:
-            wp=[(0,.010),(.07,j*.62),(.18,j),(.34,w*.95),(.52,w),(.71,w*.98),(.84,w*.91),(.95,w*.56),(1,.001)]
-        width=interp(wp,t)
-        depth=interp([(0,.015),(.10,d*.67),(.24,d*.91),(.46,d),(.7,d*.98),(.86,d*.87),(.95,d*.54),(1,.001)],t)
-        center=interp([(0,.016),(.28,0),(.62,-.01),(1,-.026)],t)
-        return width,depth,center
+    def head_profile(self, t):
+        """Individually authored skull sections, from chin through cranial vault."""
+        w, j, d = self.s['width'], self.s['jaw'], self.s['depth']
+        profiles = {
+            'dario': (
+                [(0,.020),(.035,.053),(.10,j*.81),(.19,j),(.34,w*.94),(.46,w),(.59,w*.97),(.70,w*.91),(.81,w*.95),(.90,w*.77),(.975,w*.34),(1,.002)],
+                [(0,.025),(.08,d*.70),(.23,d*.86),(.44,d*.99),(.64,d),(.79,d*.96),(.91,d*.76),(.977,d*.35),(1,.002)],
+                [(0,.025),(.15,.011),(.35,-.002),(.66,-.013),(.87,-.022),(1,-.030)]),
+            'sam': (
+                [(0,.018),(.035,.045),(.10,j*.76),(.19,j),(.32,w*.84),(.46,w*.96),(.59,w*.94),(.70,w*.88),(.82,w),(.92,w*.76),(.975,w*.34),(1,.002)],
+                [(0,.026),(.09,d*.71),(.25,d*.87),(.43,d*.94),(.66,d),(.80,d*.98),(.92,d*.77),(.977,d*.34),(1,.002)],
+                [(0,.028),(.16,.013),(.34,-.004),(.61,-.013),(.83,-.020),(1,-.025)]),
+            'elon': (
+                [(0,.023),(.035,.064),(.09,j*.88),(.19,j),(.30,w*.96),(.42,w),(.57,w*.98),(.71,w*.98),(.83,w*.92),(.93,w*.68),(.977,w*.29),(1,.002)],
+                [(0,.034),(.08,d*.73),(.23,d*.99),(.43,d),(.66,d*.99),(.83,d*.91),(.94,d*.64),(.977,d*.31),(1,.002)],
+                [(0,.026),(.20,.010),(.40,-.003),(.65,-.014),(.86,-.025),(1,-.030)]),
+            'jensen': (
+                [(0,.018),(.035,.051),(.10,j*.82),(.21,j),(.34,w*.93),(.46,w*1.015),(.57,w),(.69,w*.90),(.82,w*.91),(.92,w*.71),(.978,w*.30),(1,.002)],
+                [(0,.028),(.08,d*.74),(.23,d*.88),(.44,d),(.62,d*.98),(.81,d*.94),(.93,d*.70),(.978,d*.32),(1,.002)],
+                [(0,.021),(.18,.008),(.40,-.009),(.65,-.017),(.87,-.024),(1,-.031)]),
+        }
+        wp, dp, cp = profiles[self.id]
+        return interp(wp, t), interp(dp, t), interp(cp, t)
 
-    def front(self,x,t):
-        w,d,center=self.head_profile(t)
-        base=d*math.sqrt(max(.002,1-(x/max(w,.001))**2))+center
-        # Nose bridge and tip are displaced from the head itself, not attached balls.
-        tip_width=.030 if self.id in ['jensen','elon'] else .022
-        base+=self.s['nose']*(.77*gauss(t,.436,.063)*gauss(x,0,tip_width)+.65*gauss(t,.542,.147)*gauss(x,0,.017))
-        base+=.010*gauss(t,.417,.028)*(gauss(x,.021,.012)+gauss(x,-.021,.012))
-        # Cheek plane, orbicular depressions, brow and nasolabial volume.
-        for side in [-1,1]:
-            base+=(.011 if self.id=='jensen' else .007)*gauss(t,.44,.10)*gauss(x,side*.088,.043)
-            base-=.0095*gauss(t,.593,.049)*gauss(x,side*.067,.038)
-            base+=.008*gauss(t,.664,.038)*gauss(x,side*.064,.049)
-        base+=.006*gauss(t,.27,.075)*gauss(x,0,.055)
-        base+=.009*gauss(t,.14,.064)*gauss(x,0,.065)
-        return base
+    def front(self, x, t):
+        """One continuous face carries the jaw, orbital rims, nose and age folds."""
+        w, d, center = self.head_profile(t)
+        r = min(1, abs(x) / max(w, .001))
+        # Squarer mandibular sections give Elon/Jensen genuinely different planes,
+        # rather than the same elliptical head at a different overall width.
+        power = {'dario':2.15, 'sam':2.04, 'elon':2.68, 'jensen':2.48}[self.id]
+        power = 2 + (power - 2) * gauss(t, .37, .36)
+        base = center + d * max(0, 1-r**power)**(1/power)
+        envelope = max(0, 1-r**4)**.7
+        s = self.s
+        eye = s['eye_t']
+        spacing = s['eye_spacing']
+        feature = 0
+        nose_profiles = {
+            'dario':[(.355,0),(.385,.30),(.412,1),(.451,.95),(.512,.85),(.563,.64),(.625,.24),(.697,0)],
+            'sam':[(.363,0),(.392,.40),(.428,1),(.475,.85),(.531,.64),(.594,.39),(.676,0)],
+            'elon':[(.363,0),(.398,.55),(.439,1),(.478,.74),(.533,.40),(.609,.16),(.681,0)],
+            'jensen':[(.384,0),(.413,.42),(.448,1),(.481,.70),(.535,.26),(.608,.07),(.665,0)],
+        }
+        bridge_width = interp([(.37,s['nose_base']*.77),(.44,s['nose_tip']),(.54,s['nose_bridge']),(.67,s['nose_bridge']*1.2)], t)
+        feature += s['nose'] * interp(nose_profiles[self.id], t) * gauss(x, 0, bridge_width)
+        alar_t = .427 if self.id == 'jensen' else .410
+        for side in [-1, 1]:
+            # Alar wings and their junctions are sculpted into the face mesh.
+            feature += (.013 if self.id in ['elon','jensen'] else .010) * gauss(t, alar_t, .032) * gauss(x, side*s['nose_base'], .011)
+            feature -= .0038 * gauss(t, alar_t-.014, .020) * gauss(x, side*s['nose_base']*.72, .0065)
+            cheek_x = side * ({'dario':.096,'sam':.099,'elon':.110,'jensen':.109}[self.id])
+            cheek_t = .492 if self.id == 'jensen' else .457
+            feature += s['cheek'] * gauss(t, cheek_t, .088) * gauss(x, cheek_x, .035)
+            # Sam's hollow lower cheeks, Dario's long nasolabial planes, and
+            # Elon's full jowls remain distinct in three-quarter view.
+            feature += {'dario':-.004,'sam':-.014,'elon':.010,'jensen':-.003}[self.id] * gauss(t,.30,.11) * gauss(x,side*.098,.030)
+            feature -= {'dario':.012,'sam':.014,'elon':.017,'jensen':.008}[self.id] * gauss(t,eye,.047) * gauss(x,side*spacing,s['eye_width']*1.11)
+            feature += {'dario':.012,'sam':.011,'elon':.016,'jensen':.009}[self.id] * gauss(t,eye+.073,.036) * gauss(x,side*spacing,.043)
+            feature += {'dario':.006,'sam':.0025,'elon':.008,'jensen':.0045}[self.id] * gauss(t,eye-.048,.026) * gauss(x,side*spacing,.034)
+            feature -= {'dario':.0042,'sam':.0024,'elon':.0026,'jensen':.0040}[self.id] * gauss(t,eye-.078,.015) * gauss(x,side*spacing,.034)
+            fold_x = side*(s['nose_base']+.016+(.42-t)*.18)
+            feature -= {'dario':.0034,'sam':.0026,'elon':.0021,'jensen':.0038}[self.id] * gauss(t,.345,.082) * gauss(x,fold_x,.006)
+            feature -= {'dario':.004,'sam':.006,'elon':.001,'jensen':.003}[self.id] * gauss(t,.66,.074) * gauss(x,side*w*.83,.022)
+        # Philtrum, the lip barrel, labiomental break and a broad/fine chin.
+        mouth_t = s['mouth_t']
+        feature += .0045 * gauss(t,mouth_t+.058,.042) * (gauss(x,-.009,.006)+gauss(x,.009,.006))
+        feature -= .0025 * gauss(t,mouth_t+.067,.040) * gauss(x,0,.0045)
+        feature += {'dario':.007,'sam':.008,'elon':.009,'jensen':.006}[self.id] * gauss(t,mouth_t,.054) * gauss(x,0,s['mouth_width']*1.05)
+        feature -= .0045 * gauss(t,mouth_t-.070,.020) * gauss(x,0,.042)
+        feature += {'dario':.012,'sam':.016,'elon':.013,'jensen':.009}[self.id] * gauss(t,.135,.065) * gauss(x,0,.054 if self.id != 'elon' else .073)
+        if self.id == 'sam':
+            feature -= .0028 * gauss(t,.143,.035) * gauss(x,0,.010)
+        if self.id in ['dario','elon','jensen']:
+            for line in [.750,.789]:
+                feature -= (.0013 if self.id == 'elon' else .0017) * gauss(t,line+.006*math.cos(x*27),.0045) * gauss(x,0,.087)
+        return base + feature*envelope
 
     def face(self):
-        verts,faces=[],[]
-        n,m=96,72
+        verts, faces = [], []
+        n, m = 88, 68
         for j in range(m+1):
-            t=.0005+j/m*.999
-            y=self.y0+t*self.hh
-            w,d,c=self.head_profile(t)
+            t = .0005+j/m*.999
+            y = self.y0+t*self.hh
+            w, d, c = self.head_profile(t)
             for i in range(n):
-                a=TAU*i/n;x=w*math.sin(a);z=c+d*math.cos(a)
-                if math.cos(a)>0:
-                    z=self.front(x,t)
+                a = TAU*i/n
+                x = w*math.sin(a)
+                z = self.front(x,t) if math.cos(a) >= 0 else c+d*math.cos(a)
                 verts.append(self.p((x,y,z)))
         for j in range(m):
             for i in range(n):
-                a=j*n+i;b=j*n+(i+1)%n
+                a, b = j*n+i, j*n+(i+1)%n
                 faces.append((a,b,b+n,a+n))
         faces.extend([tuple(reversed(range(n))),tuple(m*n+i for i in range(n))])
-        head=mesh_object(self.prefix+' / integrated facial sculpt',verts,faces,self.skin,self.root)
-        # A single face surface carries soft pigmentation and Dario's close stubble.
-        face_mat=self.skin.copy();face_mat.name=self.id+' / skin with subtle complexion'
-        node=face_mat.node_tree.nodes.new('ShaderNodeVertexColor');node.layer_name='Complexion'
+        head = mesh_object(self.prefix+' / integrated facial sculpt',verts,faces,self.skin,self.root)
+        face_mat = self.skin.copy()
+        face_mat.name = self.id+' / skin with subtle complexion'
+        node = face_mat.node_tree.nodes.new('ShaderNodeVertexColor')
+        node.layer_name = 'Complexion'
         face_mat.node_tree.links.new(node.outputs['Color'],face_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
-        head.data.materials[0]=face_mat
-        attr=head.data.color_attributes.new(name='Complexion',type='FLOAT_COLOR',domain='POINT')
-        base=rgb(self.s['skin']);flush=rgb('#c2947f' if self.id!='jensen' else '#b1876c');stubble=rgb('#786c61')
-        for i,p in enumerate(verts):
-            x,y,z=p;t=(y-self.offset-self.y0)/self.hh
-            front=max(0,min(1,(z+.02)/.12))
-            blush=.22*front*(gauss(x,-.090,.040)+gauss(x,.090,.040))*gauss(t,.45,.10)
-            color=[v*(1-blush)+f*blush for v,f in zip(base,flush)]
-            if self.id=='dario':
-                beard=.47*front*gauss(t,.19,.19)*(1-.8*gauss(x,0,.040)*gauss(t,.27,.070))
-                color=[v*(1-beard)+f*beard for v,f in zip(color,stubble)]
-            attr.data[i].color=(*color,1)
+        head.data.materials[0] = face_mat
+        attr = head.data.color_attributes.new(name='Complexion',type='FLOAT_COLOR',domain='POINT')
+        base = rgb(self.s['skin'])
+        flush = rgb('#c1927a' if self.id != 'jensen' else '#ae8064')
+        beard_color = rgb('#776f65')
+        for i, p in enumerate(verts):
+            x, y, z = p
+            t = (y-self.offset-self.y0)/self.hh
+            forward = max(0,min(1,(z+.02)/.12))
+            blush = .17*forward*(gauss(x,-.094,.038)+gauss(x,.094,.038))*gauss(t,.465,.095)
+            color = [v*(1-blush)+f*blush for v,f in zip(base,flush)]
+            if self.id == 'dario':
+                beard = .40*forward*gauss(t,.18,.16)
+                beard += .22*forward*gauss(t,self.s['mouth_t']+.063,.033)*gauss(x,0,.052)
+                beard *= 1-.80*gauss(x,0,.042)*gauss(t,self.s['mouth_t'],.032)
+                color = [v*(1-beard)+f*beard for v,f in zip(color,beard_color)]
+            attr.data[i].color = (*color,1)
         self.loft('neck',[(1.485,.072,.070,0,-.008),(1.54,.075,.073,0,-.006),(1.64,.074,.070,0,.003)],self.skin)
-        # Small ears, with a folded helix rather than pink spheres beside the face.
+        # Low-poly folded ear shells: no detached spherical facial components.
         for side in [-1,1]:
-            ex=side*(self.s['width']*.97)
-            self.ell('ear', (ex,self.y0+self.hh*.54,-.012),(.022,.048,.024),self.skin)
-            self.tube('ear concha',[(ex+side*.015,self.y0+self.hh*.59,.006),(ex+side*.020,self.y0+self.hh*.54,.010),(ex+side*.010,self.y0+self.hh*.49,.011)], [.004,.005,.0025],self.shadow_skin)
+            ev, ef = [], []
+            cx = side*(self.s['width']*.955+.006)
+            cy = self.y0+self.hh*(.545 if self.id != 'jensen' else .565)
+            en, rings = 28, 6
+            for k in range(rings+1):
+                r = .06+.94*k/rings
+                for i in range(en):
+                    a = TAU*i/en
+                    x = cx+side*.022*r*math.cos(a)*(1+.10*math.sin(a))
+                    y = cy+.047*r*math.sin(a)
+                    z = -.012+.015*(1-r*r)+.010*gauss(r,.83,.14)
+                    ev.append(self.p((x,y,z)))
+            for k in range(rings):
+                for i in range(en):
+                    a,b=k*en+i,k*en+(i+1)%en
+                    ef.append((a,b,b+en,a+en))
+            ef.append(tuple(reversed(range(en))))
+            back = len(ev)
+            ev.append(self.p((cx,cy,-.026)))
+            for i in range(en):
+                ef.append((rings*en+i,back,rings*en+(i+1)%en))
+            mesh_object(self.prefix+' / folded ear shell',ev,ef,self.skin,self.root)
+            self.tube('ear antihelix',[(cx+side*.005,cy+.027,.003),(cx+side*.011,cy+.010,.005),(cx+side*.006,cy-.015,.005)],[.0020,.0025,.0013],self.shadow_skin,6,3)
         self.eyes()
         self.mouth()
         self.hairstyle()
 
-    def patch(self,name,coords,mat):
-        # Boundary plus a slightly convex center, suitable for facial patches.
-        cx=sum(p[0] for p in coords)/len(coords);cy=sum(p[1] for p in coords)/len(coords)
-        center=(cx,cy,self.front(cx,(cy-self.y0)/self.hh)+.0038)
-        verts=[self.p(center),*[self.p(p) for p in coords]]
-        faces=[(0,i+1,(i+1)%len(coords)+1) for i in range(len(coords))]
-        return mesh_object(self.prefix+' / '+name,verts,faces,mat,self.root)
+    def patch(self, name, coords, mat):
+        """Triangulate the actual facial outline, including concave lips/brows."""
+        def cross(a, b, c):
+            return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+        # Lip planes share their corner endpoints; remove zero-length edges
+        # before triangulation, retaining the caller's face-conforming depths.
+        clean = []
+        for p in coords:
+            if not clean or (p[0]-clean[-1][0])**2+(p[1]-clean[-1][1])**2 > 1e-20:
+                clean.append(p)
+        if len(clean)>1 and (clean[0][0]-clean[-1][0])**2+(clean[0][1]-clean[-1][1])**2 < 1e-20:
+            clean.pop()
+        coords = clean
+        area = sum(p[0]*q[1]-q[0]*p[1] for p,q in zip(coords,coords[1:]+coords[:1]))
+        if area < 0:
+            coords.reverse()
+        remaining = list(range(len(coords)))
+        triangles = []
+        while len(remaining) > 3:
+            for k,b in enumerate(remaining):
+                a,c = remaining[k-1],remaining[(k+1)%len(remaining)]
+                pa,pb,pc = coords[a],coords[b],coords[c]
+                turn = cross(pa,pb,pc)
+                if abs(turn) < 1e-14:
+                    remaining.pop(k)
+                    break
+                if turn < 0:
+                    continue
+                if any(cross(pa,pb,coords[q])>=-1e-14 and cross(pb,pc,coords[q])>=-1e-14 and cross(pc,pa,coords[q])>=-1e-14 for q in remaining if q not in [a,b,c]):
+                    continue
+                triangles.append((a,b,c))
+                remaining.pop(k)
+                break
+            else:
+                raise ValueError(self.prefix+' / could not triangulate '+name)
+        if len(remaining)==3 and cross(*(coords[i] for i in remaining)) > 1e-14:
+            triangles.append(tuple(remaining))
+        # A valid outline alone is insufficient: a long chord across a concave
+        # eye socket can sit in front of its iris. Refine the actual 3D surface,
+        # sampling every new point from front() plus interpolated caller lift.
+        samples = [(x,y,z-self.front(x,(y-self.y0)/self.hh)) for x,y,z in coords]
+        verts = list(coords)
+        midpoints = {}
+        def surface(sample):
+            x,y,lift = sample
+            return (x,y,self.front(x,(y-self.y0)/self.hh)+lift)
+        def midpoint(a,b):
+            key = tuple(sorted((a,b)))
+            if key not in midpoints:
+                sample = tuple((p+q)*.5 for p,q in zip(samples[a],samples[b]))
+                midpoints[key] = len(verts)
+                samples.append(sample)
+                verts.append(surface(sample))
+            return midpoints[key]
+        faces = []
+        pending = [(a,b,c,0) for a,b,c in triangles]
+        while pending:
+            a,b,c,depth = pending.pop()
+            edges = [(a,b,c),(b,c,a),(c,a,b)]
+            u,v,opposite = max(edges,key=lambda edge:sum((p-q)**2 for p,q in zip(samples[edge[0]][:2],samples[edge[1]][:2])))
+            longest = sum((p-q)**2 for p,q in zip(samples[u][:2],samples[v][:2]))
+            center = tuple(sum(samples[i][axis] for i in [a,b,c])/3 for axis in range(3))
+            error = abs(surface(center)[2]-sum(verts[i][2] for i in [a,b,c])/3)
+            for p,q,_ in edges:
+                sample = tuple((x+y)*.5 for x,y in zip(samples[p],samples[q]))
+                error = max(error,abs(surface(sample)[2]-(verts[p][2]+verts[q][2])*.5))
+            if longest > .005**2 or error > .00010:
+                if depth >= 24:
+                    raise ValueError(self.prefix+' / excessive facial patch curvature in '+name)
+                mid = midpoint(u,v)
+                pending.extend([(u,mid,opposite,depth+1),(mid,v,opposite,depth+1)])
+            else:
+                faces.append((a,b,c))
+        return mesh_object(self.prefix+' / '+name,[self.p(p) for p in verts],faces,mat,self.root)
 
     def eyes(self):
-        eye_t=.587 if self.id=='jensen' else .594
+        s = self.s
+        eye_t, ew, eh = s['eye_t'], s['eye_width'], s['eye_height']
+        brow_mat = material(self.id+' / natural brows',s['brow_color'],.86)
+        # Fine folds should shade as skin, rather than read as drawn outlines.
+        crease_mat = self.skin.copy()
+        crease_mat.name = self.id+' / subtle orbital folds'
+        crease_color = tuple(.76*a+.24*b for a,b in zip(self.skin.diffuse_color[:3],self.shadow_skin.diffuse_color[:3]))
+        crease_mat.diffuse_color = (*crease_color,1)
+        crease_mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value = (*crease_color,1)
+        tilt = {'dario':-.0010,'sam':-.0017,'elon':-.0009,'jensen':.0020}[self.id]
         for side in [-1,1]:
-            cx=side*.066;cy=self.y0+self.hh*eye_t
-            ew={'dario':.030,'sam':.032,'elon':.028,'jensen':.030}[self.id];eh={'dario':.010,'sam':.0105,'elon':.0085,'jensen':.0068}[self.id]
-            coords=[]
-            for i in range(48):
-                a=TAU*i/48;x=cx+ew*math.cos(a);y=cy+eh*math.sin(a)*(abs(math.sin(a))**.25)+(side*(x-cx)*.10 if self.id=='jensen' else 0)
-                coords.append((x,y,self.front(x,(y-self.y0)/self.hh)+.0020))
-            self.patch('almond eye',coords,self.whites)
-            z=self.front(cx,eye_t)+.005
-            self.ell('iris',(cx,cy+.0004,z),(.0070,.0078,.0022),self.iris)
-            self.ell('pupil',(cx,cy+.0004,z+.002),(.0033,.0044,.0014),self.black)
-            self.ell('eye catchlight',(cx-.0017,cy+.0033,z+.0035),(.0014,.0014,.0008),self.whites)
-            for upper in [True,False]:
-                pts=[]
-                for i in range(17):
-                    a=math.pi*i/16+(0 if upper else math.pi)
-                    x=cx+ew*math.cos(a);y=cy+eh*math.sin(a)*(abs(math.sin(a))**.25)+(side*(x-cx)*.10 if self.id=='jensen' else 0)
-                    pts.append((x,y,self.front(x,(y-self.y0)/self.hh)+.003))
-                self.tube('upper eyelid' if upper else 'lower eyelid',pts,[.0012]+[.0028 if upper else .0019]*15+[.0012],self.shadow_skin if upper else self.skin,10,2)
-            # Brows are low, tapered shapes with individual expression and arch.
-            pts=[]
-            for i in range(6):
-                u=i/5;x=side*(.031+.072*u)
-                y=cy+.035+.006*math.sin(u*math.pi)-.010*u
-                if self.id=='sam':y+=.006*(1-u) if side<0 else 0
-                pts.append((x,y,self.front(x,(y-self.y0)/self.hh)+.003))
-            self.tube('tapered eyebrow',pts,[.003,.0045,self.s['brow']*.65,.004,.003,.0009],self.hair,12,4)
-        # Tiny nostril grooves under the continuous nose.
+            cx = side*s['eye_spacing']
+            cy = self.y0+self.hh*eye_t
+            if self.id == 'sam':
+                cy += .0010 if side < 0 else -.0005
+            def lid(u, upper):
+                x = side*(s['eye_spacing']+ew*(2*u-1))
+                wave = max(0,math.sin(math.pi*u))**.8
+                hood = {'dario':.93,'sam':.76,'elon':.73,'jensen':.72}[self.id]
+                height = eh*wave*(hood*(1-.17*u) if upper else -.61*(1+.15*u))
+                y = cy+tilt*(2*u-1)+height
+                return (x,y,self.front(x,(y-self.y0)/self.hh)+.0020)
+            upper = [lid(i/16,True) for i in range(17)]
+            lower = [lid(i/16,False) for i in range(17)]
+            self.patch('individual eye opening',upper+list(reversed(lower[1:-1])),self.whites)
+            # Iris/pupil surfaces are clipped by the actual lid aperture. This
+            # retains hooded eyes without spheres poking through a narrow opening.
+            for name, rx, ry, lift, mat in [
+                ('iris',.0068,.0072,.0030,self.iris),
+                ('pupil',.0031,.0047,.0037,self.black),
+            ]:
+                points = []
+                for i in range(24):
+                    a = TAU*i/24
+                    x = cx+rx*math.cos(a)
+                    u = .5+(x-cx)/(side*ew*2)
+                    bottom,top = lid(u,False)[1]+.00045,lid(u,True)[1]-.00045
+                    y = max(bottom,min(top,cy+ry*math.sin(a)))
+                    points.append((x,y,self.front(x,(y-self.y0)/self.hh)+lift))
+                self.patch(name,points,mat)
+            points=[]
+            for i in range(10):
+                a=TAU*i/10;x=cx-.0018+.00115*math.cos(a);y=cy+.0013+.00115*math.sin(a)
+                points.append((x,y,self.front(x,(y-self.y0)/self.hh)+.0045))
+            self.patch('eye catchlight',points,self.whites)
+            self.tube('weighted upper eyelid',[(x,y,z-.00035) for x,y,z in upper],[.0007]+[.00165]*15+[.0006],self.shadow_skin,8,1)
+            self.tube('soft lower eyelid',[(x,y,z-.0008) for x,y,z in lower],[.0005]+[.00115]*15+[.0005],self.skin,8,1)
+            # The superior fold is a second, low-contrast anatomical crease.
+            crease=[]
+            for i in range(11):
+                u=.06+.88*i/10;x,y,_=lid(u,True)
+                y+= {'dario':.008,'sam':.0065,'elon':.0055,'jensen':.0050}[self.id]*(math.sin(math.pi*u)**.6)
+                crease.append((x,y,self.front(x,(y-self.y0)/self.hh)+.00035))
+            self.tube('hooded lid crease',crease,[.00025]+[.00055]*9+[.0002],crease_mat,6,1)
+            # The lower orbital bag and its crease already belong to front().
+            # Let that continuous relief catch light without a second dark tube.
+            # Broad medial brows taper into lifted or drooping lateral tails.
+            outline=[]
+            brow_points=[]
+            for i in range(13):
+                u=i/12
+                x=side*(s['eye_spacing']-ew*.97+ew*2.25*u)
+                arch={'dario':.009,'sam':.0055,'elon':.0035,'jensen':.005}[self.id]
+                y=cy+{'dario':.032,'sam':.030,'elon':.025,'jensen':.027}[self.id]+arch*math.sin(math.pi*u)-.009*u
+                if self.id == 'sam':
+                    y+=(.0035 if side < 0 else 0)*(1-u)
+                brow_points.append((x,y))
+            for sign,points in [(1,brow_points),(-1,list(reversed(brow_points)))]:
+                for x,y in points:
+                    u=(abs(x)-(s['eye_spacing']-ew*.97))/(ew*2.25)
+                    thickness=s['brow']*(.26+.74*math.sin(math.pi*max(0,min(1,u)))**.5)*(1-.55*u)
+                    yy=y+sign*thickness*.5
+                    outline.append((x,yy,self.front(x,(yy-self.y0)/self.hh)+.0014))
+            self.patch('shaped tapered brow',outline,brow_mat)
+            if self.id in ['dario','jensen']:
+                for k in range(2):
+                    x0=side*(s['eye_spacing']+ew*.97)
+                    yy=cy-.003-k*.006
+                    points=[(x0,yy),(x0+side*.013,yy-.002-k*.003),(x0+side*.021,yy-.004-k*.004)]
+                    self.tube('fine outer eye crease',[(x,y,self.front(x,(y-self.y0)/self.hh)+.0003) for x,y in points],[.00025,.00045,.00015],crease_mat,6,2)
+        # Small alar slit surfaces reinforce the already sculpted nasal base.
         for side in [-1,1]:
-            x=side*.017;t=.423;y=self.y0+self.hh*t
-            self.ell('nostril',(x,y,self.front(x,t)+.0008),(.0060,.0021,.0015),self.shadow_skin)
-        if self.id=='jensen':
+            cx=side*s['nose_base']*.73
+            nt=.417 if self.id == 'jensen' else .399
+            cy=self.y0+self.hh*nt
+            points=[]
+            for i in range(16):
+                a=TAU*i/16;x=cx+.0055*math.cos(a);y=cy+.0018*math.sin(a)-side*(x-cx)*.17
+                points.append((x,y,self.front(x,(y-self.y0)/self.hh)+.0008))
+            self.patch('alar nostril slit',points,self.shadow_skin)
+        if self.id == 'jensen':
+            cy=self.y0+self.hh*(eye_t+.011)
+            frame_z=self.front(s['eye_spacing'],eye_t)+.018
             for side in [-1,1]:
-                cx=side*.067;cy=self.y0+self.hh*.597
-                points=[]
-                for i in range(49):
-                    a=TAU*i/48
-                    # Soft rectangular acetate frame, not round comic goggles.
-                    x=cx+.047*math.copysign(abs(math.cos(a))**.6,math.cos(a))
-                    y=cy+.027*math.copysign(abs(math.sin(a))**.7,math.sin(a))
-                    points.append((x,y,.135))
-                self.tube('rectangular glasses',points,.0035,self.dark,10,2)
-                self.tube('glasses temple',[(side*.113,cy+.008,.135),(side*.151,cy+.010,.09),(side*.156,cy+.006,-.01)],.003,self.dark,10)
-            self.tube('glasses bridge',[(-.019,self.y0+self.hh*.614,.136),(0,self.y0+self.hh*.624,.144),(.019,self.y0+self.hh*.614,.136)],.0025,self.dark,10)
+                cx=side*s['eye_spacing'];points=[]
+                for i in range(33):
+                    a=TAU*i/32
+                    x=cx+.046*math.copysign(abs(math.cos(a))**.40,math.cos(a))
+                    y=cy+.0215*math.copysign(abs(math.sin(a))**.42,math.sin(a))
+                    points.append((x,y,frame_z-.05*abs(x)))
+                self.tube('rectangular glasses',points,.0030,self.dark,8,1)
+                self.tube('glasses temple',[(side*(s['eye_spacing']+.046),cy+.008,frame_z-.006),(side*.150,cy+.009,.075),(side*.158,cy+.004,-.012)],.0028,self.dark,8,3)
+            self.tube('glasses bridge',[(-.021,cy+.005,frame_z),(0,cy+.013,frame_z+.009),(.021,cy+.005,frame_z)],.0024,self.dark,8,3)
 
     def mouth(self):
-        y=self.y0+self.hh*.272
-        width={'dario':.045,'sam':.053,'elon':.047,'jensen':.042}[self.id]
-        pts=[]
-        for i in range(17):
-            u=i/16;x=(u*2-1)*width
-            yy=y+(.009 if self.id=='sam' else .0045)*(2*u-1)**2
-            if self.id=='sam':yy+=.004*(u-.5)
-            pts.append((x,yy,self.front(x,(yy-self.y0)/self.hh)+.002))
-        # A relaxed closed mouth: two soft lip planes and a fine central crease.
+        y=self.y0+self.hh*self.s['mouth_t']
+        width=self.s['mouth_width']
+        points=[]
+        for i in range(21):
+            u=i/20;q=2*u-1;x=q*width
+            curve={'dario':-.0015,'sam':.0075,'elon':-.0008,'jensen':.0060}[self.id]
+            yy=y+curve*q*q
+            if self.id == 'sam':
+                yy+=.0035*q
+            elif self.id == 'elon':
+                yy+=.0015*gauss(q,0,.40)
+            points.append((x,yy,self.front(x,(yy-self.y0)/self.hh)+.0016))
         for upper in [True,False]:
             outline=[]
-            for i,p in enumerate(pts):
-                u=i/16;lip_h=math.sin(math.pi*u)*(.0036 if upper else -.005)
-                if upper:lip_h*=.82+.18*math.cos(u*4*math.pi)
-                yy=p[1]+lip_h
-                outline.append((p[0],yy,self.front(p[0],(yy-self.y0)/self.hh)+.003))
-            outline.extend(reversed(pts))
-            self.patch('upper lip' if upper else 'lower lip',outline,self.lips)
-        self.tube('mouth crease',pts,[.0007]+[.0012]*15+[.0007],self.shadow_skin,8,2)
+            for i,p in enumerate(points):
+                u=i/20;q=2*u-1
+                height=({'dario':.0038,'sam':.0036,'elon':.0026,'jensen':.0031}[self.id] if upper else -{'dario':.0055,'sam':.0061,'elon':.0041,'jensen':.0048}[self.id])
+                height*=math.sin(math.pi*u)**.85
+                if upper:
+                    height*=.64+.36*(gauss(q,-.29,.24)+gauss(q,.29,.24))
+                yy=p[1]+height
+                outline.append((p[0],yy,self.front(p[0],(yy-self.y0)/self.hh)+.0022))
+            outline.extend(reversed(points))
+            self.patch('defined upper lip' if upper else 'soft lower lip',outline,self.lips)
+        self.tube('relaxed mouth seam',points,[.0005]+[.0010]*19+[.0005],self.shadow_skin,8,1)
+        for side in [-1,1]:
+            x=side*width;cy=points[0 if side < 0 else -1][1]
+            self.tube('mouth corner',[(x,cy,self.front(x,(cy-self.y0)/self.hh)+.0010),(x+side*.004,cy-.003,self.front(x+side*.004,(cy-.003-self.y0)/self.hh)+.0007)],[.0008,.00025],self.shadow_skin,6,2)
 
     def hairstyle(self):
-        verts,faces=[],[]
-        n,m=96,26
-        for j in range(m+1):
+        """One sculpted cap per head: curl clusters, side sweep or brushed silver."""
+        verts, faces = [], []
+        n, m = 88, 30
+        for j in range(m):
             u=j/m
             for i in range(n):
-                a=TAU*i/n;front=max(0,math.cos(a));back=max(0,-math.cos(a))
-                base=.60+.19*front-.14*back
-                base+=.010*math.sin(a*9+.4)*front
-                if self.id=='dario':base+=.022*math.sin(a*15)*front
-                if self.id=='elon':base+=.050*front-.050*front**14+.028*gauss(abs(math.sin(a)),.7,.15)*front
-                if self.id=='sam':base+=.039*math.sin(a)*front-.025*gauss(a,.28,.3)
-                if self.id=='jensen':base+=.045*front-.030*front**12
+                a=TAU*i/n;forward=max(0,math.cos(a));back=max(0,-math.cos(a));sine=math.sin(a)
+                if self.id == 'dario':
+                    base=.565+.180*forward-.105*back-.050*abs(sine)**12
+                    base+=.019*math.sin(a*13+.4)*forward
+                elif self.id == 'sam':
+                    base=.60+.245*forward-.120*back+.050*sine*forward-.068*gauss(sine,-.28,.35)*forward
+                elif self.id == 'elon':
+                    base=.605+.232*forward-.120*back-.018*forward**14+.042*gauss(abs(sine),.58,.22)*forward
+                else:
+                    base=.575+.265*forward-.100*back-.033*forward**12+.036*gauss(abs(sine),.70,.20)*forward
                 t=base+(1-base)*u
                 w,d,c=self.head_profile(t)
-                lift=math.sin(math.pi*(u*.92+.05))
-                if self.id=='dario':
-                    ripple=(.5+.5*math.sin(a*13+u*18)*math.sin(a*9-u*22))
-                    volume=(.003+.015*ripple)*(math.sin(math.pi*u)**.65)
-                    top_lift=(.015+.005*math.sin(a*7+u*18))*math.sin(math.pi*u)
+                fade=max(0,math.sin(math.pi*u))**.65
+                if self.id == 'dario':
+                    cluster=(.5+.5*math.sin(a*14+u*20+1.7*math.sin(u*TAU)))**1.35
+                    cluster*=.72+.28*math.cos(a*7-u*17)
+                    volume=.0035+(.008+.020*cluster)*fade
+                    top_lift=.024*u+.010*cluster*fade
+                    shift=0
+                elif self.id == 'sam':
+                    sweep=gauss(sine,-.22,.69)*forward
+                    ridge=(.5+.5*math.sin(a*13-u*9+1.4*math.sin(u*math.pi)))**2
+                    volume=.0035+.74*(.008+.015*sweep+.003*ridge)*fade
+                    top_lift=.0148*u+.01702*sweep*fade+.00222*ridge*fade
+                    shift=.0074*u+.00592*fade*forward
+                elif self.id == 'elon':
+                    ridge=(.5+.5*math.sin(a*15-u*7))**2
+                    volume=.003+(.005+.009*forward+.0027*ridge)*fade
+                    top_lift=.012*u+.009*forward*fade
+                    shift=.006*fade
                 else:
-                    volume=(.005+.0025*math.sin(a*12+u*18))*math.sin(math.pi*u)
-                    top_lift=(.010 if self.id=='sam' else .004)*math.sin(math.pi*u)
-                x=(w+volume*(1-u**12))*math.sin(a)
-                z=c+(d+volume*(1-u**12))*math.cos(a)
+                    ridge=(.5+.5*math.sin(a*19-u*4.5))**2
+                    volume=.003+(.006+.003*ridge)*fade
+                    top_lift=.014*u+.008*fade+.002*ridge*fade
+                    shift=-.003*fade
+                radial=volume*(1-u**10)
+                x=w*sine+radial*sine+shift
+                z=self.front(w*sine,t)+radial*math.cos(a) if forward > 0 else c+(d+radial)*math.cos(a)
                 y=self.y0+self.hh*t+top_lift
                 verts.append(self.p((x,y,z)))
-        for j in range(m):
+        for j in range(m-1):
             for i in range(n):
-                a=j*n+i;b=j*n+(i+1)%n
+                a,b=j*n+i,j*n+(i+1)%n
                 faces.append((a,b,b+n,a+n))
-        faces.append(tuple(m*n+i for i in range(n)))
-        hair=mesh_object(self.prefix+' / '+('sculpted curls' if self.id=='dario' else 'swept hair cap'),verts,faces,self.hair,self.root)
-        mod=hair.modifiers.new('Hair shell','SOLIDIFY');mod.thickness=.0025
-        # Swept flow is expressed by shallow sculpted surface ridges, with no
-        # free-standing strands or bright wire shapes on top of the head.
+        crown=len(verts)
+        lift={'dario':.024,'sam':.0148,'elon':.012,'jensen':.014}[self.id]
+        verts.append(self.p((.0074 if self.id == 'sam' else 0,self.y0+self.hh+lift,self.head_profile(1)[2])))
+        for i in range(n):
+            faces.append(((m-1)*n+i,(m-1)*n+(i+1)%n,crown))
+        # Only the hem has thickness. A full Solidify shell would double the
+        # invisible interior topology of every standing and seated hairstyle.
+        inner=len(verts)
+        for i in range(n):
+            x,y,z=verts[i]
+            verts.append((x*.992,y-.001,z*.992))
+        for i in range(n):
+            faces.append((i,inner+i,inner+(i+1)%n,(i+1)%n))
+        names={'dario':'dark sculpted curl clusters','sam':'asymmetric swept quiff','elon':'receding swept hairline','jensen':'short brushed silver hair'}
+        mesh_object(self.prefix+' / '+names[self.id],verts,faces,self.hair,self.root)
 
     def body(self):
         width=self.s['shoulders'];waist=self.s['waist']
@@ -431,7 +674,8 @@ class Sculptor:
                 rings=[(.13,.069,.075,side*.157,.026),(.18,.071,.080,side*.159,.014),(.34,.079,.087,side*.157,-.006),(.53,.084,.092,side*.150,.018),(.60,.092,.100,side*.143,.012),(.79,.114,.122,side*.124,0),(.98,.119,.135,side*.108,0)]
                 leg=self.loft('trouser leg',rings,self.pants)
             trousers.append(leg)
-        union_sculpt(self.prefix+' / continuous tailored trousers',trousers,.005)
+        trousers = union_sculpt(self.prefix+' / continuous tailored trousers',trousers,.005)
+        sculpt_garment(self, trousers, 'trousers')
         # Slightly square torso sections and full shoulder cap form a wearable garment.
         torso=self.loft('outerwear body',[(.985,waist*.93,.131,0,0),(1.003,waist,.140,0,0),(1.055,waist*1.01,.141,0,0),(1.19,waist*.97,.143,0,-.003),(1.36,width*.91,.142,0,-.009),(1.455,width,.132,0,-.012),(1.49,width*.87,.115,0,-.011),(1.535,.101,.075,0,0)],self.cloth)
         sleeves=[torso]
@@ -444,17 +688,19 @@ class Sculptor:
                 arm=[(side*.095,1.414,-.007),(side*(width-.018),1.414,-.003),(side*(width+.037),1.347,.001),(side*(width+.055),1.21,.011),(side*(width+.037),1.095,.041),(side*(width+.015),1.005,.070)]
             sleeve=self.tube('continuous sleeve',arm,[.082,.096,.094,.078,.064,.057],self.cloth,28,6)
             sleeves.append(sleeve);wrists.append(arm[-1])
-        union_sculpt(self.prefix+' / continuous tailored jacket',sleeves,.0048)
+        garment = union_sculpt(self.prefix+' / continuous tailored jacket',sleeves,.0048)
+        sculpt_garment(self, garment)
         # Ribbed cuffs and hem are separate intentional sewn boundaries.
-        self.loft('hem band',[(.992,waist*.97,.137,0,0),(1.004,waist,.140,0,0),(1.031,waist*1.006,.141,0,0),(1.039,waist*.991,.138,0,0)],self.cloth)
+        self.loft('hem band',[(.992,waist*.97,.137,0,0),(1.004,waist,.140,0,0),(1.031,waist*1.006,.141,0,0),(1.039,waist*.991,.138,0,0)],self.trim)
         for side,wrist in zip([-1,1],wrists):
             self.hand(side,wrist)
             if not self.seated:
-                self.loft('knit cuff',[(.992,.059,.060,wrist[0],wrist[2]),(1.00,.060,.061,wrist[0],wrist[2]),(1.033,.061,.062,wrist[0],wrist[2]-.007)],self.cloth)
+                self.loft('knit cuff',[(.992,.059,.060,wrist[0],wrist[2]),(1.00,.060,.061,wrist[0],wrist[2]),(1.033,.061,.062,wrist[0],wrist[2]-.007)],self.trim)
             # Soft fabric creases echo the bent elbow and waist, never black outlines.
             if self.id in ['jensen','elon']:
                 self.tube('zip pocket',[(side*.10,1.12,.139),(side*.14,1.17,.133),(side*.17,1.22,.124)],.0019,self.metal,8,5)
         self.tailoring()
+        jacket_construction(self, wrists)
         for side in [-1,1]:
             self.foot(side)
         if not self.seated:
@@ -466,12 +712,7 @@ class Sculptor:
             # planar shirt polygon can protrude through the chest at grazing angles.
             if self.id=='jensen':
                 # Jensen's jacket is a zip-front leather bomber with a compact collar.
-                for side in [-1,1]:
-                    pts=[]
-                    for i in range(17):
-                        a=(-math.pi*.08+i/16*math.pi*.99)*side
-                        pts.append((math.sin(a)*.086,1.525+.008*math.cos(a),math.cos(a)*.076))
-                    self.tube('standing leather collar',pts,.011,self.cloth,16,3)
+                sewn_collar(self, leather=True)
             else:
                 for side in [-1,1]:
                     pts=[(side*.068,1.525,.066),(side*.116,1.492,.105),(side*.086,1.443,.139),(side*.039,1.395,.148),(side*.042,1.475,.112)]
@@ -487,12 +728,7 @@ class Sculptor:
         else:
             # A crewneck on Dario; Sam wears a soft collar with an open placket.
             if self.id=='dario':
-                pts=[]
-                for i in range(33):
-                    a=TAU*i/32
-                    pts.append((math.cos(a)*.091,1.528+.008*math.sin(a),math.sin(a)*.075))
-                self.tube('rib knit collar',pts,.008,self.cloth,16,3)
-                self.tube('tee collar glimpse',[(-.069,1.537,.035),(0,1.522,.073),(.069,1.537,.035)],.005,self.tee,12)
+                sewn_collar(self)
             else:
                 for side in [-1,1]:
                     pts=[(side*.065,1.54,.062),(side*.096,1.505,.092),(side*.083,1.466,.129),(side*.037,1.480,.119)]
@@ -556,6 +792,7 @@ def build_actors(context=None):
     actors=[]
     for ident in ['dario','sam','elon','jensen']:
         for seated in [False,True]:
+            print('Building '+ident+' / '+('seated' if seated else 'standing'), flush=True)
             actor=Sculptor(ident,seated).build()
             actors.append(actor)
     return actors

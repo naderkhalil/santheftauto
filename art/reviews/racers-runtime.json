@@ -1,0 +1,1927 @@
+{
+  "source": "public/assets/models/racer-kit.glb",
+  "bytes": 7412076,
+  "sha256": "e8fe418feacb636d0dea00af4e700dbc1499af18b5b8a3b88de0bf67b7e789c4",
+  "triangles": 1727714,
+  "draws": 156,
+  "meshInstances": 156,
+  "nodes": 170,
+  "materialCount": 129,
+  "imageCount": 23,
+  "extensions": [
+    "KHR_draco_mesh_compression",
+    "KHR_materials_clearcoat",
+    "KHR_materials_specular",
+    "KHR_materials_ior"
+  ],
+  "transparentMaterials": [
+    "Windscreen"
+  ],
+  "materials": [
+    {
+      "name": "Satin aluminium",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.25,
+      "metallic": 0.800000011920929,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Charcoal",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.5,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Coupe paint",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.23999999463558197,
+      "metallic": 0.25,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_clearcoat"
+      ]
+    },
+    {
+      "name": "Leather stitching",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Saddle leather",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Tail lamp",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.25,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Warm headlight",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.17000000178813934,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Warm painted trim",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.5,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Rubber",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8299999833106995,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "Windscreen",
+      "alphaMode": "BLEND",
+      "roughness": 0.09000000357627869,
+      "metallic": 0.02500000037252903,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / cotton jersey",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "dario / eye whites",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / fine woven trousers",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "dario / iris",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / natural brows",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / natural lips",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / pupils",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / sculpted hair",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "dario / shoe leather",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / skin with subtle complexion",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / soft rib knit trim",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "dario / soft skin creases",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / sole rubber",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / subtle orbital folds",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / warm skin",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / eye whites.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / iris.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / natural brows.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / natural lips.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / pupils.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / sculpted hair.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "dario / shoe leather.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / skin with subtle complexion.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / soft skin creases.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / sole rubber.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / subtle orbital folds.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "dario / warm skin.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / eye whites",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / fine woven trousers",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "sam / graphite detail",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / iris",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / natural brows",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / natural lips",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / pupils",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / sculpted hair",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "sam / shoe leather",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / skin with subtle complexion",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / soft rib knit trim",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "sam / soft skin creases",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / sole rubber",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / subtle orbital folds",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / warm skin",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / woven cotton poplin",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "sam / eye whites.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / graphite detail.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / iris.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / natural brows.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / natural lips.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / pupils.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / sculpted hair.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "sam / shoe leather.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / skin with subtle complexion.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / soft skin creases.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / sole rubber.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / subtle orbital folds.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "sam / warm skin.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / brushed hardware",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.30000001192092896,
+      "metallic": 0.75,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / charcoal cotton twill",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "elon / eye whites",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / fine woven trousers",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "elon / graphite detail",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / iris",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / natural brows",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / natural lips",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / pupils",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / sculpted hair",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "elon / shoe leather",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / skin with subtle complexion",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / soft rib knit trim",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "elon / soft skin creases",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / sole rubber",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / subtle orbital folds",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / warm skin",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / brushed hardware.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.30000001192092896,
+      "metallic": 0.75,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / eye whites.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / graphite detail.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / iris.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / natural brows.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / natural lips.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / pupils.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / sculpted hair.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "elon / shoe leather.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / skin with subtle complexion.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / soft skin creases.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / sole rubber.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / subtle orbital folds.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "elon / warm skin.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / brushed hardware",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.30000001192092896,
+      "metallic": 0.75,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / charcoal pebbled leather",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "jensen / eye whites",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / fine woven trousers",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "jensen / graphite detail",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / iris",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / natural brows",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / natural lips",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / pupils",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / sculpted hair",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "jensen / shoe leather",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / skin with subtle complexion",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / soft rib knit trim",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "jensen / soft skin creases",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / softly worn tailored seam",
+      "alphaMode": "OPAQUE",
+      "roughness": 1,
+      "metallic": 1,
+      "normalMap": true,
+      "extensions": [
+        "KHR_materials_clearcoat",
+        "KHR_materials_specular",
+        "KHR_materials_ior"
+      ]
+    },
+    {
+      "name": "jensen / sole rubber",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / subtle orbital folds",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / warm skin",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / brushed hardware.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.30000001192092896,
+      "metallic": 0.75,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / eye whites.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.47999998927116394,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / graphite detail.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6000000238418579,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / iris.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.46000000834465027,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / natural brows.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8600000143051147,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / natural lips.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6399999856948853,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / pupils.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.41999998688697815,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / sculpted hair.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8399999737739563,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": [
+        "KHR_materials_specular"
+      ]
+    },
+    {
+      "name": "jensen / shoe leather.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.550000011920929,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / skin with subtle complexion.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / soft skin creases.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.75,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / sole rubber.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.8700000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / subtle orbital folds.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    },
+    {
+      "name": "jensen / warm skin.001",
+      "alphaMode": "OPAQUE",
+      "roughness": 0.6200000047683716,
+      "metallic": 0,
+      "normalMap": false,
+      "extensions": []
+    }
+  ],
+  "roots": [
+    {
+      "name": "Vehicle",
+      "bounds": [
+        [
+          -1.0999999046325684,
+          0.011671348873409315,
+          -2.059999942779541
+        ],
+        [
+          1.100000023841858,
+          1.2656277418136597,
+          2.009999990463257
+        ]
+      ],
+      "triangles": 57814,
+      "draws": 24,
+      "meshes": 24
+    },
+    {
+      "name": "Standing_dario",
+      "bounds": [
+        [
+          -0.3838351368904114,
+          0.022665168702531213,
+          -0.18261465843233687
+        ],
+        [
+          0.3837970197200775,
+          2.0868999651432034,
+          0.26600369811058044
+        ]
+      ],
+      "triangles": 191732,
+      "draws": 15,
+      "meshes": 15
+    },
+    {
+      "name": "Seated_dario",
+      "bounds": [
+        [
+          -0.3863438069820404,
+          -0.20988766849040985,
+          -0.17141588032245636
+        ],
+        [
+          0.386313796043396,
+          1.5360000133514404,
+          0.8580038547515869
+        ]
+      ],
+      "triangles": 223100,
+      "draws": 15,
+      "meshes": 15
+    },
+    {
+      "name": "Standing_sam",
+      "bounds": [
+        [
+          -0.3771079480648041,
+          0.02211236022412777,
+          -0.16065385599514942
+        ],
+        [
+          0.376919686794281,
+          2.026214122772217,
+          0.26600369811058044
+        ]
+      ],
+      "triangles": 189444,
+      "draws": 16,
+      "meshes": 16
+    },
+    {
+      "name": "Seated_sam",
+      "bounds": [
+        [
+          -0.3785490095615387,
+          -0.20988766849040985,
+          -0.14878419041633606
+        ],
+        [
+          0.3786562979221344,
+          1.5262141227722168,
+          0.8580038547515869
+        ]
+      ],
+      "triangles": 220296,
+      "draws": 16,
+      "meshes": 16
+    },
+    {
+      "name": "Standing_elon",
+      "bounds": [
+        [
+          -0.4168185293674469,
+          0.02299685378957328,
+          -0.17232890275246088
+        ],
+        [
+          0.4168137311935425,
+          2.084159869995119,
+          0.26600369811058044
+        ]
+      ],
+      "triangles": 193874,
+      "draws": 17,
+      "meshes": 17
+    },
+    {
+      "name": "Seated_elon",
+      "bounds": [
+        [
+          -0.42142176628112793,
+          -0.20988766849040985,
+          -0.16327981650829315
+        ],
+        [
+          0.4215831160545349,
+          1.503999948501587,
+          0.8580038547515869
+        ]
+      ],
+      "triangles": 226686,
+      "draws": 17,
+      "meshes": 17
+    },
+    {
+      "name": "Standing_jensen",
+      "bounds": [
+        [
+          -0.3838798999786377,
+          0.021382652505435473,
+          -0.15931277801032184
+        ],
+        [
+          0.38377904891967773,
+          1.9175610538616183,
+          0.26600369811058044
+        ]
+      ],
+      "triangles": 196456,
+      "draws": 18,
+      "meshes": 18
+    },
+    {
+      "name": "Seated_jensen",
+      "bounds": [
+        [
+          -0.3862896263599396,
+          -0.20988766849040985,
+          -0.14879044890403748
+        ],
+        [
+          0.3864000737667084,
+          1.4830000400543213,
+          0.8580038547515869
+        ]
+      ],
+      "triangles": 228312,
+      "draws": 18,
+      "meshes": 18
+    }
+  ],
+  "runtimeContract": [
+    {
+      "name": "Vehicle",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 57814,
+      "draws": 24,
+      "meshes": 24,
+      "bounds": [
+        [
+          -1.0999999046325684,
+          0.011671348873409315,
+          -2.059999942779541
+        ],
+        [
+          1.100000023841858,
+          1.2656277418136597,
+          2.009999990463257
+        ]
+      ]
+    },
+    {
+      "name": "Wheel_FL",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.8999999761581421,
+        0.4000000059604645,
+        1.2200000286102295,
+        1
+      ],
+      "triangles": 5692,
+      "draws": 3,
+      "meshes": 3,
+      "bounds": [
+        [
+          -1.0860001023272534,
+          0.011671374323787398,
+          0.8314999938011169
+        ],
+        [
+          -0.7974999289668366,
+          0.7883286668126445,
+          1.6085000038146973
+        ]
+      ]
+    },
+    {
+      "name": "Wheel_FR",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.8999999761581421,
+        0.4000000059604645,
+        1.2200000286102295,
+        1
+      ],
+      "triangles": 5692,
+      "draws": 3,
+      "meshes": 3,
+      "bounds": [
+        [
+          0.7974999289668366,
+          0.011671348873409315,
+          0.8314999938011169
+        ],
+        [
+          1.0860002067570627,
+          0.7883286413622664,
+          1.6085000038146973
+        ]
+      ]
+    },
+    {
+      "name": "Wheel_RL",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.8999999761581421,
+        0.4000000059604645,
+        -1.2699999809265137,
+        1
+      ],
+      "triangles": 5692,
+      "draws": 3,
+      "meshes": 3,
+      "bounds": [
+        [
+          -1.0860001023272534,
+          0.011671374323787398,
+          -1.658500075340271
+        ],
+        [
+          -0.7974999289668366,
+          0.7883286668126445,
+          -0.8815001249313354
+        ]
+      ]
+    },
+    {
+      "name": "Wheel_RR",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0.8999999761581421,
+        0.4000000059604645,
+        -1.2699999809265137,
+        1
+      ],
+      "triangles": 5692,
+      "draws": 3,
+      "meshes": 3,
+      "bounds": [
+        [
+          0.7974999289668366,
+          0.011671348873409315,
+          -1.658500075340271
+        ],
+        [
+          1.0860002067570627,
+          0.7883286413622664,
+          -0.8815001249313354
+        ]
+      ]
+    },
+    {
+      "name": "Steering",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        -0.3499999940395355,
+        0.9900000095367432,
+        0.03999999910593033,
+        1
+      ],
+      "triangles": 1020,
+      "draws": 2,
+      "meshes": 2,
+      "bounds": [
+        [
+          -0.5598208904266357,
+          0.830588161945343,
+          -0.05994955822825432
+        ],
+        [
+          -0.1402379870414734,
+          1.149993896484375,
+          0.1391683965921402
+        ]
+      ]
+    },
+    {
+      "name": "Standing_dario",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1.024999976158142,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 191732,
+      "draws": 15,
+      "meshes": 15,
+      "bounds": [
+        [
+          -0.3838351368904114,
+          0.022665168702531213,
+          -0.18261465843233687
+        ],
+        [
+          0.3837970197200775,
+          2.0868999651432034,
+          0.26600369811058044
+        ]
+      ]
+    },
+    {
+      "name": "Seated_dario",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 223100,
+      "draws": 15,
+      "meshes": 15,
+      "bounds": [
+        [
+          -0.3863438069820404,
+          -0.20988766849040985,
+          -0.17141588032245636
+        ],
+        [
+          0.386313796043396,
+          1.5360000133514404,
+          0.8580038547515869
+        ]
+      ]
+    },
+    {
+      "name": "Standing_sam",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 189444,
+      "draws": 16,
+      "meshes": 16,
+      "bounds": [
+        [
+          -0.3771079480648041,
+          0.02211236022412777,
+          -0.16065385599514942
+        ],
+        [
+          0.376919686794281,
+          2.026214122772217,
+          0.26600369811058044
+        ]
+      ]
+    },
+    {
+      "name": "Seated_sam",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 220296,
+      "draws": 16,
+      "meshes": 16,
+      "bounds": [
+        [
+          -0.3785490095615387,
+          -0.20988766849040985,
+          -0.14878419041633606
+        ],
+        [
+          0.3786562979221344,
+          1.5262141227722168,
+          0.8580038547515869
+        ]
+      ]
+    },
+    {
+      "name": "Standing_elon",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1.0399999618530273,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 193874,
+      "draws": 17,
+      "meshes": 17,
+      "bounds": [
+        [
+          -0.4168185293674469,
+          0.02299685378957328,
+          -0.17232890275246088
+        ],
+        [
+          0.4168137311935425,
+          2.084159869995119,
+          0.26600369811058044
+        ]
+      ]
+    },
+    {
+      "name": "Seated_elon",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 226686,
+      "draws": 17,
+      "meshes": 17,
+      "bounds": [
+        [
+          -0.42142176628112793,
+          -0.20988766849040985,
+          -0.16327981650829315
+        ],
+        [
+          0.4215831160545349,
+          1.503999948501587,
+          0.8580038547515869
+        ]
+      ]
+    },
+    {
+      "name": "Standing_jensen",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0.9670000076293945,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 196456,
+      "draws": 18,
+      "meshes": 18,
+      "bounds": [
+        [
+          -0.3838798999786377,
+          0.021382652505435473,
+          -0.15931277801032184
+        ],
+        [
+          0.38377904891967773,
+          1.9175610538616183,
+          0.26600369811058044
+        ]
+      ]
+    },
+    {
+      "name": "Seated_jensen",
+      "localMatrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "triangles": 228312,
+      "draws": 18,
+      "meshes": 18,
+      "bounds": [
+        [
+          -0.3862896263599396,
+          -0.20988766849040985,
+          -0.14879044890403748
+        ],
+        [
+          0.3864000737667084,
+          1.4830000400543213,
+          0.8580038547515869
+        ]
+      ]
+    }
+  ],
+  "outerwear": [
+    {
+      "name": "dario / cotton jersey",
+      "primitives": 2,
+      "images": {
+        "normal": 0,
+        "baseColor": 1,
+        "metallicRoughness": 2
+      }
+    },
+    {
+      "name": "sam / woven cotton poplin",
+      "primitives": 2,
+      "images": {
+        "normal": 11,
+        "baseColor": 12,
+        "metallicRoughness": 13
+      }
+    },
+    {
+      "name": "elon / charcoal cotton twill",
+      "primitives": 2,
+      "images": {
+        "normal": 3,
+        "baseColor": 14,
+        "metallicRoughness": 5
+      }
+    },
+    {
+      "name": "jensen / charcoal pebbled leather",
+      "primitives": 2,
+      "images": {
+        "normal": 17,
+        "baseColor": 18,
+        "metallicRoughness": 19
+      }
+    }
+  ],
+  "complexion": [
+    {
+      "name": "Standing_dario",
+      "primitives": 1
+    },
+    {
+      "name": "Seated_dario",
+      "primitives": 1
+    },
+    {
+      "name": "Standing_sam",
+      "primitives": 1
+    },
+    {
+      "name": "Seated_sam",
+      "primitives": 1
+    },
+    {
+      "name": "Standing_elon",
+      "primitives": 1
+    },
+    {
+      "name": "Seated_elon",
+      "primitives": 1
+    },
+    {
+      "name": "Standing_jensen",
+      "primitives": 1
+    },
+    {
+      "name": "Seated_jensen",
+      "primitives": 1
+    }
+  ],
+  "garage": {
+    "bytes": 6538296,
+    "sha256": "cd56144d46860d947b21a346955569c56df485b581c83544c965415eb2a51617"
+  },
+  "warnings": [
+    "Material draw count increased; inspect whether new detail can share existing materials."
+  ],
+  "measurement": "Triangles and draw estimates sum active mesh primitives from accessor metadata. Actual frame draws depend on selected actors, passes, shadows, culling and runtime copies. Compressed geometry requires the normal loader/render smoke as well.",
+  "comparison": {
+    "baseline": "074d9cd:public/assets/models/racer-kit.glb",
+    "bytesDelta": 1350420,
+    "trianglesDelta": -128296,
+    "drawsDelta": 24,
+    "roots": [
+      {
+        "name": "Vehicle",
+        "trianglesDelta": 0,
+        "drawsDelta": 0
+      },
+      {
+        "name": "Standing_dario",
+        "trianglesDelta": -14742,
+        "drawsDelta": 2
+      },
+      {
+        "name": "Seated_dario",
+        "trianglesDelta": -14742,
+        "drawsDelta": 2
+      },
+      {
+        "name": "Standing_sam",
+        "trianglesDelta": -16674,
+        "drawsDelta": 3
+      },
+      {
+        "name": "Seated_sam",
+        "trianglesDelta": -16674,
+        "drawsDelta": 3
+      },
+      {
+        "name": "Standing_elon",
+        "trianglesDelta": -16174,
+        "drawsDelta": 3
+      },
+      {
+        "name": "Seated_elon",
+        "trianglesDelta": -16174,
+        "drawsDelta": 3
+      },
+      {
+        "name": "Standing_jensen",
+        "trianglesDelta": -16778,
+        "drawsDelta": 4
+      },
+      {
+        "name": "Seated_jensen",
+        "trianglesDelta": -16338,
+        "drawsDelta": 4
+      }
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "source": "/Users/naderkhalil/Projects/SF1/art/source/racers-and-garage.blend",
+  "sourceUnmodified": true,
+  "coordinateConvention": "Game Y-up/+Z-front becomes Blender Z-up/-Y-front.",
+  "lighting": "Identical neutral area lights; orthographic front and 32-degree views; AgX no exposure adjustment.",
+  "actors": [
+    {
+      "root": "Standing_dario",
+      "label": "DARIO AMODEI",
+      "meshObjects": 15,
+      "blenderBounds": [
+        [
+          -0.3838351368904114,
+          -0.26600369811058044,
+          0.022665169090032578
+        ],
+        [
+          0.3837970197200775,
+          0.18261465430259705,
+          2.086899995803833
+        ]
+      ]
+    },
+    {
+      "root": "Standing_sam",
+      "label": "SAM ALTMAN",
+      "meshObjects": 16,
+      "blenderBounds": [
+        [
+          -0.3771079480648041,
+          -0.26600369811058044,
+          0.02211236022412777
+        ],
+        [
+          0.376919686794281,
+          0.16065385937690735,
+          2.026214122772217
+        ]
+      ]
+    },
+    {
+      "root": "Standing_elon",
+      "label": "ELON MUSK",
+      "meshObjects": 17,
+      "blenderBounds": [
+        [
+          -0.4168185293674469,
+          -0.26600369811058044,
+          0.022996854037046432
+        ],
+        [
+          0.4168137311935425,
+          0.1723289042711258,
+          2.0841598510742188
+        ]
+      ]
+    },
+    {
+      "root": "Standing_jensen",
+      "label": "JENSEN HUANG",
+      "meshObjects": 18,
+      "blenderBounds": [
+        [
+          -0.3838798999786377,
+          -0.26600369811058044,
+          0.0213826522231102
+        ],
+        [
+          0.38377904891967773,
+          0.15931276977062225,
+          1.9175610542297363
+        ]
+      ]
+    }
+  ],
+  "contactSheet": "/Users/naderkhalil/Projects/SF1/art/reviews/racers-portraits.png",
+  "renders": [
+    "/Users/naderkhalil/Projects/SF1/art/reviews/racers-portraits-front.png",
+    "/Users/naderkhalil/Projects/SF1/art/reviews/racers-portraits-three-quarter.png",
+    "/Users/naderkhalil/Projects/SF1/art/reviews/racers-portraits-lineup.png"
+  ],
+  "pixels": [
+    2048,
+    1360
+  ],
+  "engine": "BLENDER_EEVEE_NEXT"
+}

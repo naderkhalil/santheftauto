@@ -40,6 +40,15 @@ Street relationships, approximate building footprints, named parcels and stairs 
 
 The terraced plaza composition also references the public [Union Square overview photograph](https://commons.wikimedia.org/wiki/File:San_Francisco_Union_Square.jpg). Its pixels are not used as a runtime texture. Terrace elevations, planted beds, seven palm placements, four jacaranda placements, furnishings and the subway entrance are an original game interpretation rather than a surveyed reconstruction.
 
+## Playable character surfaces
+
+The four stylized driver sculptures, their clothing construction, and the
+leather/jersey/poplin/twill/rib material maps are original generated project work.
+Their editable source is `art/source/racers-and-garage.blend`; generators are
+`tools/blender/racer_characters.py`, `racer_materials.py`, and `racer_surfaces.py`.
+The small seamless texture sources live in `art/textures/racers/` and are embedded
+in `racer-kit.glb`. No photographs are projected onto the faces or garments.
+
 ## Runtime decoder
 
 The locally bundled Draco WebAssembly decoder and wrapper are from the Three.js glTF decoder distribution (Google Draco, Apache License 2.0). [License](draco/LICENSE). Three.js itself uses the MIT license.

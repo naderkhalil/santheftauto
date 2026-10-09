@@ -4,6 +4,69 @@ The reference-based art stretch covers the four Union Square frontages, surround
 
 ## Delivered models
 
+### Playable drivers
+
+The four drivers are original stylized Blender sculpts. The standing selection
+models and seated racing models share the same facial construction and wardrobe:
+
+| Driver | Facial construction | Wardrobe |
+| --- | --- | --- |
+| Dario | Long face, arched projecting nose, deeper eye sockets, dark curl clusters and subtle beard shading | Blue cotton jersey crewneck |
+| Sam | Narrow lower face, defined long nose, hooded eyes, asymmetric mouth and swept hair | Pale woven cotton shirt |
+| Elon | Broad jaw and cheeks, fuller chin, recessed eyes and swept receding hairline | Charcoal twill jacket |
+| Jensen | High broad cheekbones, compact eyes, wider nasal base, silver brushed hair and rectangular glasses | Black pebbled leather jacket with rib trim, shaped folds, seams and metal zipper teeth |
+
+`tools/blender/racer_characters.py` authors the faces, hair, bodies and poses.
+`racer_materials.py` creates original seamless color, normal and roughness maps
+in `art/textures/racers/`. These are actual embedded glTF image textures;
+Blender-only procedural shaders are not relied on in the browser.
+`racer_surfaces.py` shapes garment tension folds, adds construction details,
+assigns metric UVs after remeshing, and batches meshes by material.
+
+The editable master is `art/source/racers-and-garage.blend`, and the shared runtime
+asset is `public/assets/models/racer-kit.glb`. To rebuild only the people while
+retaining the approved car and garage geometry:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/blender/rebuild_racer_characters.py
+node tools/validate-racers.mjs
+```
+
+`tools/blender/build_racer_assets.py` remains the complete car, garage and driver
+rebuild. Bump `RACER_ASSET_VERSION` in `src/racer-assets.ts` when replacing the kit.
+Review both front and three-quarter views, then check the selection screen and
+the seated driver in the actual game:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/blender/review_racer_characters.py -- --input art/source/racers-and-garage.blend --output art/reviews/racers-portraits.png
+```
+
+With Vite running, `/art/characters/portraits.html` provides a close review of the
+exported GLB using browser lighting and materials. This authoring page is not a
+production entry point. Rendered studies are review artifacts, not replacement
+portraits or billboards in the game.
+
+Facial patches follow the sculpted surface with adaptive subdivision. Preserve
+that curvature when editing the eyes: a long, flat sclera triangle can cover
+the iris even when its boundary sits behind it. Review visible pupils, lid
+clearance, nose profiles and mouth shapes from both angles. Clothing grain is
+small-scale texture; collars, folds, seams and zipper hardware use geometry.
+
+The 9 October 2026 character export is 7,412,076 bytes (7.41 MB), with
+1,727,714 triangles across the car and all eight standing/seated models: 6.9%
+fewer triangles than the preceding kit. The 23 embedded images and UVs increase
+the download by 1.35 MB. There are 156 material primitives across the entire
+kit, an increase of 2–4 per driver; these are asset counts, not whole-frame
+performance measurements. The garage export remains byte-for-byte unchanged.
+
+The runtime validator, four asset/profile tests and Cloudflare production build
+pass. The actual GLB was reviewed in the browser from front and three-quarter
+angles, and in the game's driver lineup and seated car preview. The Blender
+contact sheet and runtime report are saved in `art/reviews/racers-portraits.png`
+and `art/reviews/racers-runtime.json`. Browser close-ups are saved beside them.
+
+### City assets
+
 | Asset | Close triangles | Runtime draws | Delivery |
 | --- | ---: | ---: | --- |
 | Westin historic hotel and rear towers | 236,697 | 13 | 5.28 MB Draco GLB |
@@ -139,7 +202,7 @@ The contact-shading pass reuses the main render's shadow map and excludes transp
 
 ## Scope and next assets
 
-This is a reference-informed, compressed interpretation. No claim of photogrammetry or survey-level dimensional accuracy is made. The square now has distinct architecture on every side, but the wider city, people and ordinary vehicles still show the earlier procedural style. The next useful art work is Dragon Gate and Grant storefronts, then close street life and the other neighborhoods, judged in the actual racing camera.
+This is a reference-informed, compressed interpretation. No claim of photogrammetry or survey-level dimensional accuracy is made. The square now has distinct architecture on every side, and the four playable drivers use the Blender sculpts described above. The wider city, background pedestrians and ordinary street vehicles still show the earlier procedural style. The next useful art work is Dragon Gate and Grant storefronts, then close street life and the other neighborhoods, judged in the actual racing camera.
 
 The entire pre-art game is preserved at `pre-art-direction-v2` (`3f03057`), the first Westin-focused Blender pass at `union-square-blender-v1` (`ffae8dc`), and the preceding wider square at `union-square-fidelity-v2`. The last of these predates the map handedness correction, complete block expansion and Blender street furniture. Keep those tags when iterating or comparing versions.
 
