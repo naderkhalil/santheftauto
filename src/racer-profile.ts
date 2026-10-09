@@ -3,7 +3,7 @@ export const DRIVERS = [
   { id: 'dario', name: 'Dario Amodei', short: 'Dario', color: '#f3aa7d', emoji: '◈', title: 'THE SAFETY DRIVER', bio: 'Ran 47 evals on this left turn.', move: 'Constitutional cornering', stat: 'CAUTION 99 · VIBES 100' },
   { id: 'sam', name: 'Sam Altman', short: 'Sam', color: '#b8a3ff', emoji: '✳', title: 'THE LAUNCH GUY', bio: 'The next lap will change everything.', move: 'One more launch', stat: 'HYPE 100 · ETA SOON' },
   { id: 'elon', name: 'Elon Musk', short: 'Elon', color: '#80c8f8', emoji: '↗', title: 'THE ROCKET WILDCARD', bio: 'Missed the turn. Entered orbit.', move: 'Unscheduled space program', stat: 'THRUST 100 · CHILL 0' },
-  { id: 'jensen', name: 'Jensen Huang', short: 'Jensen', color: '#c4f36a', emoji: '▧', title: 'THE GPU DADDY', bio: 'The more you boost, the more you save.', move: 'Full leather acceleration', stat: 'JACKET 100 · VRAM 999' },
+  { id: 'jensen', name: 'Jensen Huang', short: 'Jensen', color: '#c4f36a', emoji: '▧', title: 'THE GPU DADDY', bio: 'Fully accelerated.', move: 'Full leather acceleration', stat: 'JACKET 100 · VRAM 999' },
 ] as const;
 export const CARS = [
   { id: 'sundrop', name: 'Sundrop Roadster', color: '#427e7c', roof: '#ffe4aa', description: 'The original city flyer' },
