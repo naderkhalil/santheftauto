@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "whimsical-sf",
+  "account_id": "e445939a8472c94322a1d7a4a246a170",
+  "main": "cloudflare/index.ts",
+  "compatibility_date": "2026-10-08",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist-cloudflare",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/ops/*", "/healthz", "/readyz"],
+    "not_found_handling": "none"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "RaceRoom" }]
+  },
+  "migrations": [{ "tag": "v1-race-rooms", "new_sqlite_classes": ["RaceRoom"] }],
+  "ratelimits": [
+    { "name": "ADMISSION_LIMITER", "namespace_id": "2026100801", "simple": { "limit": 600, "period": 60 } },
+    { "name": "API_LIMITER", "namespace_id": "2026100802", "simple": { "limit": 60000, "period": 60 } }
+  ],
+  "vars": { "NEW_ROOMS_ENABLED": "true" },
+  "limits": { "cpu_ms": 30000 },
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}

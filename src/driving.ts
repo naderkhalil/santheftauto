@@ -48,6 +48,16 @@ export type DriveState = {
 };
 export type RaceEvent = 'checkpoint' | 'finish' | 'missed-gate' | 'crash' | 'launch' | 'land' | 'boost-pad';
 export type PropImpact = { id: string; x: number; y: number; z: number; vx: number; vz: number; speed: number };
+/** Dynamic physics only; restore with the same route and obstacle configuration. */
+export type DrivingCheckpoint = {
+  version: 1; state: DriveState; lateralVelocity: number; steering: number;
+  wallBlocked: boolean; edgeCooldown: number; activeLaunch: number | null; liftBias: number;
+  launchedZones: number[]; collectedBoosts: number[]; surgeSpeed: number;
+  boostLocked: boolean; lastBoosting: boolean; hitObstacles: number[];
+  explorationEnabled: boolean; untimed: boolean; explorationActive: boolean;
+  worldX: number; worldZ: number; safeProgress: number; plazaHop: boolean;
+  knockedProps: string[]; propImpacts: PropImpact[]; scrapeNormals: string[];
+};
 
 const STEP = 1 / 120;
 const CAR_HALF_WIDTH = .95;
@@ -168,6 +178,7 @@ export class DrivingSimulation {
   private explorationActive = false;
   private worldX: number;
   private worldZ: number;
+  private networkPosition: { x: number; z: number } | null = null;
   private safeProgress: number;
   private playgroundObstacles: SolidBox[] = [];
   private plazaHop = false;
@@ -181,6 +192,7 @@ export class DrivingSimulation {
   drainPropImpacts(): PropImpact[] { return this.propImpacts.splice(0); }
   get exploring(): boolean { return this.explorationActive; }
   get position(): { x: number; y: number; z: number } {
+    if (this.networkPosition) return { ...this.networkPosition, y: this.state.y };
     return this.explorationActive ? { x: this.worldX, y: this.state.y, z: this.worldZ } : { ...this.route.routePoint(this.state.progress, this.state.lateral), y: this.state.y };
   }
   get groundHeight(): number { return this.explorationActive ? this.explorationSupportHeight() : this.route.sampleRoute(this.state.progress).y; }
@@ -212,6 +224,7 @@ export class DrivingSimulation {
   }
 
   reset() {
+    this.networkPosition = null;
     this.state = initialState(this.route);
     this.untimed = false;
     this.lateralVelocity = 0;
@@ -231,6 +244,72 @@ export class DrivingSimulation {
     this.safeProgress = this.route.START_PROGRESS;
     this.plazaHop = false;
     this.knockedProps.clear(); this.propImpacts.length = 0; this.scrapeNormals.clear();
+  }
+
+  exportState(): DrivingCheckpoint {
+    return {
+      version: 1, state: { ...this.state }, lateralVelocity: this.lateralVelocity, steering: this.steering,
+      wallBlocked: this.wallBlocked, edgeCooldown: this.edgeCooldown,
+      activeLaunch: this.activeLaunch ? this.route.LAUNCH_ZONES.indexOf(this.activeLaunch) : null,
+      liftBias: this.liftBias, launchedZones: [...this.launchedZones], collectedBoosts: [...this.collectedBoosts],
+      surgeSpeed: this.surgeSpeed, boostLocked: this.boostLocked, lastBoosting: this.lastBoosting,
+      hitObstacles: [...this.hitObstacles], explorationEnabled: this.explorationEnabled,
+      untimed: this.untimed, explorationActive: this.explorationActive,
+      worldX: this.worldX, worldZ: this.worldZ, safeProgress: this.safeProgress, plazaHop: this.plazaHop,
+      knockedProps: [...this.knockedProps], propImpacts: this.propImpacts.map(impact => ({ ...impact })),
+      scrapeNormals: [...this.scrapeNormals],
+    };
+  }
+
+  /** Validate completely before replacing state; never simulate time spent offline. */
+  restoreState(value: unknown): void {
+    const fail = (): never => { throw new Error('Invalid driving checkpoint.'); };
+    const record = (input: unknown): Record<string, unknown> => input !== null && typeof input === 'object' && !Array.isArray(input) ? input as Record<string, unknown> : fail();
+    const number = (input: unknown) => typeof input === 'number' && Number.isFinite(input) && Math.abs(input) <= 1e9 ? input : fail();
+    const boolean = (input: unknown) => typeof input === 'boolean' ? input : fail();
+    const strings = (input: unknown) => {
+      if (!Array.isArray(input) || input.length > 10000 || input.some(item => typeof item !== 'string' || item.length > 128) || new Set(input).size !== input.length) return fail();
+      return input as string[];
+    };
+    const indexes = (input: unknown, length: number) => {
+      if (!Array.isArray(input) || input.length > length || input.some(item => !Number.isSafeInteger(item) || item < 0 || item >= length) || new Set(input).size !== input.length) return fail();
+      return input as number[];
+    };
+    const source = record(value), rawState = record(source.state);
+    if (source.version !== 1) fail();
+    const state = Object.fromEntries(Object.entries(initialState(this.route)).map(([key, initial]) => [key,
+      typeof initial === 'boolean' ? boolean(rawState[key]) : number(rawState[key])])) as DriveState;
+    if (state.progress < 0 || state.progress > this.route.TRACK_LENGTH || state.elapsed < 0 || !Number.isSafeInteger(state.checkpoint) || state.checkpoint < 0 || state.checkpoint > this.route.CHECKPOINTS.length) fail();
+    for (const count of [state.launches, state.collisions]) if (!Number.isSafeInteger(count) || count < 0) fail();
+    const activeLaunch = source.activeLaunch === null ? null : indexes([source.activeLaunch], this.route.LAUNCH_ZONES.length)[0];
+    if (!Array.isArray(source.propImpacts) || source.propImpacts.length > 10000) fail();
+    const propImpacts = (source.propImpacts as unknown[]).map(value => {
+      const impact = record(value);
+      if (typeof impact.id !== 'string' || impact.id.length > 128) fail();
+      return { id: impact.id as string, x: number(impact.x), y: number(impact.y), z: number(impact.z), vx: number(impact.vx), vz: number(impact.vz), speed: number(impact.speed) };
+    });
+    const parsed: DrivingCheckpoint = {
+      version: 1, state, lateralVelocity: number(source.lateralVelocity), steering: number(source.steering),
+      wallBlocked: boolean(source.wallBlocked), edgeCooldown: number(source.edgeCooldown), activeLaunch,
+      liftBias: number(source.liftBias), launchedZones: indexes(source.launchedZones, this.route.LAUNCH_ZONES.length),
+      collectedBoosts: indexes(source.collectedBoosts, this.route.BOOST_ZONES?.length ?? 0),
+      surgeSpeed: number(source.surgeSpeed), boostLocked: boolean(source.boostLocked), lastBoosting: boolean(source.lastBoosting),
+      hitObstacles: indexes(source.hitObstacles, this.obstacles.length), explorationEnabled: boolean(source.explorationEnabled),
+      untimed: boolean(source.untimed), explorationActive: boolean(source.explorationActive),
+      worldX: number(source.worldX), worldZ: number(source.worldZ), safeProgress: number(source.safeProgress), plazaHop: boolean(source.plazaHop),
+      knockedProps: strings(source.knockedProps), propImpacts, scrapeNormals: strings(source.scrapeNormals),
+    };
+    if (parsed.safeProgress < 0 || parsed.safeProgress > this.route.TRACK_LENGTH || (this.customRoute && parsed.explorationEnabled)) fail();
+    this.networkPosition = null;
+    this.state = parsed.state; this.lateralVelocity = parsed.lateralVelocity; this.steering = parsed.steering;
+    this.wallBlocked = parsed.wallBlocked; this.edgeCooldown = parsed.edgeCooldown;
+    this.activeLaunch = parsed.activeLaunch === null ? undefined : this.route.LAUNCH_ZONES[parsed.activeLaunch];
+    this.liftBias = parsed.liftBias; this.launchedZones = new Set(parsed.launchedZones); this.collectedBoosts = new Set(parsed.collectedBoosts);
+    this.surgeSpeed = parsed.surgeSpeed; this.boostLocked = parsed.boostLocked; this.lastBoosting = parsed.lastBoosting;
+    this.hitObstacles = new Set(parsed.hitObstacles); this.explorationEnabled = parsed.explorationEnabled;
+    this.untimed = parsed.untimed; this.explorationActive = parsed.explorationActive;
+    this.worldX = parsed.worldX; this.worldZ = parsed.worldZ; this.safeProgress = parsed.safeProgress; this.plazaHop = parsed.plazaHop;
+    this.knockedProps = new Set(parsed.knockedProps); this.propImpacts = parsed.propImpacts; this.scrapeNormals = new Set(parsed.scrapeNormals);
   }
 
   /** Start the public-square playground without a race countdown. */
@@ -276,11 +355,16 @@ export class DrivingSimulation {
   applyNetworkState(state: DriveState, position: {x:number;z:number}, exploring: boolean) {
     Object.assign(this.state, state);
     this.worldX = position.x; this.worldZ = position.z;
+    // Network playback interpolates in world space, including corners and the
+    // plaza/road boundary. Re-projecting its pose from route progress discards
+    // that interpolation and makes the car and camera jump at packet cadence.
+    this.networkPosition = { x: position.x, z: position.z };
     this.explorationActive = exploring;
   }
 
   /** Reposition for a retry without erasing race time, earned gates, or statistics. */
   seek(progress: number, lateral = 0) {
+    this.networkPosition = null;
     const s = this.state;
     this.activeLaunch = undefined;
     s.progress = clamp(Number.isFinite(progress) ? progress : this.route.START_PROGRESS, 0, this.route.TRACK_LENGTH);
@@ -302,6 +386,7 @@ export class DrivingSimulation {
   }
 
   update(dt: number, input: DriveInput): RaceEvent[] {
+    this.networkPosition = null;
     const events: RaceEvent[] = [];
     if (!Number.isFinite(dt) || dt <= 0 || this.state.finished) return events;
     const controls = {

@@ -19,9 +19,18 @@ for the full flow, hosting, sponsor artwork, reconnects and verification.
 Internet invitations require the game and its room server to run together on a
 public HTTPS origin; local play does not establish internet validation.
 
+## Cloudflare deployment
+
+The primary deployment uses Cloudflare Workers for the website and one Durable
+Object per multiplayer room. See the [Cloudflare runbook](docs/cloudflare.md)
+for account setup, deployment, recovery, validation, and the $500 monthly budget.
+Build with `npm run build:cloudflare`, preview with `npm run dev:cloudflare`, and
+publish with `npm run deploy:cloudflare`. The [Node/Render runbook](docs/launch.md)
+is retained as a fallback.
+
 ## Usage analytics
 
-Production builds send anonymous page views, page leaves, and session IDs to
+Production builds send page views, page leaves, and session IDs to
 [PostHog project 398694](https://us.posthog.com/project/398694). Open **Web analytics**
 there for unique visitors, visits (sessions), page views, and visit duration. In
 **Product analytics**, `$pageview` with **Unique users** counts visitors; unique
@@ -41,11 +50,56 @@ Tracking is off in `npm run dev` and on in production builds, including
 explicitly enable development testing. After deploying, visit the site and check
 PostHog's **Activity** for `$pageview` events with a `$session_id`.
 
-Analytics loads independently of the game. It does not record replays, input
-values, driver names, or automatic button clicks. URL query strings and fragments
+Analytics loads independently of the game. It records race nicknames and the
+lineup explicitly through the gameplay events below; it does not record replays,
+other input values, or automatic button clicks. URL query strings and fragments
 (including private room codes) are removed from event URL/referrer properties
-before sending. Page-leave events provide visit-duration data when the browser
-can deliver them.
+before sending. Room credentials are never included in gameplay events.
+Page-leave events provide visit-duration data when the browser can deliver them.
+
+### Finishes and playing together
+
+| Event | When it is recorded |
+| --- | --- |
+| `game_started` | A solo race begins its countdown, or a multiplayer entrant first receives the active countdown/race. Opening setup alone does not count. |
+| `game_finished` | The player actually finishes a race. Multiplayer uses the server's finish time. |
+| `game_dnf` | The browser receives its own multiplayer did-not-finish result. This never counts as a finish. |
+
+Free exploration and Watch a Run are excluded. Each browser reports only its
+own race events. Repeated snapshots and reconnects in the same browser tab are
+deduplicated across reloads when session storage is available. A fresh rematch
+has a new `game_id`; reopening results does not create another start.
+
+Every event includes `game_id`, `mode` (`solo` or `multiplayer`), `course`,
+`player_id`, `player_name`, `player_count` (including the player), `friends_count`
+(other players), `participant_names`, `friend_names`, and `participants` (IDs
+paired with names). Finishes add `finish_seconds`; DNFs add `dnf_reason`.
+Multiplayer participants come from the frozen starting lineup, including anyone
+who later leaves. Names are the nicknames players entered, not verified real
+identities or selected character names. Duplicate nicknames remain separate
+participants. PostHog still uses its anonymous browser ID for counting visitors;
+it does not identify or merge people by nickname.
+
+To see the requested numbers in PostHog:
+
+1. **People who finish:** In **Product analytics → Trends**, select
+   `game_finished` and **Unique users**. Use **Total count** for completed runs.
+2. **Completion rate:** Build a funnel from `game_started` to `game_finished`,
+   holding `game_id` constant so the finish must belong to the same race.
+3. **How many friends they played with:** Select `game_started`, filter
+   `mode = multiplayer`, and break down by `friends_count`.
+4. **Who played together:** In **Activity**, select `game_started` and add
+   `game_id`, `player_name`, `participant_names`, and `friends_count` as columns.
+   Events with the same `game_id` belong to the same race. Filter by that ID to
+   see each player's finish or DNF, or export the table.
+
+Deploy both the frontend and room server for these events. Multiplayer game IDs
+are random round identifiers, not invitation codes; older servers with
+code-derived IDs are deliberately excluded from gameplay tracking. Collection
+starts after deployment and cannot reconstruct earlier games. Ad blockers,
+unavailable storage, or closing/disconnecting before a result arrives can cause
+missing or repeated browser events, so these are usage analytics rather than an
+authoritative results archive.
 
 ## Run
 

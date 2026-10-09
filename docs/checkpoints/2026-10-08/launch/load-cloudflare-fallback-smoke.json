@@ -1,0 +1,361 @@
+{
+  "schemaVersion": 2,
+  "runId": "05ea6f50-2b41-494a-8f40-303c5778ad37",
+  "startedAt": "2026-10-09T03:01:30.904Z",
+  "finishedAt": "2026-10-09T03:01:38.995Z",
+  "node": "v22.21.0",
+  "platform": "darwin",
+  "scope": "Loopback HTTP/WebSocket/SSE transport and simulation; excludes browsers, rendering, assets, TLS and internet latency.",
+  "config": {
+    "base": "http://127.0.0.1:8791",
+    "requestedRooms": 1,
+    "playersPerRoom": 2,
+    "measuredSecondsRequested": 3,
+    "wire": "v2",
+    "inputTransport": "http",
+    "feedTransport": "sse",
+    "inputHz": 20,
+    "heartbeatSeconds": 2
+  },
+  "actual": {
+    "rooms": 1,
+    "clients": 2,
+    "duplexClients": 0,
+    "sseClients": 2,
+    "measuredSeconds": 3.0010457080000004,
+    "capacityRejected": 0,
+    "admissionRetries": 0,
+    "placementSupported": true,
+    "interrupted": false,
+    "failure": null
+  },
+  "requests": {
+    "setup:placement": {
+      "attempts": 1,
+      "ok": 1,
+      "statuses": {
+        "200": 1
+      },
+      "latencyMs": {
+        "count": 1,
+        "p50": 5.511,
+        "p95": 5.511,
+        "p99": 5.511,
+        "max": 5.510583999999994,
+        "mean": 5.510583999999994
+      }
+    },
+    "setup:create": {
+      "attempts": 1,
+      "ok": 1,
+      "statuses": {
+        "201": 1
+      },
+      "latencyMs": {
+        "count": 1,
+        "p50": 4.611,
+        "p95": 4.611,
+        "p99": 4.611,
+        "max": 4.610583000000005,
+        "mean": 4.610583000000005
+      }
+    },
+    "setup:join": {
+      "attempts": 1,
+      "ok": 1,
+      "statuses": {
+        "201": 1
+      },
+      "latencyMs": {
+        "count": 1,
+        "p50": 2.378,
+        "p95": 2.378,
+        "p99": 2.378,
+        "max": 2.378167000000005,
+        "mean": 2.378167000000005
+      }
+    },
+    "setup:selection": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 5.964,
+        "p95": 6.377,
+        "p99": 6.377,
+        "max": 6.376542000000001,
+        "mean": 6.170104000000002
+      }
+    },
+    "setup:ready": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 2.486,
+        "p95": 2.918,
+        "p99": 2.918,
+        "max": 2.918208000000007,
+        "mean": 2.701916500000003
+      }
+    },
+    "warmup:start": {
+      "attempts": 1,
+      "ok": 1,
+      "statuses": {
+        "200": 1
+      },
+      "latencyMs": {
+        "count": 1,
+        "p50": 2.822,
+        "p95": 2.822,
+        "p99": 2.822,
+        "max": 2.8217499999999944,
+        "mean": 2.8217499999999944
+      }
+    },
+    "warmup:heartbeat": {
+      "attempts": 5,
+      "ok": 5,
+      "statuses": {
+        "200": 5
+      },
+      "latencyMs": {
+        "count": 5,
+        "p50": 3.941,
+        "p95": 5.525,
+        "p99": 5.525,
+        "max": 5.525416000000064,
+        "mean": 4.14473319999995
+      }
+    },
+    "warmup:input": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 2.659,
+        "p95": 3.073,
+        "p99": 3.073,
+        "max": 3.073374999999942,
+        "mean": 2.8660414999999375
+      }
+    },
+    "measurement:input": {
+      "attempts": 118,
+      "ok": 118,
+      "statuses": {
+        "200": 118
+      },
+      "latencyMs": {
+        "count": 118,
+        "p50": 2.994,
+        "p95": 7.834,
+        "p99": 9.9,
+        "max": 10.705665999999837,
+        "mean": 3.7326483389830036
+      }
+    },
+    "measurement:heartbeat": {
+      "attempts": 3,
+      "ok": 3,
+      "statuses": {
+        "200": 3
+      },
+      "latencyMs": {
+        "count": 3,
+        "p50": 6.154,
+        "p95": 6.469,
+        "p99": 6.469,
+        "max": 6.469207999999526,
+        "mean": 5.664429999999811
+      }
+    },
+    "cleanup:leave": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 3.23,
+        "p95": 3.485,
+        "p99": 3.485,
+        "max": 3.4853329999996276,
+        "mean": 3.3576459999999315
+      }
+    }
+  },
+  "errors": {
+    "count": 0,
+    "examples": []
+  },
+  "throughput": {
+    "sseBodyBytes": 66458,
+    "sseBodyBytesPerSecond": 22144.94761703909,
+    "sseBodyBytesPerClientSecond": 11072.473808519546,
+    "websocketResponseBodyBytes": 0,
+    "websocketResponseBodyBytesPerSecond": 0,
+    "feedBodyBytesPerSecond": 22144.94761703909,
+    "httpRequestBodyBytes": 13183,
+    "httpRequestBodyBytesPerSecond": 4392.802137220897,
+    "httpResponseBodyBytes": 4477,
+    "httpResponseBodyBytesPerSecond": 1491.8133329544075,
+    "websocketBodyBytes": 0,
+    "websocketBodyBytesPerSecond": 0,
+    "websocketInputFramesSent": 0,
+    "websocketAcknowledgementBytes": 0,
+    "websocketAcknowledgementsSent": 0,
+    "serverAcceptedWebsocketInputs": 118,
+    "deliveredInputsPerClientSecond": 19.659813858456566,
+    "inputScheduleTicks": 59,
+    "skippedInputs": 0
+  },
+  "streams": {
+    "frames": {
+      "tick": 128
+    },
+    "arrivalIntervalMs": {
+      "count": 128,
+      "p50": 51.223,
+      "p95": 53.866,
+      "p99": 55.108,
+      "max": 55.195709000000534,
+      "mean": 46.836923828125
+    },
+    "localClockSnapshotAgeMs": {
+      "count": 128,
+      "p50": 1,
+      "p95": 3,
+      "p99": 4,
+      "max": 4,
+      "mean": 1.4296875
+    },
+    "latestPhases": {
+      "racing": 2
+    }
+  },
+  "server": {
+    "healthBefore": {
+      "status": "ok",
+      "platform": "cloudflare",
+      "perRoom": true,
+      "acceptingNewRooms": true,
+      "roomMetrics": [
+        {
+          "roomIndex": 0,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 2,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 2,
+          "sockets": 0,
+          "ticks": 102,
+          "acceptedInputs": 2,
+          "rejected": 0,
+          "frames": 22,
+          "bytes": 30752
+        }
+      ],
+      "metrics": {
+        "ticks": 102,
+        "streamFrames": 22,
+        "streamBytes": 30752
+      },
+      "input": {
+        "acceptedInputs": 2
+      }
+    },
+    "healthAfter": {
+      "status": "ok",
+      "platform": "cloudflare",
+      "perRoom": true,
+      "acceptingNewRooms": true,
+      "roomMetrics": [
+        {
+          "roomIndex": 0,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 2,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 2,
+          "sockets": 0,
+          "ticks": 163,
+          "acceptedInputs": 120,
+          "rejected": 0,
+          "frames": 150,
+          "bytes": 97210
+        }
+      ],
+      "metrics": {
+        "ticks": 163,
+        "streamFrames": 150,
+        "streamBytes": 97210
+      },
+      "input": {
+        "acceptedInputs": 120
+      }
+    },
+    "healthSamples": [],
+    "metricDelta": {
+      "ticks": 61,
+      "streamFrames": 128,
+      "streamBytes": 66458
+    },
+    "counterReset": false,
+    "meanTickMs": null,
+    "inputLatencyMs": {
+      "count": 118,
+      "p50": 2.994,
+      "p95": 7.834,
+      "p99": 9.9,
+      "max": 10.705665999999837,
+      "mean": 3.7326483389830036
+    },
+    "note": "WebSocket input has no per-message acknowledgement: no input latency is fabricated. Outbound feed acknowledgements enforce queue limits, not input latency. HTTP heartbeat RTT remains measured. Cloudflare metrics aggregate only this run’s known room actors; there is no global room census. Counters reset on actor eviction, so negative deltas invalidate the measurement. Server tick timings are null when the runtime exposes only counts."
+  },
+  "loadGenerator": {
+    "eventLoopDelayMs": {
+      "p50": 10.952703,
+      "p95": 11.386879,
+      "p99": 11.976703,
+      "max": 14.934015
+    },
+    "note": "This is the load-generator process, not the server event loop. Both compete for the local machine CPU; results are not remote throughput claims."
+  },
+  "cleanup": {
+    "ownedRooms": 1,
+    "attempts": 2,
+    "success": 2,
+    "alreadyGone": 0,
+    "failed": 0
+  }
+}

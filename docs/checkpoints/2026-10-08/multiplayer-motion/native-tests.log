@@ -1,0 +1,105 @@
+
+> sf-night-run@0.1.0 test:cloudflare
+> node --experimental-strip-types --test cloudflare/*.test.ts
+
+TAP version 13
+# Subtest: workerd: public routing, origin checks, internal-header stripping and room isolation
+ok 1 - workerd: public routing, origin checks, internal-header stripping and room isolation
+  ---
+  duration_ms: 605.804833
+  type: 'test'
+  ...
+# Subtest: workerd: admission retries remain one identity, including kill-switch retry and DO eviction
+ok 2 - workerd: admission retries remain one identity, including kill-switch retry and DO eviction
+  ---
+  duration_ms: 346.208167
+  type: 'test'
+  ...
+# Subtest: workerd: native duplex sockets authenticate, share selection, gate host start and race together
+ok 3 - workerd: native duplex sockets authenticate, share selection, gate host start and race together
+  ---
+  duration_ms: 5264.562917
+  type: 'test'
+  ...
+# Subtest: workerd: physics timestamps track tick cadence without advancing on heartbeat broadcasts
+ok 4 - workerd: physics timestamps track tick cadence without advancing on heartbeat broadcasts
+  ---
+  duration_ms: 7200.840666
+  type: 'test'
+  ...
+# Heartbeat-only duplicates: 17; maximum native physics step: 54 ms.
+# Subtest: workerd: full race finishes through real driving inputs and both racers receive the same ordered results
+ok 5 - workerd: full race finishes through real driving inputs and both racers receive the same ordered results # SKIP Opt in with SF1_FULL_RACE=1 for the real-time complete race smoke.
+  ---
+  duration_ms: 0.161125
+  type: 'test'
+  ...
+# Subtest: workerd: SSE fallback broadcasts picks and claim takeover retires the previous controller
+ok 6 - workerd: SSE fallback broadcasts picks and claim takeover retires the previous controller
+  ---
+  duration_ms: 174.2665
+  type: 'test'
+  ...
+# Subtest: workerd: hibernated duplex sessions and persisted selections survive object eviction
+ok 7 - workerd: hibernated duplex sessions and persisted selections survive object eviction
+  ---
+  duration_ms: 196.306917
+  type: 'test'
+  ...
+# Subtest: workerd: valid duplex acknowledgements keep an otherwise idle host ready through hibernation
+ok 8 - workerd: valid duplex acknowledgements keep an otherwise idle host ready through hibernation
+  ---
+  duration_ms: 9279.713792
+  type: 'test'
+  ...
+# Subtest: workerd: persisted room expiry cannot be bypassed by join or creation retry
+ok 9 - workerd: persisted room expiry cannot be bypassed by join or creation retry
+  ---
+  duration_ms: 245.868334
+  type: 'test'
+  ...
+# Subtest: workerd: native rate limit bindings enforce admission and gameplay budgets
+ok 10 - workerd: native rate limit bindings enforce admission and gameplay budgets
+  ---
+  duration_ms: 123.196042
+  type: 'test'
+  ...
+# Subtest: workerd: websocket claims reject invalid authentication and input-only fallback stays usable
+ok 11 - workerd: websocket claims reject invalid authentication and input-only fallback stays usable
+  ---
+  duration_ms: 288.624333
+  type: 'test'
+  ...
+# Subtest: workerd: unacknowledged duplex frames close a slow reader without closing a healthy peer
+ok 12 - workerd: unacknowledged duplex frames close a slow reader without closing a healthy peer
+  ---
+  duration_ms: 6742.878875
+  type: 'test'
+  ...
+# Subtest: workerd: room identity and profile persist across a full runtime restart
+ok 13 - workerd: room identity and profile persist across a full runtime restart
+  ---
+  duration_ms: 251.66275
+  type: 'test'
+  ...
+# Subtest: workerd: authenticated per-room draining survives eviction and leaves existing claims usable
+ok 14 - workerd: authenticated per-room draining survives eviction and leaves existing claims usable
+  ---
+  duration_ms: 455.081375
+  type: 'test'
+  ...
+# Subtest: workerd: stalled placement, creation and command uploads time out without blocking room actions
+ok 15 - workerd: stalled placement, creation and command uploads time out without blocking room actions
+  ---
+  duration_ms: 5142.849209
+  type: 'test'
+  ...
+1..15
+# tests 15
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 36916.485292

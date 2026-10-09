@@ -1,0 +1,143 @@
+{
+  "startedAt": "2026-10-09T03:17:44.469Z",
+  "finishedAt": "2026-10-09T03:18:58.663Z",
+  "origin": "https://whimsical-sf.nader-khalil.workers.dev",
+  "durationSeconds": 74.19,
+  "scope": "One disposable public room and two owned automated racers over HTTPS/WSS. Functional acceptance smoke; not a load, capacity, billing, browser-rendering, or cross-device test.",
+  "phaseReached": "rematch",
+  "success": true,
+  "failure": null,
+  "protocolErrors": [],
+  "checks": {
+    "httpsCloudflare": true,
+    "nativeDuplex": true,
+    "liveSelection": true,
+    "hostAndReadinessGates": true,
+    "sharedCountdown": true,
+    "peerMovement": true,
+    "orderedFinishes": true,
+    "identicalResults": true,
+    "hostRematch": true
+  },
+  "results": [
+    {
+      "racer": "Host",
+      "place": 1,
+      "finishSeconds": 64.342,
+      "gapSeconds": 0,
+      "tied": false,
+      "dnf": null,
+      "driver": "dario",
+      "car": "sundrop"
+    },
+    {
+      "racer": "Guest",
+      "place": 2,
+      "finishSeconds": 66.304,
+      "gapSeconds": 1.962,
+      "tied": false,
+      "dnf": null,
+      "driver": "jensen",
+      "car": "tide"
+    }
+  ],
+  "requests": [
+    {
+      "operation": "placement",
+      "status": 200,
+      "elapsedMs": 40.53
+    },
+    {
+      "operation": "create",
+      "status": 201,
+      "elapsedMs": 467.94
+    },
+    {
+      "operation": "join",
+      "status": 201,
+      "elapsedMs": 335.34
+    },
+    {
+      "operation": "live-selection",
+      "status": 200,
+      "elapsedMs": 132.84
+    },
+    {
+      "operation": "host-selection",
+      "status": 200,
+      "elapsedMs": 85.78
+    },
+    {
+      "operation": "host-ready",
+      "status": 200,
+      "elapsedMs": 90.99
+    },
+    {
+      "operation": "not-ready-start-rejected",
+      "status": 409,
+      "elapsedMs": 57.02
+    },
+    {
+      "operation": "non-host-start-rejected",
+      "status": 403,
+      "elapsedMs": 99.3
+    },
+    {
+      "operation": "guest-selection",
+      "status": 200,
+      "elapsedMs": 114.51
+    },
+    {
+      "operation": "guest-ready",
+      "status": 200,
+      "elapsedMs": 155.33
+    },
+    {
+      "operation": "host-start",
+      "status": 200,
+      "elapsedMs": 151.35
+    },
+    {
+      "operation": "non-host-rematch-rejected",
+      "status": 403,
+      "elapsedMs": 301.16
+    },
+    {
+      "operation": "host-rematch",
+      "status": 200,
+      "elapsedMs": 86.82
+    },
+    {
+      "operation": "owned-player-leave",
+      "status": 200,
+      "elapsedMs": 181.37
+    },
+    {
+      "operation": "owned-player-leave",
+      "status": 200,
+      "elapsedMs": 92.77
+    }
+  ],
+  "clients": [
+    {
+      "racer": "Host",
+      "frames": 1474,
+      "inboundBodyBytes": 995354,
+      "controlFramesSent": 1254,
+      "feedAcknowledgementsSent": 305
+    },
+    {
+      "racer": "Guest",
+      "frames": 1474,
+      "inboundBodyBytes": 995354,
+      "controlFramesSent": 1253,
+      "feedAcknowledgementsSent": 305
+    }
+  ],
+  "cleanup": {
+    "ownedPlayers": 2,
+    "left": 2,
+    "alreadyGone": 0,
+    "failed": 0
+  }
+}

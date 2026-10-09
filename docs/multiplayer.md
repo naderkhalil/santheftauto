@@ -76,12 +76,14 @@ Ready again after reconnecting. A racer missing for 30 seconds after Start
 receives **DNF · Disconnected**, unless already finished. Rejoining does not
 undo a DNF. The host role passes to the earliest joined connected player when
 the host disconnects or leaves; reconnecting does not reclaim it automatically.
-Empty rooms expire, with a two-hour maximum room lifetime. Rooms and results
-are held in memory and disappear on server restart.
+Empty rooms expire, with a two-hour maximum room lifetime. Native Cloudflare
+rooms persist their state and recover from the latest checkpoint; the legacy
+Node server keeps rooms in memory and loses them on restart.
 
 ## Development and hosting
 
-Requires Node 22.21 or newer (native TypeScript stripping).
+Requires Node `>=22.21.0 <23` (native TypeScript stripping); `.node-version`
+and the Docker image pin `22.23.3`.
 
 ```sh
 npm install
@@ -93,7 +95,41 @@ The Vite plugin serves the room API on the same origin as the game. For another
 device on the same Wi-Fi, open Vite's printed Network URL before creating a room.
 A localhost invite only works on the same computer.
 
-Production:
+### Primary deployment: native Cloudflare
+
+Cloudflare Workers serves the public API and assets, and one SQLite-backed
+Durable Object owns each eight-player room. The complete invite code selects
+the same object for every join, command, reconnect, and race update. New rooms
+scale independently without a central simulation server. Placement keys and
+admissions are durable, so retrying an uncertain create returns the original
+room/player. Expired objects retain a creation marker rather than reusing an
+old invitation for a different room.
+
+```sh
+npm run test:cloudflare
+VITE_POSTHOG_ENABLED=false npm run build:cloudflare
+npm run dev:cloudflare
+```
+
+The local native preview runs at `http://127.0.0.1:8787`. Follow the
+[Cloudflare runbook](cloudflare.md) for login, the operations secret, paid account
+configuration, the actual `workers.dev` URL, publishing, a custom domain, and
+the $500 spending plan. No enforced billing cap is configured. Native local
+tests use an alpha Miniflare release; public cloud timing, device play, and cost
+still require deployed validation.
+
+Cloudflare advertises a duplex WebSocket for room updates and controls, with
+HTTP room actions and an SSE/HTTP fallback. Idle duplex rooms can hibernate;
+active races run the same 20 Hz simulation. Semantic changes persist before
+acknowledgement, and racing targets a checkpoint each second. On recovery,
+the latest saved physics resumes with neutral inputs and the original running
+clock/deadline. Retained valid duplex sessions keep their readiness; other
+clients retain the existing reconnect grace. A reset does not grant more race
+time. Keep the Durable Object namespace and migrations stable across releases.
+
+### Legacy Node/Render fallback
+
+Build and run the default single-process Node server:
 
 ```sh
 npm ci
@@ -101,21 +137,70 @@ npm run build
 npm start
 ```
 
-`PORT` defaults to 3000; `HOST` defaults to `0.0.0.0`. This single Node process
-serves both `dist` and `/api/rooms`. Static-only hosting and `vite preview` do not
-provide rooms. To share internet invites, deploy this process behind HTTPS with
-an origin-preserving proxy. Allow streaming responses, disable buffering on
-`/api/rooms/*/events`, and allow long-lived requests. Use one server instance;
-room affinity/shared state is required before scaling across instances.
-No paid service or external account is required by the implementation.
+`PORT` defaults to 3000; `HOST` defaults to `0.0.0.0`. With `SERVER_ROLE=single`,
+one Node process serves `dist`, the room API, and racing simulation. Static-only
+hosting and `vite preview` do not provide rooms.
 
-Transport uses same-origin JSON control requests and a 20 Hz streamed snapshot
-feed. Clients smooth rendered positions. The server runs the existing simulation,
-including parked traffic and checkpoint/recovery rules. Authentication uses random
-per-racer bearer tokens in headers; invite links contain only a random room code.
-Incoming payloads are bounded, input values clamped, input sequences ordered,
-mutations origin-checked, and requests rate-limited. Invite links are bearer
-invitations: anyone with a valid room code can join a lobby until it is full.
+For multiple race workers, `SERVER_ROLE=gateway` serves the public game and
+forwards room traffic to private `SERVER_ROLE=worker` processes. Each worker
+has a fixed two-character hex ID and exactly one instance. The room-code prefix
+keeps joins, reconnects, streams, and inputs on that room's owner. Creation uses
+a saved placement key so an uncertain retry cannot create another room on a
+different worker. Add capacity with a new worker ID and gateway mapping;
+never replicate a worker under the same ID or remove its mapping while rooms
+remain. Rooms stay in memory and cannot fail over to an empty worker.
+
+The separate Render blueprint proposes one public gateway and two private workers
+in Oregon. It creates three paid services when applied and is not part of the
+native Cloudflare deployment. The [Node/Render runbook](launch.md) covers the configuration,
+local three-process cluster, load measurements, capacity limits, cache rules,
+operations authentication, rollout, and rollback. Manually drain each worker
+and wait for zero active races before deploying it; shutdown grace alone is
+shorter than a newly started race's maximum duration.
+
+Internet invitations require HTTPS on one public origin. Preserve that origin,
+disable buffering and transformation on `/api/rooms/*/events`, permit long-lived
+SSE responses, and forward WebSocket upgrades on `/api/rooms/*/input`.
+
+Room actions and heartbeats use same-origin JSON HTTP requests. Driving inputs
+use an authenticated WebSocket at a target 20 Hz, with HTTP fallback when the
+socket is unavailable or backpressured. The SSE feed sends full room metadata
+when it changes, compact racer updates during active racing at 20 Hz, and slower
+heartbeats in idle rooms. The server serializes each room's frame once per wire
+format and shares it across recipients; legacy full snapshots remain supported.
+Clients reconstruct room state and smooth rendered positions.
+
+The server runs the simulation, including parked traffic and checkpoint/recovery
+rules. Random per-racer tokens travel in HTTP headers or the WebSocket's first
+claim message, never in invitation or socket URLs. Input sequence numbers order
+controls across both transports, and session generations prevent an older tab
+from controlling a reclaimed racer. Payloads are bounded, input values clamped,
+mutations origin-checked, and requests rate-limited. Anyone with a valid invite
+can join its lobby until it is full.
+
+### Analytics build configuration
+
+Analytics uses the existing `VITE_POSTHOG_ENABLED`, `VITE_POSTHOG_KEY`, and
+`VITE_POSTHOG_HOST` build-time settings. Production builds default to enabled
+tracking with the supplied public project token and US ingestion host; the
+development server defaults to disabled. An explicit `false` disables tracking.
+For isolated local browser checks, build with
+`VITE_POSTHOG_ENABLED=false npm run build` before starting the local cluster.
+
+The Docker build exposes the same three settings as build arguments. For example:
+
+```sh
+docker build --build-arg VITE_POSTHOG_ENABLED=false -t city-loop:local .
+```
+
+Omitted or empty arguments preserve the application defaults. Use
+`--build-arg VITE_POSTHOG_KEY=...` and `--build-arg VITE_POSTHOG_HOST=...` to select
+another public browser token or ingestion host. These values are included in
+the public bundle; never supply a personal API credential. `.env*` files are
+excluded from the Docker build context. Changing runtime environment variables
+on an already-built container or local server does not change browser tracking;
+rebuild the image with the intended settings. Docker image execution remains
+unverified in the current environment.
 
 ## Drivers, cars and sponsor artwork
 
@@ -158,8 +243,10 @@ npm run build
 Room checks cover host authorization, capacity, readiness and profile revisions,
 cosmetic locking, input validation, token isolation, origin checks, shared
 countdown and timing, recovery, disconnects, host handoff, full simulated races,
-immutable results and rematches. The HTTP transport test opens a temporary
-localhost port.
+immutable results and rematches. Transport and application tests also cover
+compact frames, WebSocket authentication and fallback-compatible ordering,
+fixed worker ownership, capacity/drain behavior, and static cache/compression
+rules. Integration tests open temporary localhost ports.
 
 Validate the complete host/guest flow in independent browser sessions: early
 invitation, live selections, readiness, host Start, two separately controlled

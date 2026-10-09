@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-10-09T03:24:12.734Z",
+  "baseRevision": "3eabfe7974131a151eca56ea7c347e474435fa40",
+  "includesUncommittedChanges": true,
+  "sha256": {
+    "wrangler.jsonc": "05c598870ba0674f99e828f9f5706378010dc32103086d7575a0a3606f6e7d43",
+    "cloudflare/index.ts": "8bb1872ad351609bc80c9009545fc149c36f5774a2e21705e70d1bc2a4f3da10",
+    "cloudflare/race-room.ts": "b76c810cf9eca61fc4310a44e25c8e9b55ab9750bd78f18cf67ae6e4b28d331a",
+    "server/rooms.ts": "0cdb7e2575f15e627e340435d959eb0384c5240ac8070c3b39f060c970f9598b",
+    "src/driving.ts": "2b7190b790d7166195388933ada188d81c2e9e8ea032e37ab63f73bd374133ca",
+    "src/room-stream.ts": "30d13d5abb85854987207c1414e4641188bd9a7b7199f7bcd54b46570b14e802",
+    "src/multiplayer.ts": "6e814a2a58e5d7cb1b49c6695a94caaa6cd5a01ba094403b378e3601e7218368",
+    "src/multiplayer-ui.ts": "b5b03a3d44393995372108af5b9408119042602ef411dac8825d04dedcd3af17",
+    "src/multiplayer.css": "c14b0f984631e473f0775c3f4d671310157378f8ad4dc056d88c1af33912334c",
+    "dist-cloudflare/index.html": "c2129c280ed664ca246b57ef245c14da681ee9a0b1e1d78dcdf2658e8d68a8ad"
+  }
+}

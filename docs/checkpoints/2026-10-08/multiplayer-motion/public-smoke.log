@@ -1,0 +1,165 @@
+Live smoke: one room, two native duplex racers; shared countdown confirmed.
+{
+  "report": "/Users/naderkhalil/Projects/SF1/docs/checkpoints/2026-10-08/multiplayer-motion/public-smoke.json",
+  "startedAt": "2026-10-09T04:04:58.598Z",
+  "finishedAt": "2026-10-09T04:06:13.356Z",
+  "origin": "https://whimsical-sf.nader-khalil.workers.dev",
+  "durationSeconds": 74.76,
+  "scope": "One disposable public room and two owned automated racers over HTTPS/WSS. Functional acceptance smoke; not a load, capacity, billing, browser-rendering, or cross-device test.",
+  "phaseReached": "rematch",
+  "success": true,
+  "failure": null,
+  "protocolErrors": [],
+  "checks": {
+    "httpsCloudflare": true,
+    "nativeDuplex": true,
+    "liveSelection": true,
+    "hostAndReadinessGates": true,
+    "sharedCountdown": true,
+    "peerMovement": true,
+    "orderedFinishes": true,
+    "identicalResults": true,
+    "physicsTimestamps": true,
+    "finiteBufferedPoses": true,
+    "boundedMotionHistory": true,
+    "hostRematch": true
+  },
+  "results": [
+    {
+      "racer": "Host",
+      "place": 1,
+      "finishSeconds": 64.39,
+      "gapSeconds": 0,
+      "tied": false,
+      "dnf": null,
+      "driver": "dario",
+      "car": "sundrop"
+    },
+    {
+      "racer": "Guest",
+      "place": 2,
+      "finishSeconds": 66.356,
+      "gapSeconds": 1.966,
+      "tied": false,
+      "dnf": null,
+      "driver": "jensen",
+      "car": "tide"
+    }
+  ],
+  "requests": [
+    {
+      "operation": "placement",
+      "status": 200,
+      "elapsedMs": 33.15
+    },
+    {
+      "operation": "create",
+      "status": 201,
+      "elapsedMs": 618.4
+    },
+    {
+      "operation": "join",
+      "status": 201,
+      "elapsedMs": 184.7
+    },
+    {
+      "operation": "live-selection",
+      "status": 200,
+      "elapsedMs": 117.05
+    },
+    {
+      "operation": "host-selection",
+      "status": 200,
+      "elapsedMs": 126.52
+    },
+    {
+      "operation": "host-ready",
+      "status": 200,
+      "elapsedMs": 98.48
+    },
+    {
+      "operation": "not-ready-start-rejected",
+      "status": 409,
+      "elapsedMs": 240.3
+    },
+    {
+      "operation": "non-host-start-rejected",
+      "status": 403,
+      "elapsedMs": 72.09
+    },
+    {
+      "operation": "guest-selection",
+      "status": 200,
+      "elapsedMs": 137.8
+    },
+    {
+      "operation": "guest-ready",
+      "status": 200,
+      "elapsedMs": 91.98
+    },
+    {
+      "operation": "host-start",
+      "status": 200,
+      "elapsedMs": 131.42
+    },
+    {
+      "operation": "non-host-rematch-rejected",
+      "status": 403,
+      "elapsedMs": 152.46
+    },
+    {
+      "operation": "host-rematch",
+      "status": 200,
+      "elapsedMs": 92.69
+    },
+    {
+      "operation": "owned-player-leave",
+      "status": 200,
+      "elapsedMs": 91.98
+    },
+    {
+      "operation": "owned-player-leave",
+      "status": 200,
+      "elapsedMs": 302.89
+    }
+  ],
+  "clients": [
+    {
+      "racer": "Host",
+      "frames": 1475,
+      "inboundBodyBytes": 1038090,
+      "controlFramesSent": 1254,
+      "feedAcknowledgementsSent": 305,
+      "motion": {
+        "sampleCount": 1393,
+        "posesChecked": 2786,
+        "invalidPoses": 0,
+        "physicsFramesChecked": 1463,
+        "peakPhysicsAgeMs": 295.34,
+        "maxBufferSize": 32
+      }
+    },
+    {
+      "racer": "Guest",
+      "frames": 1475,
+      "inboundBodyBytes": 1038090,
+      "controlFramesSent": 1253,
+      "feedAcknowledgementsSent": 305,
+      "motion": {
+        "sampleCount": 1393,
+        "posesChecked": 2786,
+        "invalidPoses": 0,
+        "physicsFramesChecked": 1463,
+        "peakPhysicsAgeMs": 294.96,
+        "maxBufferSize": 32
+      }
+    }
+  ],
+  "motionMeasurement": "Buffered poses sampled on the 50ms control timer, not browser frames or FPS. Physics age is serverNow minus simulationAt plus local time since the latest frame; it excludes unknown one-way network transit. Metrics are bounded aggregates, with no room identities, player credentials, or pose histories.",
+  "cleanup": {
+    "ownedPlayers": 2,
+    "left": 2,
+    "alreadyGone": 0,
+    "failed": 0
+  }
+}

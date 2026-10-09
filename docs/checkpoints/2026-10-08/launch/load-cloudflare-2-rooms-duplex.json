@@ -1,0 +1,515 @@
+{
+  "schemaVersion": 2,
+  "runId": "4dddd233-f787-482e-b856-944a806169a5",
+  "startedAt": "2026-10-09T02:57:23.907Z",
+  "finishedAt": "2026-10-09T02:57:49.451Z",
+  "node": "v22.21.0",
+  "platform": "darwin",
+  "scope": "Loopback HTTP/WebSocket/SSE transport and simulation; excludes browsers, rendering, assets, TLS and internet latency.",
+  "config": {
+    "base": "http://127.0.0.1:8791",
+    "requestedRooms": 2,
+    "playersPerRoom": 8,
+    "measuredSecondsRequested": 20,
+    "wire": "v2",
+    "inputTransport": "websocket",
+    "feedTransport": "duplex",
+    "inputHz": 20,
+    "heartbeatSeconds": 2
+  },
+  "actual": {
+    "rooms": 2,
+    "clients": 16,
+    "duplexClients": 16,
+    "sseClients": 0,
+    "measuredSeconds": 20.007042249999998,
+    "capacityRejected": 0,
+    "admissionRetries": 0,
+    "placementSupported": true,
+    "interrupted": false,
+    "failure": null
+  },
+  "requests": {
+    "setup:placement": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 2.538,
+        "p95": 16.147,
+        "p99": 16.147,
+        "max": 16.147167000000024,
+        "mean": 9.342375500000003
+      }
+    },
+    "setup:create": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "201": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 6.627,
+        "p95": 21.324,
+        "p99": 21.324,
+        "max": 21.323875000000044,
+        "mean": 13.975208500000008
+      }
+    },
+    "setup:join": {
+      "attempts": 14,
+      "ok": 14,
+      "statuses": {
+        "201": 14
+      },
+      "latencyMs": {
+        "count": 14,
+        "p50": 5.456,
+        "p95": 11.444,
+        "p99": 11.444,
+        "max": 11.444165999999996,
+        "mean": 5.808321142857149
+      }
+    },
+    "setup:heartbeat": {
+      "attempts": 1,
+      "ok": 1,
+      "statuses": {
+        "200": 1
+      },
+      "latencyMs": {
+        "count": 1,
+        "p50": 9.211,
+        "p95": 9.211,
+        "p99": 9.211,
+        "max": 9.210833999999977,
+        "mean": 9.210833999999977
+      }
+    },
+    "setup:selection": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 27.108,
+        "p95": 38.535,
+        "p99": 38.535,
+        "max": 38.535124999999994,
+        "mean": 24.44559631249999
+      }
+    },
+    "setup:ready": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 22.679,
+        "p95": 32.225,
+        "p99": 32.225,
+        "max": 32.22512500000005,
+        "mean": 22.501778625000004
+      }
+    },
+    "warmup:start": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 19.057,
+        "p95": 21.058,
+        "p99": 21.058,
+        "max": 21.058042,
+        "mean": 20.057353999999975
+      }
+    },
+    "warmup:heartbeat": {
+      "attempts": 40,
+      "ok": 40,
+      "statuses": {
+        "200": 40
+      },
+      "latencyMs": {
+        "count": 40,
+        "p50": 6.122,
+        "p95": 15.398,
+        "p99": 19.976,
+        "max": 19.97570899999937,
+        "mean": 7.33590317500005
+      }
+    },
+    "measurement:heartbeat": {
+      "attempts": 159,
+      "ok": 159,
+      "statuses": {
+        "200": 159
+      },
+      "latencyMs": {
+        "count": 159,
+        "p50": 6.948,
+        "p95": 19.226,
+        "p99": 75.884,
+        "max": 76.40445800000089,
+        "mean": 8.99665385534593
+      }
+    },
+    "cleanup:leave": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 5.89,
+        "p95": 9.948,
+        "p99": 9.948,
+        "max": 9.947500000002037,
+        "mean": 6.092614749999939
+      }
+    }
+  },
+  "errors": {
+    "count": 0,
+    "examples": []
+  },
+  "throughput": {
+    "sseBodyBytes": 0,
+    "sseBodyBytesPerSecond": 0,
+    "sseBodyBytesPerClientSecond": 0,
+    "websocketResponseBodyBytes": 14817016,
+    "websocketResponseBodyBytesPerSecond": 740590.0289934161,
+    "feedBodyBytesPerSecond": 740590.0289934161,
+    "httpRequestBodyBytes": 3180,
+    "httpRequestBodyBytesPerSecond": 158.94403381889197,
+    "httpResponseBodyBytes": 5883,
+    "httpResponseBodyBytesPerSecond": 294.0464625649501,
+    "websocketBodyBytes": 854156,
+    "websocketBodyBytesPerSecond": 42692.767342958956,
+    "websocketInputFramesSent": 6320,
+    "websocketAcknowledgementBytes": 47376,
+    "websocketAcknowledgementsSent": 1536,
+    "serverAcceptedWebsocketInputs": 6320,
+    "deliveredInputsPerClientSecond": 19.74304822593155,
+    "inputScheduleTicks": 395,
+    "skippedInputs": 0
+  },
+  "streams": {
+    "frames": {
+      "tick": 7664
+    },
+    "arrivalIntervalMs": {
+      "count": 7664,
+      "p50": 50.389,
+      "p95": 54.706,
+      "p99": 57.895,
+      "max": 156.4419170000001,
+      "mean": 41.73025870433185
+    },
+    "localClockSnapshotAgeMs": {
+      "count": 7664,
+      "p50": 4,
+      "p95": 8,
+      "p99": 11,
+      "max": 74,
+      "mean": 4.224034446764092
+    },
+    "latestPhases": {
+      "racing": 16
+    }
+  },
+  "server": {
+    "healthBefore": {
+      "status": "ok",
+      "platform": "cloudflare",
+      "perRoom": true,
+      "acceptingNewRooms": true,
+      "roomMetrics": [
+        {
+          "roomIndex": 0,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 8,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 0,
+          "sockets": 8,
+          "ticks": 102,
+          "acceptedInputs": 16,
+          "rejected": 0,
+          "frames": 200,
+          "bytes": 1017256
+        },
+        {
+          "roomIndex": 1,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 8,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 0,
+          "sockets": 8,
+          "ticks": 102,
+          "acceptedInputs": 8,
+          "rejected": 0,
+          "frames": 192,
+          "bytes": 998272
+        }
+      ],
+      "metrics": {
+        "ticks": 204,
+        "streamFrames": 392,
+        "streamBytes": 2015528
+      },
+      "input": {
+        "acceptedInputs": 24
+      }
+    },
+    "healthAfter": {
+      "status": "ok",
+      "platform": "cloudflare",
+      "perRoom": true,
+      "acceptingNewRooms": true,
+      "roomMetrics": [
+        {
+          "roomIndex": 0,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 8,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 0,
+          "sockets": 8,
+          "ticks": 501,
+          "acceptedInputs": 3176,
+          "rejected": 0,
+          "frames": 4032,
+          "bytes": 8435216
+        },
+        {
+          "roomIndex": 1,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 8,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 0,
+          "sockets": 8,
+          "ticks": 502,
+          "acceptedInputs": 3168,
+          "rejected": 0,
+          "frames": 4024,
+          "bytes": 8397328
+        }
+      ],
+      "metrics": {
+        "ticks": 1003,
+        "streamFrames": 8056,
+        "streamBytes": 16832544
+      },
+      "input": {
+        "acceptedInputs": 6344
+      }
+    },
+    "healthSamples": [
+      {
+        "elapsedSeconds": 10.004099292000001,
+        "health": {
+          "status": "ok",
+          "platform": "cloudflare",
+          "perRoom": true,
+          "acceptingNewRooms": true,
+          "roomMetrics": [
+            {
+              "roomIndex": 0,
+              "role": "durable-room",
+              "health": {
+                "workerId": null,
+                "accepting": false,
+                "activeRooms": 1,
+                "activePlayers": 8,
+                "activeRaces": 1,
+                "capacity": 1,
+                "playerCapacity": 8,
+                "availableSlots": 0,
+                "draining": false,
+                "overloaded": false
+              },
+              "streams": 0,
+              "sockets": 8,
+              "ticks": 305,
+              "acceptedInputs": 1600,
+              "rejected": 0,
+              "frames": 2144,
+              "bytes": 4550728
+            },
+            {
+              "roomIndex": 1,
+              "role": "durable-room",
+              "health": {
+                "workerId": null,
+                "accepting": false,
+                "activeRooms": 1,
+                "activePlayers": 8,
+                "activeRaces": 1,
+                "capacity": 1,
+                "playerCapacity": 8,
+                "availableSlots": 0,
+                "draining": false,
+                "overloaded": false
+              },
+              "streams": 0,
+              "sockets": 8,
+              "ticks": 304,
+              "acceptedInputs": 1592,
+              "rejected": 0,
+              "frames": 2128,
+              "bytes": 4516744
+            }
+          ],
+          "metrics": {
+            "ticks": 609,
+            "streamFrames": 4272,
+            "streamBytes": 9067472
+          },
+          "input": {
+            "acceptedInputs": 3192
+          }
+        }
+      },
+      {
+        "elapsedSeconds": 20.000401917,
+        "health": {
+          "status": "ok",
+          "platform": "cloudflare",
+          "perRoom": true,
+          "acceptingNewRooms": true,
+          "roomMetrics": [
+            {
+              "roomIndex": 0,
+              "role": "durable-room",
+              "health": {
+                "workerId": null,
+                "accepting": false,
+                "activeRooms": 1,
+                "activePlayers": 8,
+                "activeRaces": 1,
+                "capacity": 1,
+                "playerCapacity": 8,
+                "availableSlots": 0,
+                "draining": false,
+                "overloaded": false
+              },
+              "streams": 0,
+              "sockets": 8,
+              "ticks": 501,
+              "acceptedInputs": 3176,
+              "rejected": 0,
+              "frames": 4032,
+              "bytes": 8435216
+            },
+            {
+              "roomIndex": 1,
+              "role": "durable-room",
+              "health": {
+                "workerId": null,
+                "accepting": false,
+                "activeRooms": 1,
+                "activePlayers": 8,
+                "activeRaces": 1,
+                "capacity": 1,
+                "playerCapacity": 8,
+                "availableSlots": 0,
+                "draining": false,
+                "overloaded": false
+              },
+              "streams": 0,
+              "sockets": 8,
+              "ticks": 502,
+              "acceptedInputs": 3168,
+              "rejected": 0,
+              "frames": 4024,
+              "bytes": 8397328
+            }
+          ],
+          "metrics": {
+            "ticks": 1003,
+            "streamFrames": 8056,
+            "streamBytes": 16832544
+          },
+          "input": {
+            "acceptedInputs": 6344
+          }
+        }
+      }
+    ],
+    "metricDelta": {
+      "ticks": 799,
+      "streamFrames": 7664,
+      "streamBytes": 14817016
+    },
+    "meanTickMs": null,
+    "inputLatencyMs": null,
+    "note": "WebSocket input has no per-message acknowledgement: no input latency is fabricated. Outbound feed acknowledgements enforce queue limits, not input latency. HTTP heartbeat RTT remains measured. Cloudflare metrics aggregate only this run’s known room actors; there is no global room census. Counters reset on actor eviction, so negative deltas invalidate the measurement. Server tick timings are null when the runtime exposes only counts."
+  },
+  "loadGenerator": {
+    "eventLoopDelayMs": {
+      "p50": 10.657791,
+      "p95": 11.468799,
+      "p99": 13.213695,
+      "max": 50.135039
+    },
+    "note": "This is the load-generator process, not the server event loop. Both compete for the local machine CPU; results are not remote throughput claims."
+  },
+  "cleanup": {
+    "ownedRooms": 2,
+    "attempts": 16,
+    "success": 16,
+    "alreadyGone": 0,
+    "failed": 0
+  }
+}

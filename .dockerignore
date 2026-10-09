@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.env*
+*.local
+art
+docs/checkpoints
+.codex
+.agents
+*.blend*

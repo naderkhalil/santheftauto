@@ -1,0 +1,407 @@
+{
+  "schemaVersion": 1,
+  "runId": "b19b30a2-a6e3-40a9-bb96-71caee265e68",
+  "startedAt": "2026-10-09T00:17:22.877Z",
+  "finishedAt": "2026-10-09T00:17:48.055Z",
+  "node": "v22.21.0",
+  "platform": "darwin",
+  "scope": "Loopback HTTP/SSE transport and simulation; excludes browsers, rendering, assets, TLS and internet latency.",
+  "config": {
+    "base": "http://127.0.0.1:4103",
+    "requestedRooms": 2,
+    "playersPerRoom": 8,
+    "measuredSecondsRequested": 20,
+    "wire": "v2",
+    "inputTransport": "websocket",
+    "inputHz": 20,
+    "heartbeatSeconds": 2
+  },
+  "actual": {
+    "rooms": 2,
+    "clients": 16,
+    "measuredSeconds": 20.002307333,
+    "capacityRejected": 0,
+    "admissionRetries": 0,
+    "placementSupported": true,
+    "interrupted": false,
+    "failure": null
+  },
+  "requests": {
+    "setup:placement": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 1.322,
+        "p95": 4.271,
+        "p99": 4.271,
+        "max": 4.270834000000008,
+        "mean": 2.796333500000003
+      }
+    },
+    "setup:create": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "201": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 1.818,
+        "p95": 1.951,
+        "p99": 1.951,
+        "max": 1.9513340000000028,
+        "mean": 1.8848960000000048
+      }
+    },
+    "setup:join": {
+      "attempts": 14,
+      "ok": 14,
+      "statuses": {
+        "201": 14
+      },
+      "latencyMs": {
+        "count": 14,
+        "p50": 1.858,
+        "p95": 6.261,
+        "p99": 6.261,
+        "max": 6.261042000000003,
+        "mean": 2.066014999999997
+      }
+    },
+    "setup:selection": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 2.061,
+        "p95": 2.638,
+        "p99": 2.638,
+        "max": 2.637917000000016,
+        "mean": 1.9536849374999985
+      }
+    },
+    "setup:ready": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 1.587,
+        "p95": 2.414,
+        "p99": 2.414,
+        "max": 2.413916999999998,
+        "mean": 1.5675285625000015
+      }
+    },
+    "warmup:start": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 1.71,
+        "p95": 1.764,
+        "p99": 1.764,
+        "max": 1.7643749999999727,
+        "mean": 1.7373124999999874
+      }
+    },
+    "warmup:heartbeat": {
+      "attempts": 41,
+      "ok": 41,
+      "statuses": {
+        "200": 41
+      },
+      "latencyMs": {
+        "count": 41,
+        "p50": 1.335,
+        "p95": 1.904,
+        "p99": 2.622,
+        "max": 2.621625000000222,
+        "mean": 1.3574145853658648
+      }
+    },
+    "measurement:heartbeat": {
+      "attempts": 157,
+      "ok": 157,
+      "statuses": {
+        "200": 157
+      },
+      "latencyMs": {
+        "count": 157,
+        "p50": 3.384,
+        "p95": 6.175,
+        "p99": 7.394,
+        "max": 10.456582999999227,
+        "mean": 3.3746181146496292
+      }
+    },
+    "cleanup:leave": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 0.406,
+        "p95": 1.588,
+        "p99": 1.588,
+        "max": 1.58795900000041,
+        "mean": 0.6611720000000787
+      }
+    }
+  },
+  "errors": {
+    "count": 0,
+    "examples": []
+  },
+  "throughput": {
+    "sseBodyBytes": 12010488,
+    "sseBodyBytesPerSecond": 600455.1275034646,
+    "sseBodyBytesPerClientSecond": 37528.445468966536,
+    "httpRequestBodyBytes": 3140,
+    "httpRequestBodyBytesPerSecond": 156.98188952529478,
+    "httpResponseBodyBytes": 5809,
+    "httpResponseBodyBytesPerSecond": 290.4164956217954,
+    "websocketBodyBytes": 839552,
+    "websocketBodyBytesPerSecond": 41972.75774354786,
+    "websocketInputFramesSent": 6272,
+    "serverAcceptedWebsocketInputs": 6272,
+    "deliveredInputsPerClientSecond": 19.5977390744954,
+    "inputScheduleTicks": 392,
+    "skippedInputs": 0
+  },
+  "streams": {
+    "frames": {
+      "tick": 6272
+    },
+    "arrivalIntervalMs": {
+      "count": 6272,
+      "p50": 51.072,
+      "p95": 53.6,
+      "p99": 55.659,
+      "max": 70.69112499999937,
+      "mean": 51.00889073102644
+    },
+    "localClockSnapshotAgeMs": {
+      "count": 6272,
+      "p50": 3,
+      "p95": 7,
+      "p99": 15,
+      "max": 26,
+      "mean": 3.910076530612245
+    },
+    "latestPhases": {
+      "racing": 16
+    }
+  },
+  "server": {
+    "healthBefore": {
+      "workerId": null,
+      "accepting": true,
+      "activeRooms": 2,
+      "activePlayers": 16,
+      "activeRaces": 2,
+      "capacity": 32,
+      "playerCapacity": 256,
+      "availableSlots": 30,
+      "draining": false,
+      "overloaded": false,
+      "api": {
+        "ticks": 1252,
+        "lastTickMs": 5.17783299999428,
+        "maxTickMs": 5.997834000001603,
+        "totalTickMs": 44.458021000048035,
+        "lastTickLagMs": 1.659125000005588,
+        "maxTickLagMs": 46.23433400000067,
+        "streamFrames": 103,
+        "streamBytes": 470633,
+        "snapshotsBuilt": 215,
+        "serializedFrames": 27,
+        "uptimeMs": 64362.710542,
+        "rooms": 2,
+        "streams": 16,
+        "wireV2Streams": 16
+      },
+      "input": {
+        "acceptedInputs": 16,
+        "receivedBytes": 3046,
+        "authFailures": 0,
+        "rateLimited": 0,
+        "connections": 16
+      },
+      "eventLoop": {
+        "p99Ms": 22.69,
+        "maxMs": 74.78,
+        "overloaded": false
+      }
+    },
+    "healthAfter": {
+      "workerId": null,
+      "accepting": true,
+      "activeRooms": 2,
+      "activePlayers": 16,
+      "activeRaces": 2,
+      "capacity": 32,
+      "playerCapacity": 256,
+      "availableSlots": 30,
+      "draining": false,
+      "overloaded": false,
+      "api": {
+        "ticks": 1644,
+        "lastTickMs": 3.8677500000048894,
+        "maxTickMs": 17.490790999996534,
+        "totalTickMs": 1263.8272700000512,
+        "lastTickLagMs": 0,
+        "maxTickLagMs": 46.23433400000067,
+        "streamFrames": 6375,
+        "streamBytes": 12481121,
+        "snapshotsBuilt": 999,
+        "serializedFrames": 811,
+        "uptimeMs": 84366.942083,
+        "rooms": 2,
+        "streams": 16,
+        "wireV2Streams": 16
+      },
+      "input": {
+        "acceptedInputs": 6288,
+        "receivedBytes": 842598,
+        "authFailures": 0,
+        "rateLimited": 0,
+        "connections": 16
+      },
+      "eventLoop": {
+        "p99Ms": 24.36,
+        "maxMs": 74.78,
+        "overloaded": false
+      }
+    },
+    "healthSamples": [
+      {
+        "elapsedSeconds": 10.009225292,
+        "health": {
+          "workerId": null,
+          "accepting": true,
+          "activeRooms": 2,
+          "activePlayers": 16,
+          "activeRaces": 2,
+          "capacity": 32,
+          "playerCapacity": 256,
+          "availableSlots": 30,
+          "draining": false,
+          "overloaded": false,
+          "api": {
+            "ticks": 1448,
+            "lastTickMs": 1.9907079999975394,
+            "maxTickMs": 17.490790999996534,
+            "totalTickMs": 647.1053990000204,
+            "lastTickLagMs": 0,
+            "maxTickLagMs": 46.23433400000067,
+            "streamFrames": 3239,
+            "streamBytes": 6129041,
+            "snapshotsBuilt": 607,
+            "serializedFrames": 419,
+            "uptimeMs": 74372.91033299999,
+            "rooms": 2,
+            "streams": 16,
+            "wireV2Streams": 16
+          },
+          "input": {
+            "acceptedInputs": 3152,
+            "receivedBytes": 414411,
+            "authFailures": 0,
+            "rateLimited": 0,
+            "connections": 16
+          },
+          "eventLoop": {
+            "p99Ms": 25.49,
+            "maxMs": 74.78,
+            "overloaded": false
+          }
+        }
+      },
+      {
+        "elapsedSeconds": 20.000150542,
+        "health": {
+          "workerId": null,
+          "accepting": true,
+          "activeRooms": 2,
+          "activePlayers": 16,
+          "activeRaces": 2,
+          "capacity": 32,
+          "playerCapacity": 256,
+          "availableSlots": 30,
+          "draining": false,
+          "overloaded": false,
+          "api": {
+            "ticks": 1644,
+            "lastTickMs": 3.8677500000048894,
+            "maxTickMs": 17.490790999996534,
+            "totalTickMs": 1263.8272700000512,
+            "lastTickLagMs": 0,
+            "maxTickLagMs": 46.23433400000067,
+            "streamFrames": 6375,
+            "streamBytes": 12481121,
+            "snapshotsBuilt": 999,
+            "serializedFrames": 811,
+            "uptimeMs": 84363.963708,
+            "rooms": 2,
+            "streams": 16,
+            "wireV2Streams": 16
+          },
+          "input": {
+            "acceptedInputs": 6288,
+            "receivedBytes": 842598,
+            "authFailures": 0,
+            "rateLimited": 0,
+            "connections": 16
+          },
+          "eventLoop": {
+            "p99Ms": 24.36,
+            "maxMs": 74.78,
+            "overloaded": false
+          }
+        }
+      }
+    ],
+    "metricDelta": {
+      "ticks": 392,
+      "totalTickMs": 1219.369249000003,
+      "streamFrames": 6272,
+      "streamBytes": 12010488,
+      "snapshotsBuilt": 784,
+      "serializedFrames": 784
+    },
+    "meanTickMs": 3.110635839285722,
+    "inputLatencyMs": null,
+    "note": "WebSocket input has no per-message acknowledgement: no input latency is fabricated. HTTP heartbeat RTT remains measured. maxTickMs is cumulative server lifetime; meanTickMs uses the measured counter delta. Server tick percentiles are unavailable unless the health endpoint supplies them."
+  },
+  "loadGenerator": {
+    "eventLoopDelayMs": {
+      "p50": 11.624447,
+      "p95": 12.132351,
+      "p99": 12.673023,
+      "max": 18.989055
+    },
+    "note": "This is the load-generator process, not the server event loop. Both compete for the local machine CPU; results are not remote throughput claims."
+  },
+  "cleanup": {
+    "ownedRooms": 2,
+    "attempts": 16,
+    "success": 16,
+    "alreadyGone": 0,
+    "failed": 0
+  }
+}

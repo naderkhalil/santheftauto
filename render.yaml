@@ -1,0 +1,78 @@
+# Review plan pricing before applying. This defines three paid services.
+# Fixed worker IDs are permanent room owners. Do not reuse or remove an ID
+# while its old rooms exist. Add workers by assigning another unused hex ID.
+envVarGroups:
+  - name: city-loop-private
+    envVars:
+      - key: WORKER_SECRET
+        generateValue: true
+
+services:
+  - type: web
+    name: city-loop
+    runtime: docker
+    plan: standard
+    region: oregon
+    healthCheckPath: /healthz
+    autoDeployTrigger: 'off'
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - fromGroup: city-loop-private
+      - key: SERVER_ROLE
+        value: gateway
+      - key: PORT
+        value: "10000"
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: ROOM_WORKER_00
+        fromService:
+          type: pserv
+          name: city-loop-races-00
+          property: hostport
+      - key: ROOM_WORKER_01
+        fromService:
+          type: pserv
+          name: city-loop-races-01
+          property: hostport
+
+  - type: pserv
+    name: city-loop-races-00
+    runtime: docker
+    plan: standard
+    region: oregon
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - fromGroup: city-loop-private
+      - key: SERVER_ROLE
+        value: worker
+      - key: ROOM_WORKER_ID
+        value: "00"
+      - key: PORT
+        value: "10000"
+      - key: MAX_ROOMS
+        value: "16"
+      - key: MAX_PLAYERS
+        value: "128"
+
+  - type: pserv
+    name: city-loop-races-01
+    runtime: docker
+    plan: standard
+    region: oregon
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    maxShutdownDelaySeconds: 300
+    envVars:
+      - fromGroup: city-loop-private
+      - key: SERVER_ROLE
+        value: worker
+      - key: ROOM_WORKER_ID
+        value: "01"
+      - key: PORT
+        value: "10000"
+      - key: MAX_ROOMS
+        value: "16"
+      - key: MAX_PLAYERS
+        value: "128"

@@ -1,0 +1,18 @@
+TAP version 13
+# NOSENTRY SQLite alarm handler canceled with requestScheduledAlarm.; scheduledTime = 1791515283.358s; localAlarmState.orDefault(kj::UNIX_EPOCH) = 1791515284.359s; actorId = 8784ca8ef38b562b11c665ba7f06b84a4f282eac2cae607d181b4f3f869e3688
+# Subtest: workerd: full race finishes through real driving inputs and both racers receive the same ordered results
+ok 1 - workerd: full race finishes through real driving inputs and both racers receive the same ordered results
+  ---
+  duration_ms: 71392.710083
+  type: 'test'
+  ...
+# Native race finish times: 64.206, 66.120 seconds; runner-up gap 1.914 seconds.
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 71712.680666

@@ -1,0 +1,500 @@
+
+> sf-night-run@0.1.0 test:multiplayer
+> node --experimental-strip-types --test server/*.test.ts
+
+TAP version 13
+# Subtest: single mode exposes only authenticated operations and optional loopback diagnostics
+ok 1 - single mode exposes only authenticated operations and optional loopback diagnostics
+  ---
+  duration_ms: 104.866209
+  type: 'test'
+  ...
+# Subtest: private workers require gateway authentication and remain healthy when full
+ok 2 - private workers require gateway authentication and remain healthy when full
+  ---
+  duration_ms: 26.839041
+  type: 'test'
+  ...
+# Subtest: two real workers and gateway share owner state and reject foreign origins
+ok 3 - two real workers and gateway share owner state and reject foreign origins
+  ---
+  duration_ms: 114.143125
+  type: 'test'
+  ...
+# Subtest: real input WebSocket authenticates through the gateway and reaches the owning worker
+ok 4 - real input WebSocket authenticates through the gateway and reaches the owning worker
+  ---
+  duration_ms: 47.363125
+  type: 'test'
+  ...
+# Subtest: real race snapshots count each finisher once, retain departed friends, and distinguish rematches
+ok 5 - real race snapshots count each finisher once, retain departed friends, and distinguish rematches
+  ---
+  duration_ms: 22.33575
+  type: 'test'
+  ...
+# Subtest: an authoritative time-limit DNF is separate from the other browser finishing
+ok 6 - an authoritative time-limit DNF is separate from the other browser finishing
+  ---
+  duration_ms: 2.994667
+  type: 'test'
+  ...
+# Subtest: fixed ownership keeps create retries and all room routes on their worker across replicas and pool growth
+ok 7 - fixed ownership keeps create retries and all room routes on their worker across replicas and pool growth
+  ---
+  duration_ms: 141.36325
+  type: 'test'
+  ...
+# Subtest: drain and capacity affect fresh placement, never owner routing or an existing idempotent retry
+ok 8 - drain and capacity affect fresh placement, never owner routing or an existing idempotent retry
+  ---
+  duration_ms: 103.555833
+  type: 'test'
+  ...
+# Subtest: ambiguous create failure never falls back to a different worker and missing owners remain unavailable
+ok 9 - ambiguous create failure never falls back to a different worker and missing owners remain unavailable
+  ---
+  duration_ms: 29.627333
+  type: 'test'
+  ...
+# Subtest: gateway validates browser origin and replaces spoofed routing, secret and client-address headers
+ok 10 - gateway validates browser origin and replaces spoofed routing, secret and client-address headers
+  ---
+  duration_ms: 27.146666
+  type: 'test'
+  ...
+# Subtest: SSE bytes arrive before the upstream ends and wire query is preserved
+ok 11 - SSE bytes arrive before the upstream ends and wire query is preserved
+  ---
+  duration_ms: 158.405542
+  type: 'test'
+  ...
+# Subtest: WebSocket input tunnel preserves owner, handshake and bidirectional bytes
+ok 12 - WebSocket input tunnel preserves owner, handshake and bidirectional bytes
+  ---
+  duration_ms: 6.405209
+  type: 'test'
+  ...
+# Subtest: unhealthy workers and explicit exclusions are skipped for fresh placement
+ok 13 - unhealthy workers and explicit exclusions are skipped for fresh placement
+  ---
+  duration_ms: 13.4825
+  type: 'test'
+  ...
+# Subtest: HTTP and WebSocket handshakes time out without migration; foreign upgrades are rejected
+ok 14 - HTTP and WebSocket handshakes time out without migration; foreign upgrades are rejected
+  ---
+  duration_ms: 92.689625
+  type: 'test'
+  ...
+# Subtest: input sockets authenticate before controls, preserve sequence/clamping and neutralize on close
+ok 15 - input sockets authenticate before controls, preserve sequence/clamping and neutralize on close
+  ---
+  duration_ms: 100.303083
+  type: 'test'
+  ...
+# Subtest: malformed, unauthenticated, foreign-origin and private-worker control requests are rejected
+ok 16 - malformed, unauthenticated, foreign-origin and private-worker control requests are rejected
+  ---
+  duration_ms: 120.462083
+  type: 'test'
+  ...
+# Subtest: new socket/session supersedes old controls without letting its close neutralize the new driver
+ok 17 - new socket/session supersedes old controls without letting its close neutralize the new driver
+  ---
+  duration_ms: 73.898542
+  type: 'test'
+  ...
+# Subtest: token input budget survives reconnects and rejects excessive or spoofed controls
+ok 18 - token input budget survives reconnects and rejects excessive or spoofed controls
+  ---
+  duration_ms: 15.336
+  type: 'test'
+  ...
+# Subtest: unauthenticated socket capacity is bounded and is released on close
+ok 19 - unauthenticated socket capacity is bounded and is released on close
+  ---
+  duration_ms: 37.512041
+  type: 'test'
+  ...
+# Subtest: configured per-address upgrade limit rejects excess connections with 429
+ok 20 - configured per-address upgrade limit rejects excess connections with 429
+  ---
+  duration_ms: 4.9835
+  type: 'test'
+  ...
+# Subtest: valid token claim budget prevents repeated socket replacement
+ok 21 - valid token claim budget prevents repeated socket replacement
+  ---
+  duration_ms: 82.98325
+  type: 'test'
+  ...
+# Subtest: unrelated websocket upgrades remain available for development hot reload
+ok 22 - unrelated websocket upgrades remain available for development hot reload
+  ---
+  duration_ms: 5.6355
+  type: 'test'
+  ...
+# Subtest: capacity rejects new rooms but preserves admitted retries and existing joins
+ok 23 - capacity rejects new rooms but preserves admitted retries and existing joins
+  ---
+  duration_ms: 9.209083
+  type: 'test'
+  ...
+# Subtest: player capacity, overload and drain preserve already admitted identities
+ok 24 - player capacity, overload and drain preserve already admitted identities
+  ---
+  duration_ms: 0.721583
+  type: 'test'
+  ...
+# Subtest: drain allows ongoing races to finish but refuses a new start
+ok 25 - drain allows ongoing races to finish but refuses a new start
+  ---
+  duration_ms: 27.5055
+  type: 'test'
+  ...
+# Subtest: a committed create with a dropped reply retries through the real gateway without duplicating its room
+ok 26 - a committed create with a dropped reply retries through the real gateway without duplicating its room
+  ---
+  duration_ms: 136.081959
+  type: 'test'
+  ...
+# Subtest: a stopped real owner remains unavailable while fresh placement and other rooms use the surviving worker
+ok 27 - a stopped real owner remains unavailable while fresh placement and other rooms use the surviving worker
+  ---
+  duration_ms: 1039.443583
+  type: 'test'
+  ...
+# Subtest: real worker drain preserves the shared race stream and controls while excluding new placement and starts
+ok 28 - real worker drain preserves the shared race stream and controls while excluding new placement and starts
+  ---
+  duration_ms: 5144.533416
+  type: 'test'
+  ...
+# Subtest: loading, profile revisions and admissions atomically gate Start
+ok 29 - loading, profile revisions and admissions atomically gate Start
+  ---
+  duration_ms: 6.38775
+  type: 'test'
+  ...
+# Subtest: committed edits are ordered and failed loading becomes visible after 30 seconds
+ok 30 - committed edits are ordered and failed loading becomes visible after 30 seconds
+  ---
+  duration_ms: 0.865042
+  type: 'test'
+  ...
+# Subtest: winner survives leaving, final result survives rematch and the next round
+ok 31 - winner survives leaving, final result survives rematch and the next round
+  ---
+  duration_ms: 5.278291
+  type: 'test'
+  ...
+# Subtest: within-step finish timing distinguishes places and exact ties use competition ranks
+ok 32 - within-step finish timing distinguishes places and exact ties use competition ranks
+  ---
+  duration_ms: 3.411708
+  type: 'test'
+  ...
+# Subtest: leaving before finishing preserves a DNF row with final valid progress
+ok 33 - leaving before finishing preserves a DNF row with final valid progress
+  ---
+  duration_ms: 0.704834
+  type: 'test'
+  ...
+# Subtest: deadline results have no invented winner and retain every DNF reason
+ok 34 - deadline results have no invented winner and retain every DNF reason
+  ---
+  duration_ms: 60.850083
+  type: 'test'
+  ...
+# Subtest: lobby disconnect clears readiness, transfers host once and preserves reconnect grace across rematch
+ok 35 - lobby disconnect clears readiness, transfers host once and preserves reconnect grace across rematch
+  ---
+  duration_ms: 4.085083
+  type: 'test'
+  ...
+# Subtest: host removal revokes that session without banning a fresh admission
+ok 36 - host removal revokes that session without banning a fresh admission
+  ---
+  duration_ms: 0.691333
+  type: 'test'
+  ...
+# Subtest: idempotent admissions recover the same room and slot, including after the start boundary
+ok 37 - idempotent admissions recover the same room and slot, including after the start boundary
+  ---
+  duration_ms: 1.18225
+  type: 'test'
+  ...
+# Subtest: session takeover revokes old inputs and reconnects without letting an old stream disconnect the new claim
+ok 38 - session takeover revokes old inputs and reconnects without letting an old stream disconnect the new claim
+  ---
+  duration_ms: 1.524334
+  type: 'test'
+  ...
+# Subtest: countdown cannot move early and disconnect does not move the shared start time
+ok 39 - countdown cannot move early and disconnect does not move the shared start time
+  ---
+  duration_ms: 8.10425
+  type: 'test'
+  ...
+# Subtest: fixed room ownership rejects collisions while Node random/prefixed ownership remains supported
+ok 40 - fixed room ownership rejects collisions while Node random/prefixed ownership remains supported
+  ---
+  duration_ms: 6.913
+  type: 'test'
+  ...
+# Subtest: lobby roundtrip preserves live socket readiness, cosmetics, revisions, claims and admission keys
+ok 41 - lobby roundtrip preserves live socket readiness, cosmetics, revisions, claims and admission keys
+  ---
+  duration_ms: 23.366417
+  type: 'test'
+  ...
+# Subtest: active race restores the exact physics checkpoint and clock without offline movement or stale controls
+ok 42 - active race restores the exact physics checkpoint and clock without offline movement or stale controls
+  ---
+  duration_ms: 35.471792
+  type: 'test'
+  ...
+# Subtest: countdown restores its original start and advances only on the next actor tick
+ok 43 - countdown restores its original start and advances only on the next actor tick
+  ---
+  duration_ms: 1.449834
+  type: 'test'
+  ...
+# Subtest: departed entrants retain DNF progress, frozen cosmetics and revocation across an active restore
+ok 44 - departed entrants retain DNF progress, frozen cosmetics and revocation across an active restore
+  ---
+  duration_ms: 6.551
+  type: 'test'
+  ...
+# Subtest: final standings and last results survive restoration and rematch independently
+ok 45 - final standings and last results survive restoration and rematch independently
+  ---
+  duration_ms: 1.132875
+  type: 'test'
+  ...
+# Subtest: host removal stays revoked and draining persists across hibernation
+ok 46 - host removal stays revoked and draining persists across hibernation
+  ---
+  duration_ms: 0.319333
+  type: 'test'
+  ...
+# Subtest: original disconnect grace and room lifetime expire without being extended by repeated restoration
+ok 47 - original disconnect grace and room lifetime expire without being extended by repeated restoration
+  ---
+  duration_ms: 0.392083
+  type: 'test'
+  ...
+# Subtest: an expired active deadline completes at the next tick without moving or inventing a finisher
+ok 48 - an expired active deadline completes at the next tick without moving or inventing a finisher
+  ---
+  duration_ms: 8.186917
+  type: 'test'
+  ...
+# Subtest: malformed or incompatible checkpoints fail atomically instead of corrupting existing rooms
+ok 49 - malformed or incompatible checkpoints fail atomically instead of corrupting existing rooms
+  ---
+  duration_ms: 3.17425
+  type: 'test'
+  ...
+# Subtest: driving checkpoint includes private airborne and steering state for deterministic continuation
+ok 50 - driving checkpoint includes private airborne and steering state for deterministic continuation
+  ---
+  duration_ms: 11.837375
+  type: 'test'
+  ...
+# Subtest: compact ticks reconstruct every physics field exactly without mutating the previous snapshot
+ok 51 - compact ticks reconstruct every physics field exactly without mutating the previous snapshot
+  ---
+  duration_ms: 7.454542
+  type: 'test'
+  ...
+# Subtest: physics time survives compact ticks and clock-only heartbeats, including older-server fallback
+ok 52 - physics time survives compact ticks and clock-only heartbeats, including older-server fallback
+  ---
+  duration_ms: 3.998416
+  type: 'test'
+  ...
+# Subtest: semantic frames preserve departures, finished results, reconnects and rematches
+ok 53 - semantic frames preserve departures, finished results, reconnects and rematches
+  ---
+  duration_ms: 14.417209
+  type: 'test'
+  ...
+# Subtest: idle rooms send semantic changes immediately and a small periodic heartbeat
+ok 54 - idle rooms send semantic changes immediately and a small periodic heartbeat
+  ---
+  duration_ms: 2.199333
+  type: 'test'
+  ...
+# Subtest: stream decoder isolates authoritative heartbeat and tick baselines from mutable UI drafts
+ok 55 - stream decoder isolates authoritative heartbeat and tick baselines from mutable UI drafts
+  ---
+  duration_ms: 1.283333
+  type: 'test'
+  ...
+# Subtest: SSE parser distinguishes named errors from event-like nicknames in room data
+ok 56 - SSE parser distinguishes named errors from event-like nicknames in room data
+  ---
+  duration_ms: 0.442041
+  type: 'test'
+  ...
+# Subtest: eight-player compact race snapshots reduce representative payloads by at least 75 percent
+ok 57 - eight-player compact race snapshots reduce representative payloads by at least 75 percent
+  ---
+  duration_ms: 1279.94825
+  type: 'test'
+  ...
+# Subtest: HTTP fans out one room serialization per tick and keeps idle streams alive
+ok 58 - HTTP fans out one room serialization per tick and keeps idle streams alive
+  ---
+  duration_ms: 267.798167
+  type: 'test'
+  ...
+# Subtest: direct placement preserves worker affinity and marks definite capacity rejections
+ok 59 - direct placement preserves worker affinity and marks definite capacity rejections
+  ---
+  duration_ms: 21.889625
+  type: 'test'
+  ...
+# Subtest: room authorization, readiness and cosmetic locking
+ok 60 - room authorization, readiness and cosmetic locking
+  ---
+  duration_ms: 4.12425
+  type: 'test'
+  ...
+# Subtest: capacity, input validation and duplicate/out-of-order input protection
+ok 61 - capacity, input validation and duplicate/out-of-order input protection
+  ---
+  duration_ms: 13.439166
+  type: 'test'
+  ...
+# Subtest: countdown is shared; clients cannot submit positions, checkpoints or results
+ok 62 - countdown is shared; clients cannot submit positions, checkpoints or results
+  ---
+  duration_ms: 9.076167
+  type: 'test'
+  ...
+# Subtest: recovery preserves authoritative timing; stale inputs stop and host migrates
+ok 63 - recovery preserves authoritative timing; stale inputs stop and host migrates
+  ---
+  duration_ms: 59.1235
+  type: 'test'
+  ...
+# Subtest: physics timestamps stay fixed through heartbeats and advance before permitted recovery
+ok 64 - physics timestamps stay fixed through heartbeats and advance before permitted recovery
+  ---
+  duration_ms: 2.955292
+  type: 'test'
+  ...
+# Subtest: a finish crossed while advancing to recovery cannot be reset
+ok 65 - a finish crossed while advancing to recovery cannot be reset
+  ---
+  duration_ms: 1.815875
+  type: 'test'
+  ...
+# Subtest: two server-driven cars can finish a full race and rematch
+ok 66 - two server-driven cars can finish a full race and rematch
+  ---
+  duration_ms: 370.315458
+  type: 'test'
+  ...
+# Subtest: abandoned racers become DNF, room closes, and sessions can reconnect before grace expires
+ok 67 - abandoned racers become DNF, room closes, and sessions can reconnect before grace expires
+  ---
+  duration_ms: 0.523042
+  type: 'test'
+  ...
+# Subtest: HTTP transport isolates room tokens, rejects foreign origins, and streams snapshots
+ok 68 - HTTP transport isolates room tokens, rejects foreign origins, and streams snapshots
+  ---
+  duration_ms: 63.941167
+  type: 'test'
+  ...
+# Subtest: eight racers have unique grid slots and all complete a server-simulated race
+ok 69 - eight racers have unique grid slots and all complete a server-simulated race
+  ---
+  duration_ms: 791.724417
+  type: 'test'
+  ...
+# Subtest: live founder selections reach both racers and changing a pick clears readiness
+ok 70 - live founder selections reach both racers and changing a pick clears readiness
+  ---
+  duration_ms: 0.278667
+  type: 'test'
+  ...
+# Subtest: HTTP admission retries, controller takeover, heartbeats and removals have stable contracts
+ok 71 - HTTP admission retries, controller takeover, heartbeats and removals have stable contracts
+  ---
+  duration_ms: 37.421417
+  type: 'test'
+  ...
+# Subtest: streaming server output does not substitute for a client heartbeat
+ok 72 - streaming server output does not substitute for a client heartbeat
+  ---
+  duration_ms: 54.804833
+  type: 'test'
+  ...
+# Subtest: only configured proxy hops determine the client address
+ok 73 - only configured proxy hops determine the client address
+  ---
+  duration_ms: 3.51875
+  type: 'test'
+  ...
+# Subtest: production roles fail closed on invalid routing configuration
+ok 74 - production roles fail closed on invalid routing configuration
+  ---
+  duration_ms: 13.264958
+  type: 'test'
+  ...
+# Subtest: HTML revalidates, hashed script/style assets are immutable, and ordinary assets have a bounded cache
+ok 75 - HTML revalidates, hashed script/style assets are immutable, and ordinary assets have a bounded cache
+  ---
+  duration_ms: 97.413042
+  type: 'test'
+  ...
+# Subtest: Brotli and gzip serve the correct bytes, original MIME, encoded length, and distinct ETags
+ok 76 - Brotli and gzip serve the correct bytes, original MIME, encoded length, and distinct ETags
+  ---
+  duration_ms: 23.034292
+  type: 'test'
+  ...
+# Subtest: compression honors q=0 and falls back when a sidecar is absent
+ok 77 - compression honors q=0 and falls back when a sidecar is absent
+  ---
+  duration_ms: 41.743
+  type: 'test'
+  ...
+# Subtest: conditional requests return an empty 304 only for the selected representation
+ok 78 - conditional requests return an empty 304 only for the selected representation
+  ---
+  duration_ms: 16.953333
+  type: 'test'
+  ...
+# Subtest: HEAD returns GET metadata without transferring the body
+ok 79 - HEAD returns GET metadata without transferring the body
+  ---
+  duration_ms: 19.393417
+  type: 'test'
+  ...
+# Subtest: missing files, directories, dotfiles, malformed paths, and traversal do not expose source
+ok 80 - missing files, directories, dotfiles, malformed paths, and traversal do not expose source
+  ---
+  duration_ms: 23.120708
+  type: 'test'
+  ...
+# Subtest: unsupported methods are rejected with an explicit Allow header
+ok 81 - unsupported methods are rejected with an explicit Allow header
+  ---
+  duration_ms: 14.189917
+  type: 'test'
+  ...
+1..81
+# tests 81
+# suites 0
+# pass 81
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6756.865

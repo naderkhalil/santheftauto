@@ -6,6 +6,7 @@ import { RoomService, RoomError } from './rooms.ts';
 import { createRoomApi } from './http.ts';
 import { DemoAutopilot } from '../src/autopilot.ts';
 import { DEFAULT_PROFILE, normalizeProfile } from '../src/racer-profile.ts';
+import { CHECKPOINTS, TRACK_LENGTH } from '../src/route.ts';
 const setup=()=>{const service=new RoomService(),a=service.create(DEFAULT_PROFILE,1000),b=service.join(a.room.code,{...DEFAULT_PROFILE,name:'Guest'},1000);return {service,a,b,code:a.room.code};};
 const ready=(service:RoomService,code:string,token:string,now=1000)=>{service.command(code,token,{type:'selection',status:'car',courseVersion:COURSE_VERSION},now);service.command(code,token,{type:'ready',ready:true,profileRevision:service.auth(code,token).player.profileRevision,courseVersion:COURSE_VERSION},now);};
 const start=(s:ReturnType<typeof setup>)=>{for(const p of [s.a,s.b])ready(s.service,s.code,p.token);s.service.command(s.code,s.a.token,{type:'start'},1000);};
@@ -42,8 +43,37 @@ test('recovery preserves authoritative timing; stale inputs stop and host migrat
   const s=setup();start(s);
   for(let now=6000;now<=8000;now+=50){for(const p of [s.a,s.b]){s.service.touch(s.code,p.token,now);s.service.command(s.code,p.token,{type:'input',sequence:now,input:{throttle:1,brake:0,steer:0,drift:false,boost:false}},now);}s.service.tick(now);}
   const player=s.service.auth(s.code,s.a.token).player,before=player.sim.state.elapsed;
-  s.service.command(s.code,s.a.token,{type:'recover'},8001);assert.equal(player.sim.state.elapsed,before);
+  s.service.command(s.code,s.a.token,{type:'recover'},8001);assert.equal(player.sim.state.elapsed,before+.001);
   s.service.touch(s.code,s.b.token,17000);s.service.tick(17000);assert.equal(s.service.room(s.code).host,s.b.id);assert.equal(player.connected,false);assert.equal(player.input.throttle,0);
+});
+test('physics timestamps stay fixed through heartbeats and advance before permitted recovery',()=>{
+  const s=setup();start(s);s.service.tick(6000);
+  const room=s.service.room(s.code),input={throttle:1,brake:0,steer:0,drift:false,boost:false};
+  for(const p of [s.a,s.b])s.service.command(s.code,p.token,{type:'input',sequence:1,input},6000);
+  s.service.tick(6050);
+  s.service.command(s.code,s.a.token,{type:'heartbeat'},6070);
+  const heartbeat=s.service.snapshot(room,6070);
+  assert.equal(heartbeat.serverNow,6070);assert.equal(heartbeat.simulationAt,6050);
+  assert.equal(heartbeat.players[0].state.elapsed,.05);
+  assert.throws(()=>s.service.command(s.code,'invalid',{type:'recover'},6071),/session/);
+  assert.equal(room.lastTick,6050);
+  s.service.command(s.code,s.a.token,{type:'recover'},6075);
+  const recovered=s.service.snapshot(room,6075);
+  assert.equal(recovered.simulationAt,6075);
+  assert.ok(recovered.players.every(p=>p.state.elapsed===.075));
+  assert.equal(recovered.players.find(p=>p.id===s.a.id)!.state.speed,0);
+  assert.ok(recovered.players.find(p=>p.id===s.b.id)!.state.speed>heartbeat.players.find(p=>p.id===s.b.id)!.state.speed);
+  s.service.command(s.code,s.a.token,{type:'recover'},6080);assert.equal(room.lastTick,6075);
+  s.service.tick(6100);assert.equal(s.service.snapshot(room,6125).simulationAt,6100);
+  assert.ok([...room.players.values()].every(p=>p.sim.state.elapsed===.1));
+});
+test('a finish crossed while advancing to recovery cannot be reset',()=>{
+  const s=setup();start(s);s.service.tick(6000);
+  const player=s.service.auth(s.code,s.a.token).player;
+  player.sim.seek(TRACK_LENGTH-.01);player.sim.state.checkpoint=CHECKPOINTS.length;player.sim.state.speed=30;
+  s.service.command(s.code,s.a.token,{type:'recover'},6010);
+  assert.equal(player.sim.state.finished,true);assert.ok(player.finishTime!==null);
+  assert.equal(player.recoverAt,0);assert.equal(s.service.room(s.code).lastTick,6010);
 });
 test('two server-driven cars can finish a full race and rematch',()=>{
   const s=setup();start(s);const pilots=[new DemoAutopilot(),new DemoAutopilot()];

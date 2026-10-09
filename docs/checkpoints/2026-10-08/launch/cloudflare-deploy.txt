@@ -1,0 +1,114 @@
+
+ ⛅️ wrangler 4.149.0
+────────────────────
+🌀 Building list of assets...
+✨ Read 102 files from the assets directory /Users/naderkhalil/Projects/SF1/dist-cloudflare
+🌀 Starting asset upload...
+🌀 Found 88 new or modified static assets to upload. Proceeding with upload...
++ /assets/plaza/date-palm.stats.json
++ /assets/cerebral-valley/streetlife.meta.json
++ /index.html
++ /assets/waterfront/ferry-building.meta.json
++ /assets/vegetation/SOURCE.md
++ /assets/sky/SOURCE.md
++ /assets/models/cable-car-SOURCE.md
++ /assets/north-square/north-square.meta.json
++ /assets/sponsors/SOURCES.md
++ /assets/cerebral-valley/skyline.meta.json
++ /assets/cerebral-valley/heroes.meta.json
++ /assets/cerebral-valley/vegetation-anchors.json
++ /assets/draco/draco_wasm_wrapper.js
++ /assets/vegetation/jacaranda_tree_branches_diff_1k.webp
++ /assets/draco/draco_decoder.wasm
++ /assets/vegetation/jacaranda_tree_trunk_diff_1k.webp
++ /assets/models/cable-car-oak.png
++ /assets/plaster-normal.jpg
++ /assets/cerebral-valley/anina.glb
++ /assets/waterfront/bay-bridge.glb
++ /assets/asphalt-color.jpg
++ /assets/plaza/dewey-monument.glb
++ /assets/cerebral-valley/layout.json
++ /assets/cerebral-valley/heroes-lod.glb
++ /assets/cerebral-valley/heroes.glb
++ /assets/cerebral-valley/skyline.glb
++ /assets/models/victorian-garage.glb
++ /assets/sky/kloofendal_43d_clear_puresky_2k.hdr
++ /assets/models/racer-kit.glb
++ /assets/cerebral-valley/neighborhood-lod.glb
++ /assets/plaza/dewey-monument.stats.json
++ /favicon.svg
++ /assets/square-frontages/square-frontages.meta.json
++ /assets/waterfront/bay-bridge.meta.json
++ /assets/sponsors/sf-compute-symbol.svg
++ /assets/cerebral-valley/anina.meta.json
++ /assets/sponsors/roboflow-symbol.svg
++ /assets/cerebral-valley/patricias-green.meta.json
++ /assets/waterfront/embarcadero.json
++ /assets/CREDITS.md
++ /assets/draco/LICENSE
++ /assets/cerebral-valley/neighborhood-parcels.json
++ /assets/vegetation/jacaranda_tree_branches_arm_1k.webp
++ /assets/cerebral-valley/streetlife.glb
++ /assets/vegetation/jacaranda_tree_branches_nor_gl_1k.webp
++ /assets/brick-normal.jpg
++ /assets/module-z1dyU-Se.js
++ /assets/waterfront/embarcadero-paving.png
++ /assets/asphalt-roughness.jpg
++ /assets/plaster-color.jpg
++ /assets/plaza/date-palm.glb
++ /assets/cerebral-valley/background-buildings.json
++ /assets/asphalt-normal.jpg
++ /assets/waterfront/ferry-building-lod.glb
++ /assets/waterfront/embarcadero.glb
++ /assets/north-square/north-square.glb
++ /assets/square-frontages/square-frontages.glb
++ /assets/hero/westin.glb
++ /assets/waterfront/ferry-building.glb
++ /assets/models/cable-car-metrics.json
++ /assets/hero/westin.meta.json
++ /assets/cerebral-valley/canopy-lod.meta.json
++ /assets/cerebral-valley/neighborhood.meta.json
++ /assets/square-street-details/README.md
++ /assets/square-street-details/square-street-details.meta.json
++ /assets/sponsors/nvidia.svg
++ /assets/plaza/SOURCE.md
++ /assets/sponsors/roboflow.svg
++ /assets/cerebral-valley/SOURCE.md
++ /assets/sponsors/sf-compute.svg
++ /assets/vegetation/jacaranda_tree_leaves_arm_1k.webp
++ /assets/index-CTT9sR6x.css
++ /assets/vegetation/jacaranda_tree_leaves_nor_gl_1k.webp
++ /assets/vegetation/jacaranda_tree_trunk_arm_1k.webp
++ /assets/vegetation/jacaranda_tree_leaves_diff_1k.webp
++ /assets/vegetation/jacaranda_tree_trunk_nor_gl_1k.webp
++ /assets/square-street-details/square-street-details.glb
++ /assets/brick-color.jpg
++ /assets/cerebral-valley/canopy-lod.glb
++ /assets/hero/westin-lod.glb
++ /assets/index-BhmsLpK5.js
++ /assets/waterfront/embarcadero-lod.glb
++ /assets/models/cable-car.glb
++ /assets/north-square/north-square-lod.glb
++ /assets/square-frontages/square-frontages-lod.glb
++ /assets/vegetation/jacaranda.glb
++ /assets/cerebral-valley/patricias-green.glb
++ /assets/models/racer-garage.glb
+Uploaded 29 of 88 assets
+Uploaded 59 of 88 assets
+Uploaded 88 of 88 assets
+✨ Success! Uploaded 88 files (43.81 sec)
+
+Total Upload: 139.73 KiB / gzip: 35.24 KiB
+Worker Startup Time: 51 ms
+Your Worker has access to the following bindings:
+Binding                                         Resource
+env.ROOMS (RaceRoom)                            Durable Object
+env.ADMISSION_LIMITER (600 requests/60s)        Rate Limit
+env.API_LIMITER (60000 requests/60s)            Rate Limit
+env.ASSETS                                      Assets
+env.NEW_ROOMS_ENABLED ("true")                  Environment Variable
+
+Uploaded whimsical-sf (46.93 sec)
+Deployed whimsical-sf triggers (0.48 sec)
+  https://whimsical-sf.nader-khalil.workers.dev
+Current Version ID: 7119810d-c9ca-4507-9749-9c1dfd862c47

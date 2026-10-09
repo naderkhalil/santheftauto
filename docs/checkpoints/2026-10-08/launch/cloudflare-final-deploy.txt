@@ -1,0 +1,29 @@
+
+ ⛅️ wrangler 4.149.0
+────────────────────
+🌀 Building list of assets...
+✨ Read 102 files from the assets directory /Users/naderkhalil/Projects/SF1/dist-cloudflare
+🌀 Starting asset upload...
+🌀 Found 3 new or modified static assets to upload. Proceeding with upload...
++ /index.html
++ /assets/index-BWuf-yM0.css
++ /assets/index-DOfvmSYS.js
+Uploaded 1 of 3 assets
+Uploaded 2 of 3 assets
+Uploaded 3 of 3 assets
+✨ Success! Uploaded 3 files (85 already uploaded) (2.55 sec)
+
+Total Upload: 140.48 KiB / gzip: 35.45 KiB
+Worker Startup Time: 51 ms
+Your Worker has access to the following bindings:
+Binding                                         Resource
+env.ROOMS (RaceRoom)                            Durable Object
+env.ADMISSION_LIMITER (600 requests/60s)        Rate Limit
+env.API_LIMITER (60000 requests/60s)            Rate Limit
+env.ASSETS                                      Assets
+env.NEW_ROOMS_ENABLED ("true")                  Environment Variable
+
+Uploaded whimsical-sf (5.99 sec)
+Deployed whimsical-sf triggers (0.36 sec)
+  https://whimsical-sf.nader-khalil.workers.dev
+Current Version ID: f078936a-6875-4015-bad9-a171b8a30f10

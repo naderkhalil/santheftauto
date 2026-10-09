@@ -1,0 +1,94 @@
+TAP version 13
+# Subtest: workerd: public routing, origin checks, internal-header stripping and room isolation
+ok 1 - workerd: public routing, origin checks, internal-header stripping and room isolation
+  ---
+  duration_ms: 164.542584
+  type: 'test'
+  ...
+# Subtest: workerd: admission retries remain one identity, including kill-switch retry and DO eviction
+ok 2 - workerd: admission retries remain one identity, including kill-switch retry and DO eviction
+  ---
+  duration_ms: 224.325
+  type: 'test'
+  ...
+# Subtest: workerd: native duplex sockets authenticate, share selection, gate host start and race together
+ok 3 - workerd: native duplex sockets authenticate, share selection, gate host start and race together
+  ---
+  duration_ms: 5196.86725
+  type: 'test'
+  ...
+# Subtest: workerd: full race finishes through real driving inputs and both racers receive the same ordered results
+ok 4 - workerd: full race finishes through real driving inputs and both racers receive the same ordered results # SKIP Opt in with SF1_FULL_RACE=1 for the real-time complete race smoke.
+  ---
+  duration_ms: 0.12975
+  type: 'test'
+  ...
+# Subtest: workerd: SSE fallback broadcasts picks and claim takeover retires the previous controller
+ok 5 - workerd: SSE fallback broadcasts picks and claim takeover retires the previous controller
+  ---
+  duration_ms: 176.977916
+  type: 'test'
+  ...
+# Subtest: workerd: hibernated duplex sessions and persisted selections survive object eviction
+ok 6 - workerd: hibernated duplex sessions and persisted selections survive object eviction
+  ---
+  duration_ms: 214.084292
+  type: 'test'
+  ...
+# Subtest: workerd: valid duplex acknowledgements keep an otherwise idle host ready through hibernation
+ok 7 - workerd: valid duplex acknowledgements keep an otherwise idle host ready through hibernation
+  ---
+  duration_ms: 9317.813042
+  type: 'test'
+  ...
+# Subtest: workerd: persisted room expiry cannot be bypassed by join or creation retry
+ok 8 - workerd: persisted room expiry cannot be bypassed by join or creation retry
+  ---
+  duration_ms: 276.806375
+  type: 'test'
+  ...
+# Subtest: workerd: native rate limit bindings enforce admission and gameplay budgets
+ok 9 - workerd: native rate limit bindings enforce admission and gameplay budgets
+  ---
+  duration_ms: 139.615834
+  type: 'test'
+  ...
+# Subtest: workerd: websocket claims reject invalid authentication and input-only fallback stays usable
+ok 10 - workerd: websocket claims reject invalid authentication and input-only fallback stays usable
+  ---
+  duration_ms: 280.859125
+  type: 'test'
+  ...
+# Subtest: workerd: unacknowledged duplex frames close a slow reader without closing a healthy peer
+ok 11 - workerd: unacknowledged duplex frames close a slow reader without closing a healthy peer
+  ---
+  duration_ms: 6755.672375
+  type: 'test'
+  ...
+# Subtest: workerd: room identity and profile persist across a full runtime restart
+ok 12 - workerd: room identity and profile persist across a full runtime restart
+  ---
+  duration_ms: 430.299083
+  type: 'test'
+  ...
+# Subtest: workerd: authenticated per-room draining survives eviction and leaves existing claims usable
+ok 13 - workerd: authenticated per-room draining survives eviction and leaves existing claims usable
+  ---
+  duration_ms: 459.943958
+  type: 'test'
+  ...
+# Subtest: workerd: stalled placement, creation and command uploads time out without blocking room actions
+ok 14 - workerd: stalled placement, creation and command uploads time out without blocking room actions
+  ---
+  duration_ms: 5203.875417
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 29182.33175

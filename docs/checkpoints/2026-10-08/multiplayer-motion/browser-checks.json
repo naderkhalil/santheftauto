@@ -1,0 +1,33 @@
+{
+  "release": "98905fc1-dbc6-489b-9906-43b884672d9f",
+  "loadedBundle": "index-3FJHGtxZ.js",
+  "local": {
+    "twoPlayerSetup": true,
+    "sharedSelections": true,
+    "sharedCountdown": true,
+    "barrierImpacts": true,
+    "repeatedRecovery": true,
+    "cleanup": "Both players left; temporary tabs closed"
+  },
+  "public": {
+    "twoPlayerSetup": true,
+    "sharedSelections": true,
+    "sharedCountdown": true,
+    "visiblePeerCar": true,
+    "guestReloadReclaimedRace": true,
+    "barrierImpactAndRecovery": true,
+    "recoveryObservation": {
+      "durationSeconds": 9.24,
+      "distinctObservedPoses": 210,
+      "startSpeedMetresPerSecond": 5.6,
+      "endSpeedMetresPerSecond": 44.0
+    },
+    "consoleWarningsOrErrors": [],
+    "cleanup": "Host expired after intentionally navigating away beyond reconnect grace; guest left; both temporary tabs closed; Auto Accelerate restored to OFF"
+  },
+  "limitations": [
+    "Same computer with multiple rendering tabs, not a cross-device performance benchmark.",
+    "DOM samples are asynchronous observations, not a per-frame smoothness measurement.",
+    "Packet gaps longer than playback buffer can still pause motion; no physics prediction is used."
+  ]
+}

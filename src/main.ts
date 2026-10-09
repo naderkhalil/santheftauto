@@ -32,7 +32,8 @@ import { playgroundHeight } from './playground';
 import './style.css';
 import { mountRacePicker } from './race-picker';
 import { Multiplayer } from './multiplayer';
-import { initAnalytics } from './analytics';
+import { gameAnalytics, initAnalytics } from './analytics';
+import { DEFAULT_PROFILE } from './racer-profile';
 
 void initAnalytics();
 
@@ -239,6 +240,7 @@ async function boot() {
   let tourArt:TourScene|null=null;
   const tourSceneNames:Record<TourScene,string>={square:'UNION SQUARE',westin:'THE WESTIN ST. FRANCIS',post:'POST STREET'};
   let multiplayer:Multiplayer|null=null;
+  let raceProfile={...DEFAULT_PROFILE};
   let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0, freeDrive=false;
   let multiplayerDnf=false, roomUiActive=false, inputBlocked=false;
   let topSpeed=0, best=Number(safeRead('whimsical-sf-shortcuts-race-best-v4'))||0, muted=safeRead('sf-night-run-muted')==='true';
@@ -257,7 +259,7 @@ async function boot() {
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   audio.setMuted(muted);
   function updateSoundButton(){el('sound').innerHTML=muted?muteIcon:speakerIcon;el('sound').setAttribute('aria-label',muted?'Unmute sound':'Mute sound');el('sound').setAttribute('aria-pressed',String(muted));}
-  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.02:.065;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);squareStreetDetails.setQuality(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
+  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));composer.setPixelRatio(renderer.getPixelRatio());renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.02:.065;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);squareStreetDetails.setQuality(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
   function resize(){
     camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
     // Scenic stops scroll as one row on small screens. On wider screens,
@@ -319,6 +321,7 @@ async function boot() {
   function startExploration(){if(multiplayer?.active){multiplayer.open();return;}startRun(true);}
   function restartRun(){if(multiplayer?.active){multiplayer.open();return;}startRun(freeDrive);}
   function startRun(explore:boolean,seconds=3){
+    if(!explore&&!multiplayer?.active)gameAnalytics.startSolo(raceProfile);else gameAnalytics.clearSolo();
     clearInputs();freeDrive=explore;multiplayerDnf=false;tourArt=null;sim.reset();if(explore)sim.explore(true);playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore||seconds<=0?'racing':'countdown';countdownLeft=seconds;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';recoveryCooldown=0;cameraReversing=false;
     landmarks.resetProps();knockedProps=0;
     ['help','pause-panel','results','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));
@@ -328,7 +331,7 @@ async function boot() {
   function pause(){if(multiplayer?.active){clearInputs();multiplayer.open();return;}if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
   function menu(){if(multiplayer?.active){openRoom();return;}resetToMenu();}
-  function resetToMenu(){phase='menu';multiplayerDnf=false;tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
+  function resetToMenu(){gameAnalytics.clearSolo();phase='menu';multiplayerDnf=false;tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
     if(multiplayer?.active){
       const racerId=multiplayer.id,racer=multiplayer.room?.players.find(player=>player.id===racerId);
@@ -338,6 +341,7 @@ async function boot() {
       ['help','pause-panel','results','countdown'].forEach(id=>el(id).classList.add('hidden'));
       el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');syncPhase();return;
     }
+    if(!freeDrive)gameAnalytics.finishSolo(sim.state.elapsed);
     phase='finished';finishedAt=totalTime;finishCameraStart.copy(cityCameraPosition);finishLookStart.copy(smoothedLook);finishReveal=totalTime+4.4;audio.suspend();audio.cue('finish');clearInputs();
     const s=sim.state, isBest=!multiplayer?.active&&!freeDrive&&(!best||s.elapsed<best);
     if(isBest){best=s.elapsed;safeWrite('whimsical-sf-shortcuts-race-best-v4',String(best));}
@@ -530,7 +534,7 @@ async function boot() {
   el('loading').classList.add('faded');setTimeout(()=>el('loading').classList.add('hidden'),650);
 
   multiplayer=new Multiplayer(cityRoot,{
-    profile:profile=>car.customize(profile),
+    profile:profile=>{raceProfile={...profile};car.customize(profile);},
     solo:()=>startRun(false),
     start:()=>startRun(false,multiplayer?.countdown??5),
     state:player=>{

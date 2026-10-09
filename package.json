@@ -5,19 +5,33 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node tools/compress-assets.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --experimental-strip-types --test src/*.test.ts",
     "start": "node --experimental-strip-types server/start.ts",
-    "test:multiplayer": "node --experimental-strip-types --test server/*.test.ts"
+    "test:multiplayer": "node --experimental-strip-types --test server/*.test.ts",
+    "load:multiplayer": "node --experimental-strip-types tools/load-multiplayer.ts",
+    "start:cluster:local": "node tools/launch-local.mjs",
+    "build:cloudflare": "npm run build && node tools/prepare-cloudflare-assets.mjs && tsc -p tsconfig.cloudflare.json && wrangler deploy --dry-run --outdir .cloudflare-build",
+    "dev:cloudflare": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "test:cloudflare": "node --experimental-strip-types --test cloudflare/*.test.ts",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
   },
   "dependencies": {
     "posthog-js": "^1.438.3",
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261009.1",
     "@types/three": "^0.180.0",
+    "esbuild": "^0.28.2",
+    "miniflare": "^5.20261006.1-alpha",
     "typescript": "^5.9.2",
-    "vite": "^7.1.7"
+    "vite": "^7.1.7",
+    "wrangler": "^4.149.0"
+  },
+  "engines": {
+    "node": ">=22.21.0 <23"
   }
 }

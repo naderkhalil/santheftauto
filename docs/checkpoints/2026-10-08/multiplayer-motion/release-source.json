@@ -1,0 +1,18 @@
+{
+  "version": "98905fc1-dbc6-489b-9906-43b884672d9f",
+  "recordedAt": "2026-10-09T04:05:59.727946+00:00",
+  "baseCommit": "fb6c70459acdea6a079ca944dbb59a8455bdf914",
+  "files": {
+    "src/multiplayer.ts": "def27df29eac6cbd14561ba239c197d9f79418d49dc9ab935e8aa8f6d2028831",
+    "src/room-interpolation.ts": "a2e4475b29993fcb435e75a465565d50ec01413d7c813a94cd959f90373b46c3",
+    "src/driving.ts": "c2d949bdca08b6d5b9bdcb08190a8557a2299f8d22c1d710ac6957dc477ce64c",
+    "src/car.ts": "c42d30961c7cc3b993165758c330d4b995d0b09c0867ff52fcbab9453cdb8661",
+    "src/main.ts": "e2c99905b488be6931e6d0a5fb229eb22cacafc926a64c6d7704db691c713a2a",
+    "src/multiplayer-protocol.ts": "c476fc9637c3a43a43be05d146165abd9b66ecda0fa83bb06b9a95cd62f13c31",
+    "src/room-wire.ts": "68dbc112026ac2616aab8fee49cb42fa6057fb056560c23e54ff4f61196616e1",
+    "server/rooms.ts": "1e1d705ece7d2fcb100a86c3dd33033be1bd713c5093fef56e4da5c1216079c3",
+    "server/room-wire.ts": "a2178c891c147dae62010d36ea4e04465f44788920fcd6c7ef4e53b005d6f82f",
+    "wrangler.jsonc": "05c598870ba0674f99e828f9f5706378010dc32103086d7575a0a3606f6e7d43",
+    "dist-cloudflare/index.html": "499ed9785280612d766394ca6da278a59e3637bc8ef01939691379baf34106d0"
+  }
+}

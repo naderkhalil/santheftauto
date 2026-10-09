@@ -10,6 +10,9 @@ export function createCar(){
   let fallback:ReturnType<typeof createLegacyCar>|null=createLegacyCar();group.add(fallback.group);
   let model:THREE.Object3D|null=null,disposed=false,profile:RacerProfile={...DEFAULT_PROFILE},hover=0;
   const drivers=new Map<string,THREE.Object3D>();
+  const remoteMeshes:Array<{mesh:THREE.Mesh;castShadow:boolean}>=[];
+  const originalShadows=new WeakMap<THREE.Mesh,boolean>();
+  let remote=false,remoteDriverVisible=true;
   const wheels:Array<{mount:THREE.Group;fold:THREE.Group;steer:THREE.Group;spin:THREE.Object3D;side:number;front:boolean}>=[];
   const body=new THREE.Group();group.add(body);
   const decalCanvas=document.createElement('canvas');decalCanvas.width=512;decalCanvas.height=256;
@@ -22,12 +25,36 @@ export function createCar(){
   const hood=new THREE.Mesh(new THREE.PlaneGeometry(.5,.24),decalMaterial);hood.rotation.x=-Math.PI/2;hood.position.set(0,.878,.93);decals.add(hood);
   const glowMaterial=new THREE.MeshStandardMaterial({color:'#86f4e2',emissive:'#27d7cf',emissiveIntensity:0,transparent:true,opacity:0});
   const glows:THREE.Mesh[]=[];
+  function syncDriverVisibility(){
+    for(const [id,driver] of drivers)driver.visible=id===profile.driver&&(!remote||remoteDriverVisible);
+    group.userData.driverVisible=!!model&&(!remote||remoteDriverVisible);
+  }
+  function cacheRemoteMeshes(){
+    remoteMeshes.length=0;
+    group.traverse(object=>{if(object instanceof THREE.Mesh){
+      const castShadow=originalShadows.get(object)??object.castShadow;
+      originalShadows.set(object,castShadow);remoteMeshes.push({mesh:object,castShadow});
+      if(remote)object.castShadow=remoteDriverVisible&&castShadow;
+    }});
+  }
+  /** Opponents retain their paint/decal; distant drivers do not consume portrait detail. */
+  function setRemoteDetail(distance:number){
+    if(disposed)return;
+    remote=true;
+    const visible=Number.isFinite(distance)?remoteDriverVisible?distance<=45:distance<35:remoteDriverVisible;
+    if(visible!==remoteDriverVisible){
+      remoteDriverVisible=visible;
+      for(const {mesh,castShadow} of remoteMeshes)mesh.castShadow=visible&&castShadow;
+      syncDriverVisibility();
+    }
+  }
+  cacheRemoteMeshes();
   function customize(next:RacerProfile){
     group.userData.visualRevision=(group.userData.visualRevision??0)+1;
     profile=normalizeProfile(next);fallback?.customize(profile);group.userData.profile={...profile};
     const car=CARS.find(c=>c.id===profile.car)??CARS[0];
     model?.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m instanceof THREE.MeshStandardMaterial&&m.name==='Coupe paint')m.color.set(car.color);});
-    for(const [id,driver] of drivers)driver.visible=id===profile.driver;
+    syncDriverVisibility();
     const sponsor=SPONSORS.find(s=>s.id===profile.sponsor)??SPONSORS[0];decals.visible=!!model&&!!sponsor.mark;
     const ctx=decalCanvas.getContext('2d')!;ctx.clearRect(0,0,512,256);if(sponsor.mark){ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 80px sans-serif';ctx.fillText(sponsor.mark,256,128,460);}decalMap.needsUpdate=true;
     if(sponsor.logo){const id=sponsor.id,image=new Image();image.onload=()=>{
@@ -36,7 +63,6 @@ export function createCar(){
       ctx.clearRect(0,0,512,256);ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.drawImage(image,(512-width)/2,(256-height)/2,width,height);
       decalMap.needsUpdate=true;group.userData.visualRevision=(group.userData.visualRevision??0)+1;
     };image.src=sponsor.logo;}
-    group.userData.driverVisible=!!model;
   }
   const ready=loadRacerKit().then(kit=>{
     if(disposed)return;
@@ -48,7 +74,7 @@ export function createCar(){
       const glow=new THREE.Mesh(new THREE.TorusGeometry(.25,.019,8,32),glowMaterial);glow.rotation.y=Math.PI/2;glow.position.x=side*.14;steer.add(glow);glows.push(glow);
     }
     for(const d of DRIVERS){const driver=cloneRacerPart(kit,`Seated_${d.id}`);driver.scale.multiplyScalar(.88);driver.position.set(-.35,.30,-.37);body.add(driver);drivers.set(d.id,driver);}
-    fallback?.dispose();fallback=null;customize(profile);group.userData.asset='blender';
+    fallback?.dispose();fallback=null;cacheRemoteMeshes();customize(profile);group.userData.asset='blender';
   }).catch(error=>{group.userData.asset='fallback';console.warn('Blender racer unavailable; keeping the playable fallback.',error);});
   function update(dt:number,state:CarState){
     if(fallback){fallback.update(dt,state);Object.assign(group.userData,{hover:fallback.group.userData.hover,wheelFoldDegrees:fallback.group.userData.wheelFoldDegrees});return;}
@@ -61,5 +87,5 @@ export function createCar(){
     glowMaterial.opacity=hover;glowMaterial.emissiveIntensity=hover*(state.boosting?4:2);group.userData.hover=hover;group.userData.wheelFoldDegrees=hover*90;group.userData.hoverAltitude=state.altitude??0;
   }
   function dispose(){disposed=true;fallback?.dispose();if(model)releaseRacerPart(model);drivers.forEach(releaseRacerPart);for(const wheel of wheels)releaseRacerPart(wheel.spin);glows.forEach(g=>g.geometry.dispose());decals.children.forEach(o=>{if(o instanceof THREE.Mesh)o.geometry.dispose();});decalMaterial.dispose();decalMap.dispose();glowMaterial.dispose();group.removeFromParent();}
-  return {group,ready,customize,update,dispose};
+  return {group,ready,customize,update,dispose,setRemoteDetail};
 }

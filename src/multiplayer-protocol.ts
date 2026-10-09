@@ -52,6 +52,8 @@ export type RoomSnapshot = {
   courseVersion: string;
   startAt: number;
   serverNow: number;
+  /** Time represented by racing positions; independent of later clock/metadata replies. */
+  simulationAt?: number;
   deadline: number;
   players: RacerSnapshot[];
   entrants: RacerSnapshot[];

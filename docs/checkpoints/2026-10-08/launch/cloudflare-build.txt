@@ -1,0 +1,39 @@
+
+> sf-night-run@0.1.0 build:cloudflare
+> npm run build && node tools/prepare-cloudflare-assets.mjs && tsc -p tsconfig.cloudflare.json && wrangler deploy --dry-run --outdir .cloudflare-build
+
+
+> sf-night-run@0.1.0 build
+> tsc && vite build && node tools/compress-assets.mjs
+
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 85 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.65 kB │ gzip:   0.43 kB
+dist/assets/index-BWuf-yM0.css     91.13 kB │ gzip:  19.40 kB
+dist/assets/module-z1dyU-Se.js    327.90 kB │ gzip: 108.21 kB
+dist/assets/index-DOfvmSYS.js   1,195.84 kB │ gzip: 379.33 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.64s
+Prepared compressed static assets.
+Prepared 88 Cloudflare assets. Disabled Cerebral Valley art stays in the original build.
+
+ ⛅️ wrangler 4.149.0
+────────────────────
+✨ Read 102 files from the assets directory /Users/naderkhalil/Projects/SF1/dist-cloudflare
+Total Upload: 140.48 KiB / gzip: 35.45 KiB
+Your Worker has access to the following bindings:
+Binding                                         Resource
+env.ROOMS (RaceRoom)                            Durable Object
+env.ADMISSION_LIMITER (600 requests/60s)        Rate Limit
+env.API_LIMITER (60000 requests/60s)            Rate Limit
+env.ASSETS                                      Assets
+env.NEW_ROOMS_ENABLED ("true")                  Environment Variable
+
+--dry-run: exiting now.

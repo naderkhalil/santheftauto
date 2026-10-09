@@ -5,6 +5,11 @@ import type { DriveInput } from './driving';
 import { COURSE_VERSION, ROOM_CAPACITY, type RoomCommand, type RoomSnapshot, type RacerSnapshot, type RoundResult } from './multiplayer-protocol';
 import { setupMarkup, escape, time, clock, driverName, carName, sponsorName, playerStatus, ordinal, dnfLabel } from './multiplayer-ui';
 import { RacerShowroom } from './racer-showroom';
+import { gameAnalytics } from './analytics';
+import { parseRoomStreamEvent, RoomWireDecoder } from './room-wire';
+import { RoomInputChannel } from './room-input';
+import { RacerSnapshotBuffer } from './room-interpolation';
+import { RoomStreamChannel, RoomStreamError, RoomStreamRetryPolicy, roomTransportFor, type RoomTransport } from './room-stream';
 import './multiplayer.css';
 
 const read = (key: string) => { try { return sessionStorage.getItem(key); } catch { return null; } };
@@ -12,7 +17,7 @@ const save = (key: string, value: string) => { try { sessionStorage.setItem(key,
 const neutral = (): DriveInput => ({ throttle: 0, brake: 0, steer: 0, drift: false, boost: false });
 type Step = 'mode' | 'name' | 'driver' | 'car' | 'grid';
 type Hooks = { start: () => void; state: (player: RacerSnapshot) => void; finish: () => void; leave: () => void; profile: (profile: RacerProfile) => void; solo: () => void };
-class RoomRequestError extends Error { constructor(message: string, public code = '', public status = 0) { super(message); } }
+class RoomRequestError extends Error { constructor(message: string, public code = '', public status = 0, public admitted?: boolean) { super(message); } }
 
 export class Multiplayer {
   room: RoomSnapshot | null = null;
@@ -34,6 +39,10 @@ export class Multiplayer {
   private restoring = false;
   private blockedSession = false;
   private pendingInput = neutral();
+  private inputChannel = new RoomInputChannel((code, message) => this.terminalError(new RoomRequestError(message, code)));
+  private roomStream = new RoomStreamChannel();
+  private streamRetries = new RoomStreamRetryPolicy();
+  private transport: RoomTransport = 'sse';
   private networkTimer: ReturnType<typeof setInterval>;
   private peers = new Map<string, { car: ReturnType<typeof createCar>; profile: string; label: THREE.Sprite; texture: THREE.CanvasTexture }>();
   private requestedCode = '';
@@ -42,9 +51,9 @@ export class Multiplayer {
   private notice = '';
   private pending = false;
   private pendingAction = false;
+  private capacityLimited = false;
   private actionQueue: Promise<unknown> = Promise.resolve();
-  private localPosition: THREE.Vector3 | null = null;
-  private localHeading = 0;
+  private motion = new RacerSnapshotBuffer();
   private step: Step = 'mode';
   private mode: 'solo' | 'friends' = 'solo';
   private showroom: RacerShowroom | null = null;
@@ -76,6 +85,7 @@ export class Multiplayer {
     this.button('mp-close').onclick = () => this.dialog.close();
     this.dialog.addEventListener('close', () => { this.pendingInput = neutral(); });
     this.button('mp-solo').onclick = () => { if (this.pending) return; this.mode = 'solo'; this.goStep('driver'); };
+    this.button('mp-busy-solo').onclick = () => { if (this.pending || this.room) return; this.capacityLimited = false; this.error = ''; this.mode = 'solo'; this.goStep('driver'); };
     this.button('mp-multi').onclick = () => { this.mode = 'friends'; void this.enter(); };
     this.button('mp-code-entry').onclick = () => { this.mode = 'friends'; this.goStep('name'); };
     this.button('mp-create-instead').onclick = () => { this.mode = 'friends'; void this.enter(); };
@@ -133,14 +143,17 @@ export class Multiplayer {
     this.networkTimer = setInterval(() => {
       if (!this.room || this.blockedSession) return;
       const now = performance.now();
-      if (this.receivedAt && now - this.receivedAt > 6000) { this.disconnected(); this.receivedAt = now; void this.listen(this.room.code); }
+      if (this.receivedAt && now - this.receivedAt > 6000) {
+        if (this.transport === 'duplex-v2') this.streamRetries.failed(this.streamSession(this.room.code));
+        this.disconnected(); this.receivedAt = now; void this.listen(this.room.code);
+      }
       if (now - this.lastHeartbeat > 2000) void this.heartbeat();
       void this.sendInput();
     }, 50);
     window.addEventListener('blur', () => { this.focused = false; this.pendingInput = neutral(); });
     window.addEventListener('focus', () => { this.focused = true; });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.pendingInput = neutral(); });
-    window.addEventListener('pagehide', () => { clearInterval(this.networkTimer); this.abort?.abort(); this.showroom?.dispose(); });
+    window.addEventListener('pagehide', () => { clearInterval(this.networkTimer); this.abort?.abort(); this.roomStream.close(); this.inputChannel.close(); this.showroom?.dispose(); });
   }
 
   get active() { return !!this.room; }
@@ -237,7 +250,7 @@ export class Multiplayer {
     const started = performance.now();
     const response = await fetch('/api/rooms' + path, { method: 'POST', headers: this.headers(token), body: JSON.stringify(data), signal: AbortSignal.timeout(8000) });
     const result = await response.json().catch(() => ({ error: 'The room service is unavailable. Please try again.' }));
-    if (!response.ok) throw new RoomRequestError(result.error ?? 'Room request failed.', result.code, response.status);
+    if (!response.ok) throw new RoomRequestError(result.error ?? 'Room request failed.', result.code, response.status, result.admitted);
     const serverNow = result.serverNow ?? result.room?.serverNow;
     const rtt = performance.now() - started;
     if (Number.isFinite(serverNow) && (rtt <= this.bestRtt || performance.now() - this.clockReceivedAt > 10000)) {
@@ -248,18 +261,20 @@ export class Multiplayer {
   private async enter(code?: string) {
     if (this.pending || this.room) return;
     if (code !== undefined && !/^[A-F0-9]{8}$/.test(code)) { this.error = 'Enter the 8-character code from your friend’s invite.'; this.render(); return; }
-    this.pending = true; this.error = ''; this.blockedSession = false; this.networkMessage = ''; this.restoring = false;
+    this.pending = true; this.error = ''; this.capacityLimited = false; this.blockedSession = false; this.networkMessage = ''; this.restoring = false;
     this.profile.name = (this.step === 'name' ? this.input('mp-name').value : this.profile.name) || 'Racer';
     this.profile = normalizeProfile(this.profile);
     const retryKey = 'sf-room-attempt-' + (code ?? 'create');
     this.render();
     try {
       // getRandomValues also works on a plain HTTP LAN origin; randomUUID does not.
-      const idempotencyKey = read(retryKey) || Array.from(crypto.getRandomValues(new Uint8Array(24)), byte => byte.toString(16).padStart(2, '0')).join('');
+      const idempotencyKey = read(retryKey) || (code ? this.randomAttemptKey() : await this.placementKey());
       save(retryKey, idempotencyKey);
       const result = await this.request(code ? `/${code}/join` : '', { profile: this.profile, idempotencyKey }, '');
+      this.transport = roomTransportFor(result);
       this.id = result.id; this.token = result.token; this.connectionGeneration = result.generation;
       this.room = result.room; this.mode = 'friends'; this.profileRevision = this.me?.profileRevision ?? 0;
+      this.receivedAt = performance.now();
       this.profile = this.me?.profile ?? this.profile;
       this.input('mp-name').value = this.input('mp-nickname').value = this.profile.name;
       save('sf-room-' + this.room!.code, JSON.stringify({ id: this.id, token: this.token })); save(retryKey, '');
@@ -271,15 +286,27 @@ export class Multiplayer {
       void this.command({ type: 'selection', status: 'driver', courseVersion: COURSE_VERSION });
       void this.heartbeat();
     } catch (error) {
-      if (error instanceof RoomRequestError && ['SESSION_EXPIRED', 'ROOM_EXPIRED', 'REMOVED_FROM_ROOM'].includes(error.code)) save(retryKey, '');
+      this.capacityLimited = error instanceof RoomRequestError && ['ROOM_CAPACITY', 'SERVICE_BUSY', 'SERVER_DRAINING', 'ROOM_WORKER_UNAVAILABLE'].includes(error.code);
+      if (error instanceof RoomRequestError && (error.admitted === false || ['SESSION_EXPIRED', 'ROOM_EXPIRED', 'REMOVED_FROM_ROOM', 'AFFINITY_REQUIRED'].includes(error.code))) save(retryKey, '');
       this.error = error instanceof Error ? error.message : 'Could not open the room.';
     }
     finally { this.pending = false; this.render(); this.showroom?.resize(); }
+  }
+  private randomAttemptKey() { return Array.from(crypto.getRandomValues(new Uint8Array(24)), byte => byte.toString(16).padStart(2, '0')).join(''); }
+  private async placementKey() {
+    try { return (await this.request('/placement', {}, '')).idempotencyKey as string; }
+    catch (error) {
+      // Existing standalone servers can serve a newer frontend during rollout.
+      // Only a missing placement endpoint permits their original create API.
+      if (error instanceof RoomRequestError && error.status === 404) return this.randomAttemptKey();
+      throw error;
+    }
   }
   private async restore(code: string) {
     this.pending = true; this.restoring = true; this.render();
     try {
       const result = await this.request(`/${code}/claim`, {});
+      this.transport = roomTransportFor(result);
       this.connectionGeneration = result.generation;
       if (result.room) this.receive(result.room);
       void this.listen(code);
@@ -291,6 +318,8 @@ export class Multiplayer {
     } finally { this.pending = false; this.render(); }
   }
   private disconnected() {
+    this.inputChannel.close();
+    this.roomStream.close();
     this.connected = false; this.pendingInput = neutral();
     this.networkMessage = this.driving ? 'Reconnecting… The race clock keeps running.' : 'Reconnecting to your room…';
     this.render();
@@ -299,31 +328,46 @@ export class Multiplayer {
     if (!(error instanceof RoomRequestError) || !['SESSION_TAKEN_OVER', 'REMOVED_FROM_ROOM', 'SESSION_EXPIRED', 'ROOM_EXPIRED'].includes(error.code)) return false;
     const code = this.room?.code ?? this.requestedCode;
     this.blockedSession = true; this.abort?.abort(); this.streamGeneration++;
+    this.inputChannel.close();
+    this.roomStream.close();
     this.room = null; this.connected = false; this.pendingInput = neutral(); this.restoring = false;
     this.token = ''; this.id = ''; this.seenRound = -1; this.finished = false; this.pendingAction = false;
     save('sf-room-' + code, ''); this.clearPeers(); this.hooks.leave();
     this.step = 'name'; this.input('mp-code').value = code; this.networkMessage = ''; this.error = error.message;
     this.open(); return true;
   }
+  private streamSession(code: string) { return `${code}:${this.connectionGeneration}:${this.token}`; }
   private async listen(code: string) {
     this.abort?.abort(); const controller = new AbortController(); this.abort = controller;
     const generation = ++this.streamGeneration;
+    const session = this.streamSession(code);
     while (!controller.signal.aborted && generation === this.streamGeneration && !this.blockedSession) {
       try {
-        const response = await fetch(`/api/rooms/${code}/events`, { headers: this.headers(), signal: controller.signal });
+        if (this.streamRetries.useDuplex(session, this.transport)) {
+          await this.roomStream.listen(code, this.token, this.connectionGeneration, controller.signal, room => {
+            this.streamRetries.received(session); this.receive(room);
+          });
+          if (controller.signal.aborted) return;
+          throw new RoomStreamError('The room connection was interrupted.');
+        }
+        const response = await fetch(`/api/rooms/${code}/events?wire=v2`, { headers: this.headers(), signal: controller.signal });
         if (!response.ok) { const data = await response.json(); throw new RoomRequestError(data.error, data.code, response.status); }
-        const reader = response.body!.getReader(), decoder = new TextDecoder(); let buffer = '';
+        const reader = response.body!.getReader(), decoder = new TextDecoder(), wire = new RoomWireDecoder(); let buffer = '';
         while (!controller.signal.aborted) {
           const { value, done } = await reader.read(); if (done) break;
           buffer += decoder.decode(value, { stream: true }); let end: number;
           while ((end = buffer.indexOf('\n\n')) >= 0) {
             const frame = buffer.slice(0, end); buffer = buffer.slice(end + 2);
-            if (frame.startsWith('data: ')) this.receive(JSON.parse(frame.slice(6)));
+            const event = parseRoomStreamEvent(frame);
+            if (!event) continue;
+            if (event.event === 'room-error') throw new RoomRequestError(event.error, event.code);
+            this.receive(wire.apply(event.frame));
           }
         }
         if (!controller.signal.aborted) throw Error('Connection interrupted');
       } catch (error) {
         if (controller.signal.aborted || generation !== this.streamGeneration) return;
+        if (error instanceof RoomStreamError) { this.streamRetries.failed(session); error = new RoomRequestError(error.message, error.code); }
         if (this.terminalError(error)) return;
         this.disconnected(); await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -333,6 +377,7 @@ export class Multiplayer {
     const previous = this.room; const wasConnected = this.connected;
     this.room = room; this.connected = true; this.networkMessage = ''; this.receivedAt = performance.now();
     const me = this.me; if (!me) return;
+    gameAnalytics.observeMultiplayer(room, this.id);
     if (this.restoring) {
       this.restoring = false; this.profile = me.profile; this.profileRevision = me.profileRevision;
       this.input('mp-name').value = this.input('mp-nickname').value = this.profile.name;
@@ -352,9 +397,10 @@ export class Multiplayer {
     }
     if (!wasConnected && previous && room.phase === 'lobby') this.announce('Connected. Confirm your selection when you’re ready.');
     if (room.round !== this.seenRound && (room.phase === 'countdown' || room.phase === 'racing' || room.phase === 'results')) {
-      this.seenRound = room.round; this.finished = false; this.localPosition = null; this.viewingLastResults = false;
+      this.seenRound = room.round; this.finished = false; this.motion.reset(); this.viewingLastResults = false;
       this.dialog.close(); this.hooks.start();
     }
+    this.motion.push(room, this.receivedAt);
     if (room.phase !== 'lobby' && (me.finishTime !== null || me.dnf) && !this.finished) {
       this.hooks.state(me); this.finished = true; this.pendingInput = neutral(); this.hooks.finish(); this.step = 'grid'; this.open();
     }
@@ -363,6 +409,7 @@ export class Multiplayer {
       this.seenRound = -1; this.finished = false; this.clearPeers(); this.hooks.leave(); this.step = 'grid';
       this.announce('Same room, same picks. Ready for another race?'); this.open();
     }
+    if (!this.driving || this.finished) this.inputChannel.close();
     this.render();
   }
   command(command: RoomCommand): Promise<boolean> {
@@ -406,8 +453,10 @@ export class Multiplayer {
   }
   private async sendInput() {
     if (!this.driving || !this.connected || this.sending || this.finished || this.blockedSession) return;
+    const command: Extract<RoomCommand, { type: 'input' }> = { type: 'input', sequence: ++this.sequence, input: document.hidden || !this.focused ? neutral() : this.pendingInput };
+    if (this.transport === 'duplex-v2' ? this.roomStream.send(command) : this.inputChannel.send(this.room!.code, this.token, this.connectionGeneration, command)) return;
     this.sending = true; const generation = this.streamGeneration;
-    try { await this.request(`/${this.room!.code}/command`, { type: 'input', sequence: ++this.sequence, input: document.hidden || !this.focused ? neutral() : this.pendingInput }); }
+    try { await this.request(`/${this.room!.code}/command`, command); }
     catch (error) { if (generation === this.streamGeneration && this.room && !this.terminalError(error)) this.disconnected(); }
     finally { this.sending = false; }
   }
@@ -420,7 +469,7 @@ export class Multiplayer {
     const room = this.room;
     this.pendingAction = true; this.render();
     if (room) await this.command({ type: 'leave' });
-    this.abort?.abort(); this.streamGeneration++; this.room = null; this.connected = false; this.id = ''; this.token = ''; this.connectionGeneration = 0;
+    this.abort?.abort(); this.roomStream.close(); this.inputChannel.close(); this.streamGeneration++; this.room = null; this.connected = false; this.id = ''; this.token = ''; this.connectionGeneration = 0;
     this.seenRound = -1; this.finished = false; this.error = ''; this.networkMessage = ''; this.step = 'mode'; this.pendingAction = false; this.viewingLastResults = false;
     if (room) save('sf-room-' + room.code, '');
     this.requestedCode = ''; this.announce(''); this.clockBase = 0; this.bestRtt = Infinity;
@@ -439,6 +488,10 @@ export class Multiplayer {
     return `Waiting for ${names} to get ready.`;
   }
   private render() {
+    this.renderStandings();
+    // Race snapshots arrive many times per second. The closed selection dialog
+    // only needs rebuilding when it is opened again.
+    if (!this.dialog.open && this.driving) return;
     const room = this.room, host = room?.host === this.id, me = this.me, locked = !!room && room.phase !== 'lobby';
     this.dialog.dataset.step = this.step; this.dialog.classList.toggle('has-room', !!room);
     this.dialog.querySelector<HTMLFieldSetElement>('#mp-choices')!.disabled = locked || this.pendingAction;
@@ -447,6 +500,7 @@ export class Multiplayer {
     this.dialog.querySelector<HTMLElement>('#mp-room-strip')!.hidden = !room;
     const error = this.error || this.networkMessage;
     this.text('mp-error', error); this.dialog.querySelector<HTMLElement>('#mp-error')!.hidden = !error;
+    this.button('mp-busy-solo').hidden = !this.capacityLimited || !!room;
     this.button('mp-solo').disabled = this.button('mp-multi').disabled = this.button('mp-code-entry').disabled = this.pending;
     this.button('mp-join').disabled = this.button('mp-create-instead').disabled = this.pending;
     this.button('mp-join').textContent = this.restoring ? this.pending ? 'Reconnecting…' : 'Try reconnecting →' : this.pending ? 'Joining…' : 'Join room →';
@@ -503,10 +557,16 @@ export class Multiplayer {
       this.html(this.dialog.querySelector('#mp-actions')!, actions);
       this.button('mp-leave').disabled = this.pendingAction;
     }
-    this.standings.hidden = room.phase === 'lobby' || room.phase === 'results';
+  }
+  private renderStandings() {
+    const room = this.room;
+    this.standings.hidden = !room || room.phase === 'lobby' || room.phase === 'results';
+    if (!room) return;
     if (!this.standings.hidden) {
       const current = room.entrants.find(p => p.id === this.id);
-      this.standings.querySelector('small')!.textContent = this.connected ? `${current?.rank ? ordinal(current.rank) + ' / ' + room.entrants.length + ' · ' : ''}LIVE · NO CONTACT` : 'RECONNECTING…';
+      const status = this.connected ? `${current?.rank ? ordinal(current.rank) + ' / ' + room.entrants.length + ' · ' : ''}LIVE · NO CONTACT` : 'RECONNECTING…';
+      const label = this.standings.querySelector('small')!;
+      if (label.textContent !== status) label.textContent = status;
       this.html(this.standings.querySelector('ol')!, room.entrants.map(p => `<li class="${p.id === this.id ? 'is-you' : ''}"><span>${escape(p.profile.name)}</span><b>${p.finishTime !== null ? time(p.finishTime) : p.dnf ? 'DNF' : !p.connected ? 'OFFLINE' : `${p.state.checkpoint}/4`}</b></li>`).join(''));
     }
   }
@@ -526,19 +586,13 @@ export class Multiplayer {
       this.updateGamepad();
       if (this.step === 'driver' || this.step === 'car') this.showroom?.render(performance.now());
     }
-    const players = this.room?.entrants ?? [];
+    const players = this.motion.sample(performance.now());
     for (const [id, peer] of this.peers) if (!players.some(p => p.id === id && !p.dnf) || !this.driving) {
       peer.car.dispose(); peer.label.material.dispose(); peer.texture.dispose(); peer.label.removeFromParent(); this.peers.delete(id);
     }
     if (!this.driving) return;
     const me = players.find(p => p.id === this.id);
-    if (me && !this.finished) {
-      const target = new THREE.Vector3(me.position.x, me.state.y, me.position.z);
-      if (!this.localPosition || this.localPosition.distanceToSquared(target) > 100) { this.localPosition = target.clone(); this.localHeading = me.state.heading; }
-      this.localPosition.lerp(target, 1 - Math.exp(-24 * dt));
-      this.localHeading += Math.atan2(Math.sin(me.state.heading - this.localHeading), Math.cos(me.state.heading - this.localHeading)) * (1 - Math.exp(-24 * dt));
-      this.hooks.state({ ...me, position: { x: this.localPosition.x, y: this.localPosition.y, z: this.localPosition.z }, state: { ...me.state, y: this.localPosition.y, heading: this.localHeading } });
-    }
+    if (me && !this.finished) this.hooks.state(me);
     for (const p of players) {
       if (p.id === this.id || p.dnf) continue;
       let peer = this.peers.get(p.id); const profile = JSON.stringify(p.profile);
@@ -550,9 +604,10 @@ export class Multiplayer {
         peer = { car, label, texture, profile: '' }; this.peers.set(p.id, peer); car.group.position.set(p.position.x, p.state.y, p.position.z);
       }
       if (peer.profile !== profile) { peer.car.customize(p.profile); peer.profile = profile; }
-      const group = peer.car.group; group.position.lerp(new THREE.Vector3(p.position.x, p.state.y + .03, p.position.z), 1 - Math.exp(-18 * dt));
-      const delta = Math.atan2(Math.sin(p.state.heading - group.rotation.y), Math.cos(p.state.heading - group.rotation.y)); group.rotation.order = 'YXZ'; group.rotation.y += delta * (1 - Math.exp(-18 * dt)); group.rotation.x = -p.state.surfacePitch;
-      peer.label.position.copy(group.position).add(new THREE.Vector3(0, 2.9, 0)); group.visible = peer.label.visible = p.connected;
+      const group = peer.car.group; group.position.set(p.position.x, p.state.y + .03, p.position.z);
+      group.rotation.order = 'YXZ'; group.rotation.set(-p.state.surfacePitch, p.state.heading, p.state.surfaceRoll);
+      peer.label.position.set(group.position.x, group.position.y + 2.9, group.position.z); group.visible = peer.label.visible = p.connected;
+      if (me) peer.car.setRemoteDetail(Math.hypot(p.position.x - me.position.x, p.position.z - me.position.z));
       peer.car.update(dt, { speed: p.state.speed, steer: 0, braking: false, boosting: false, time: now, glide: p.state.glide, airborne: p.state.airborne, altitude: p.state.altitude });
     }
   }
@@ -570,5 +625,5 @@ export class Multiplayer {
     if (buttons[9] && !this.padButtons[9]) targets.find(el => el.matches('[data-panel] .mp-primary, [data-panel] .mp-mode-card'))?.click();
     this.padButtons = buttons;
   }
-  private clearPeers() { for (const peer of this.peers.values()) { peer.car.dispose(); peer.label.material.dispose(); peer.texture.dispose(); peer.label.removeFromParent(); } this.peers.clear(); }
+  private clearPeers() { for (const peer of this.peers.values()) { peer.car.dispose(); peer.label.material.dispose(); peer.texture.dispose(); peer.label.removeFromParent(); } this.peers.clear(); this.motion.reset(); }
 }

@@ -1,5 +1,10 @@
 node_modules/
 dist/
+dist-cloudflare/
+.cloudflare-build/
+.wrangler/
+.dev.vars
+.dev.vars.*
 .DS_Store
 *.local
 

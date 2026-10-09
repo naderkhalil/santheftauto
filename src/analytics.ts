@@ -1,4 +1,6 @@
-import type { CaptureResult } from 'posthog-js';
+import type { CaptureResult, PostHog } from 'posthog-js';
+import { GameAnalytics } from './game-analytics.ts';
+import type { GameEvent } from './game-analytics.ts';
 
 // PostHog project tokens are public browser keys, not personal API credentials.
 const PROJECT_TOKEN = 'phc_ye84QB22CKPBQG4Ai39eYwMcRBZD65sXjvSA4sShUnzn';
@@ -28,13 +30,18 @@ export function sanitizeAnalyticsEvent(event: CaptureResult | null): CaptureResu
   return event;
 }
 
-let initialized = false;
+let initialization: Promise<void> | undefined;
+let client: PostHog | undefined;
 
-export async function initAnalytics(): Promise<void> {
+export function initAnalytics(): Promise<void> {
+  if (initialization) return initialization;
   const enabled = import.meta.env.VITE_POSTHOG_ENABLED;
-  if (initialized || enabled === 'false' || (!import.meta.env.PROD && enabled !== 'true')) return;
-  initialized = true;
+  if (enabled === 'false' || (!import.meta.env.PROD && enabled !== 'true')) return Promise.resolve();
+  initialization = loadAnalytics();
+  return initialization;
+}
 
+async function loadAnalytics(): Promise<void> {
   try {
     // Load independently so analytics never holds up the city or its assets.
     const { default: posthog } = await import('posthog-js');
@@ -60,7 +67,18 @@ export async function initAnalytics(): Promise<void> {
       disable_capture_url_hashes: true,
       before_send: sanitizeAnalyticsEvent,
     });
+    client = posthog;
   } catch {
     // A blocked or unavailable analytics SDK must not prevent play.
   }
 }
+
+export function captureGameEvent(event: GameEvent, properties: Record<string, unknown>): void {
+  const timestamp = new Date();
+  // Preserve early starts/finishes while the SDK loads, without blocking play.
+  void initAnalytics().then(() => {
+    try { client?.capture(event, properties, { timestamp }); } catch { /* Analytics is optional. */ }
+  }).catch(() => { /* Analytics is optional. */ });
+}
+
+export const gameAnalytics = new GameAnalytics(captureGameEvent);

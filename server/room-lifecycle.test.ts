@@ -64,6 +64,8 @@ test('winner survives leaving, final result survives rematch and the next round'
   s.service.command(s.code, s.host.token, { type: 'leave' }, 6060);
   nearFinish(s, 1); s.service.tick(6100);
   const result = s.service.snapshot(s.service.room(s.code), 6100).results!;
+  assert.match(result.roundId, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  assert.notEqual(result.roundId, s.code + ':1');
   assert.equal(result.entries[0].id, s.host.id);
   assert.equal(result.entries[0].finishTime, winnerTime);
   assert.equal(result.entries[0].dnfReason, null);

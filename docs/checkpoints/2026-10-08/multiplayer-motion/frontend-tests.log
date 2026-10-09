@@ -1,0 +1,1093 @@
+
+> sf-night-run@0.1.0 test
+> node --experimental-strip-types --test src/*.test.ts
+
+TAP version 13
+# Subtest: room invitations are removed from all SDK URL and referrer locations
+ok 1 - room invitations are removed from all SDK URL and referrer locations
+  ---
+  duration_ms: 2.235
+  type: 'test'
+  ...
+# Subtest: page-leave duration and direct attribution survive sanitization
+ok 2 - page-leave duration and direct attribution survive sanitization
+  ---
+  duration_ms: 0.336833
+  type: 'test'
+  ...
+# Subtest: rainbow strips are physical, trigger once, and braking or reset clears their surge
+ok 3 - rainbow strips are physical, trigger once, and braking or reset clears their surge
+  ---
+  duration_ms: 9.772708
+  type: 'test'
+  ...
+# Subtest: the full Hayes sprint, skyline launch and landing finish at 30, 60 and 120 Hz
+ok 4 - the full Hayes sprint, skyline launch and landing finish at 30, 60 and 120 Hz
+  ---
+  duration_ms: 300.230541
+  type: 'test'
+  ...
+# Subtest: a park run-up accelerator respects its lower target speed at full throttle
+ok 5 - a park run-up accelerator respects its lower target speed at full throttle
+  ---
+  duration_ms: 44.475459
+  type: 'test'
+  ...
+# Subtest: recovering from flight clamps the car to the destination path width
+ok 6 - recovering from flight clamps the car to the destination path width
+  ---
+  duration_ms: 2.271708
+  type: 'test'
+  ...
+# Subtest: the Alamo flight corridor narrows smoothly into the actual landing path
+ok 7 - the Alamo flight corridor narrows smoothly into the actual landing path
+  ---
+  duration_ms: 14.408833
+  type: 'test'
+  ...
+# Subtest: Cerebral uses an uncompressed east/north metre grid at the documented WGS84 origin
+ok 8 - Cerebral uses an uncompressed east/north metre grid at the documented WGS84 origin
+  ---
+  duration_ms: 7.633
+  type: 'test'
+  ...
+# Subtest: one shared DEM supplies route points, streets and all building frontages
+ok 9 - one shared DEM supplies route points, streets and all building frontages
+  ---
+  duration_ms: 12.667334
+  type: 'test'
+  ...
+# Subtest: Alamo lap repeats the same measured streets before Page, Reveille and Duboce
+ok 10 - Alamo lap repeats the same measured streets before Page, Reveille and Duboce
+  ---
+  duration_ms: 0.354375
+  type: 'test'
+  ...
+# Subtest: real parcels preserve all seven Painted Ladies, the narrow Page house and corner cafe
+ok 11 - real parcels preserve all seven Painted Ladies, the narrow Page house and corner cafe
+  ---
+  duration_ms: 0.222917
+  type: 'test'
+  ...
+# Subtest: runtime and Blender geometry share the same published data
+ok 12 - runtime and Blender geometry share the same published data
+  ---
+  duration_ms: 3.4735
+  type: 'test'
+  ...
+# Subtest: the dedicated Green preserves the geographic footprint and opens its Hayes edge
+ok 13 - the dedicated Green preserves the geographic footprint and opens its Hayes edge
+  ---
+  duration_ms: 39.352916
+  type: 'test'
+  ...
+# Subtest: both neighborhood levels relinquish Green and Anina while keeping their neighbors
+ok 14 - both neighborhood levels relinquish Green and Anina while keeping their neighbors
+  ---
+  duration_ms: 16.350417
+  type: 'test'
+  ...
+# Subtest: one real car on Hayes occupies both lap visits without duplicate collision records
+ok 15 - one real car on Hayes occupies both lap visits without duplicate collision records
+  ---
+  duration_ms: 14.92175
+  type: 'test'
+  ...
+# Subtest: cross-street cars, adjacent blocks and invalid placements do not create phantom obstacles
+ok 16 - cross-street cars, adjacent blocks and invalid placements do not create phantom obstacles
+  ---
+  duration_ms: 7.705334
+  type: 'test'
+  ...
+# Subtest: parked cars cause physical contacts on both lap passes while the centre lane stays clear
+ok 17 - parked cars cause physical contacts on both lap passes while the centre lane stays clear
+  ---
+  duration_ms: 99.267041
+  type: 'test'
+  ...
+# Subtest: the park adventure retains source geography and includes the Hayes opening in a 2.62 km race
+ok 18 - the park adventure retains source geography and includes the Hayes opening in a 2.62 km race
+  ---
+  duration_ms: 2.095083
+  type: 'test'
+  ...
+# Subtest: the Hayes opening approaches Patricia’s Green and Anina on their correct sides before Laguna
+ok 19 - the Hayes opening approaches Patricia’s Green and Anina on their correct sides before Laguna
+  ---
+  duration_ms: 6.991959
+  type: 'test'
+  ...
+# Subtest: park climb, crest, landing and exit use real asphalt-path anchors
+ok 20 - park climb, crest, landing and exit use real asphalt-path anchors
+  ---
+  duration_ms: 8.597625
+  type: 'test'
+  ...
+# Subtest: the stable east-facing glide crosses open park and lands on asphalt before descending Steiner
+ok 21 - the stable east-facing glide crosses open park and lands on asphalt before descending Steiner
+  ---
+  duration_ms: 0.731708
+  type: 'test'
+  ...
+# Subtest: Hayes boost effects finish well before the park bend and the final pad feeds the launch
+ok 22 - Hayes boost effects finish well before the park bend and the final pad feeds the launch
+  ---
+  duration_ms: 0.823875
+  type: 'test'
+  ...
+# Subtest: Cerebral chevrons follow physical left/right turns after north-axis reflection
+ok 23 - Cerebral chevrons follow physical left/right turns after north-axis reflection
+  ---
+  duration_ms: 3.969917
+  type: 'test'
+  ...
+# Subtest: survey waypoints along a straight street do not become false corner boards
+ok 24 - survey waypoints along a straight street do not become false corner boards
+  ---
+  duration_ms: 0.288708
+  type: 'test'
+  ...
+# Subtest: rainbow art uses canonical terrain coordinates and supports simulation boost ranges
+ok 25 - rainbow art uses canonical terrain coordinates and supports simulation boost ranges
+  ---
+  duration_ms: 10.551167
+  type: 'test'
+  ...
+# Subtest: corner panels remain outside the driving width and outside the flight span
+ok 26 - corner panels remain outside the driving width and outside the flight span
+  ---
+  duration_ms: 4.25
+  type: 'test'
+  ...
+# Subtest: complete city blocks fit their parcels without intersecting neighboring facade envelopes
+ok 27 - complete city blocks fit their parcels without intersecting neighboring facade envelopes
+  ---
+  duration_ms: 16.946834
+  type: 'test'
+  ...
+# Subtest: new city bodies and facade projections leave all street corridors and rounded racing turns clear
+ok 28 - new city bodies and facade projections leave all street corridors and rounded racing turns clear
+  ---
+  duration_ms: 180.274042
+  type: 'test'
+  ...
+# Subtest: the authored square, playground, Dragon Gate, Chinatown roofs and Transamerica remain intact
+ok 29 - the authored square, playground, Dragon Gate, Chinatown roofs and Transamerica remain intact
+  ---
+  duration_ms: 1.150375
+  type: 'test'
+  ...
+# Subtest: Powell/Bush screenshot regression replaces vacant block centers with continuous occupied street walls
+ok 30 - Powell/Bush screenshot regression replaces vacant block centers with continuous occupied street walls
+  ---
+  duration_ms: 0.524167
+  type: 'test'
+  ...
+# Subtest: neighborhood projections stay inside reserved sidewalk clearance, including corner bays and roofs
+ok 31 - neighborhood projections stay inside reserved sidewalk clearance, including corner bays and roofs
+  ---
+  duration_ms: 230.160958
+  type: 'test'
+  ...
+# Subtest: four-sided facades have finite geometry and outward window normals
+ok 32 - four-sided facades have finite geometry and outward window normals
+  ---
+  duration_ms: 22.003667
+  type: 'test'
+  ...
+# Subtest: neighborhood culling accounts for the semantic-to-render reflection
+ok 33 - neighborhood culling accounts for the semantic-to-render reflection
+  ---
+  duration_ms: 12.947375
+  type: 'test'
+  ...
+# Subtest: steep Powell storefronts use narrow bays and grounded entrance landings
+ok 34 - steep Powell storefronts use narrow bays and grounded entrance landings
+  ---
+  duration_ms: 137.7235
+  type: 'test'
+  ...
+# Subtest: a head-on road wall hit can be reversed out of at all supported frame rates
+ok 35 - a head-on road wall hit can be reversed out of at all supported frame rates
+  ---
+  duration_ms: 35.120417
+  type: 'test'
+  ...
+# Subtest: a parked car is solid on a second approach and continuous contact counts only once
+ok 36 - a parked car is solid on a second approach and continuous contact counts only once
+  ---
+  duration_ms: 31.777416
+  type: 'test'
+  ...
+# Subtest: nearby recovery preserves race progress and chooses pavement clear of obstacles
+ok 37 - nearby recovery preserves race progress and chooses pavement clear of obstacles
+  ---
+  duration_ms: 520.442042
+  type: 'test'
+  ...
+# Subtest: missing a later checkpoint recovers just before it, and a flight recovers before launch
+ok 38 - missing a later checkpoint recovers just before it, and a flight recovers before launch
+  ---
+  duration_ms: 0.220542
+  type: 'test'
+  ...
+# Subtest: City Loop with its parked traffic still completes through manual control inputs
+ok 39 - City Loop with its parked traffic still completes through manual control inputs
+  ---
+  duration_ms: 584.22925
+  type: 'test'
+  ...
+# Subtest: chase-camera clearance protects road corners in forward and reverse views
+ok 40 - chase-camera clearance protects road corners in forward and reverse views
+  ---
+  duration_ms: 76.68975
+  type: 'test'
+  ...
+# Subtest: district barriers share the collision boundary and keep Powell open
+ok 41 - district barriers share the collision boundary and keep Powell open
+  ---
+  duration_ms: 0.140542
+  type: 'test'
+  ...
+# Subtest: Apple is to the right of Saks when looking north across Union Square
+ok 42 - Apple is to the right of Saks when looking north across Union Square
+  ---
+  duration_ms: 5.64025
+  type: 'test'
+  ...
+# Subtest: Apple and Neiman Marcus occupy opposite ends of the east side from the Westin view
+ok 43 - Apple and Neiman Marcus occupy opposite ends of the east side from the Westin view
+  ---
+  duration_ms: 0.368292
+  type: 'test'
+  ...
+# Subtest: the Post to Stockton corner is visibly a right turn, matching the clockwise square lap
+ok 44 - the Post to Stockton corner is visibly a right turn, matching the clockwise square lap
+  ---
+  duration_ms: 0.465125
+  type: 'test'
+  ...
+# Subtest: right and left controls move toward their screen side in every street heading
+ok 45 - right and left controls move toward their screen side in every street heading
+  ---
+  duration_ms: 9.283291
+  type: 'test'
+  ...
+# Subtest: world geometry, particle points and camera conversions share one reflection without mutating city state
+ok 46 - world geometry, particle points and camera conversions share one reflection without mutating city state
+  ---
+  duration_ms: 1.665375
+  type: 'test'
+  ...
+# Subtest: Cerebral road-mode driving keeps the car on measured lateral ground after seeking and finishing
+ok 47 - Cerebral road-mode driving keeps the car on measured lateral ground after seeking and finishing
+  ---
+  duration_ms: 22.457042
+  type: 'test'
+  ...
+# Subtest: Hawk Hill retains race time after missing fog, then clears all beacons and finishes
+ok 48 - Hawk Hill retains race time after missing fog, then clears all beacons and finishes
+  ---
+  duration_ms: 164.872917
+  type: 'test'
+  ...
+# Subtest: VC Circle is manually driveable through all ordered gates at 30, 60, and 120 Hz
+ok 49 - VC Circle is manually driveable through all ordered gates at 30, 60, and 120 Hz
+  ---
+  duration_ms: 111.77025
+  type: 'test'
+  ...
+# Subtest: Cerebral Valley is manually driveable through all ordered gates at 30, 60, and 120 Hz
+ok 50 - Cerebral Valley is manually driveable through all ordered gates at 30, 60, and 120 Hz
+  ---
+  duration_ms: 235.919417
+  type: 'test'
+  ...
+# Subtest: Golden Gate Surfride is manually driveable through all ordered gates at 30, 60, and 120 Hz
+ok 51 - Golden Gate Surfride is manually driveable through all ordered gates at 30, 60, and 120 Hz
+  ---
+  duration_ms: 89.909334
+  type: 'test'
+  ...
+# Subtest: Lands End is manually driveable through all ordered gates at 30, 60, and 120 Hz
+ok 52 - Lands End is manually driveable through all ordered gates at 30, 60, and 120 Hz
+  ---
+  duration_ms: 51.674167
+  type: 'test'
+  ...
+# Subtest: Presidio Run is manually driveable through all ordered gates at 30, 60, and 120 Hz
+ok 53 - Presidio Run is manually driveable through all ordered gates at 30, 60, and 120 Hz
+  ---
+  duration_ms: 71.294209
+  type: 'test'
+  ...
+# Subtest: Golden Gate → Hawk Hill is manually driveable through all ordered gates at 30, 60, and 120 Hz
+ok 54 - Golden Gate → Hawk Hill is manually driveable through all ordered gates at 30, 60, and 120 Hz
+  ---
+  duration_ms: 162.63425
+  type: 'test'
+  ...
+# Subtest: all six city races have ordered gates, distinct identities, and a reachable finish
+ok 55 - all six city races have ordered gates, distinct identities, and a reachable finish
+  ---
+  duration_ms: 1.290625
+  type: 'test'
+  ...
+# Subtest: rounded roads preserve metres, tangent continuity, authored height, and usable lane radii
+ok 56 - rounded roads preserve metres, tangent continuity, authored height, and usable lane radii
+  ---
+  duration_ms: 218.027583
+  type: 'test'
+  ...
+# Subtest: overlapping lap locations keep separate ordered progress and can be disambiguated
+ok 57 - overlapping lap locations keep separate ordered progress and can be disambiguated
+  ---
+  duration_ms: 1.491875
+  type: 'test'
+  ...
+# Subtest: Cerebral Valley visits 531 Page before Webster and detours on Waller to Réveille
+ok 58 - Cerebral Valley visits 531 Page before Webster and detours on Waller to Réveille
+  ---
+  duration_ms: 0.335291
+  type: 'test'
+  ...
+# Subtest: Hawk Hill fog lies on the bridge, before its north exit and the climb
+ok 59 - Hawk Hill fog lies on the bridge, before its north exit and the climb
+  ---
+  duration_ms: 0.494417
+  type: 'test'
+  ...
+# Subtest: short adjacent corners trim without reversing streets and invalid geometry fails clearly
+ok 60 - short adjacent corners trim without reversing streets and invalid geometry fails clearly
+  ---
+  duration_ms: 2.3005
+  type: 'test'
+  ...
+# Subtest: an injected route controls spawn, world position, ordered gates, and the finish distance
+ok 61 - an injected route controls spawn, world position, ordered gates, and the finish distance
+  ---
+  duration_ms: 3.386
+  type: 'test'
+  ...
+# Subtest: custom recovery returns to the earned gate and seeking retains race time and statistics
+ok 62 - custom recovery returns to the earned gate and seeking retains race time and statistics
+  ---
+  duration_ms: 0.8335
+  type: 'test'
+  ...
+# Subtest: custom courses use their own curbs and cannot enter the Union Square playground
+ok 63 - custom courses use their own curbs and cannot enter the Union Square playground
+  ---
+  duration_ms: 0.620584
+  type: 'test'
+  ...
+# Subtest: custom launch zones and flight paths remain course specific after recovery
+ok 64 - custom launch zones and flight paths remain course specific after recovery
+  ---
+  duration_ms: 1.216167
+  type: 'test'
+  ...
+# Subtest: reset restores a fresh race, including hidden collision and boost state
+ok 65 - reset restores a fresh race, including hidden collision and boost state
+  ---
+  duration_ms: 12.759917
+  type: 'test'
+  ...
+# Subtest: 30, 60 and 120 Hz produce matching routes, handling and timers
+ok 66 - 30, 60 and 120 Hz produce matching routes, handling and timers
+  ---
+  duration_ms: 47.5825
+  type: 'test'
+  ...
+# Subtest: boost is faster, depletes, recharges, and can be triggered again
+ok 67 - boost is faster, depletes, recharges, and can be triggered again
+  ---
+  duration_ms: 37.108916
+  type: 'test'
+  ...
+# Subtest: an explicitly driven run crosses checkpoints in order and finishes exactly once
+ok 68 - an explicitly driven run crosses checkpoints in order and finishes exactly once
+  ---
+  duration_ms: 213.945625
+  type: 'test'
+  ...
+# Subtest: boost effects reflect actual power after depletion, release, braking, reset and finish
+ok 69 - boost effects reflect actual power after depletion, release, braking, reset and finish
+  ---
+  duration_ms: 4.36025
+  type: 'test'
+  ...
+# Subtest: head-on obstacle contact stops the car without tunneling and permits reverse
+ok 70 - head-on obstacle contact stops the car without tunneling and permits reverse
+  ---
+  duration_ms: 5.025
+  type: 'test'
+  ...
+# Subtest: passing an obstacle in an adjacent lane does not collide
+ok 71 - passing an obstacle in an adjacent lane does not collide
+  ---
+  duration_ms: 5.809792
+  type: 'test'
+  ...
+# Subtest: grounded curb impacts stay inside the road and the driver can steer away
+ok 72 - grounded curb impacts stay inside the road and the driver can steer away
+  ---
+  duration_ms: 1.211625
+  type: 'test'
+  ...
+# Subtest: holding brake reverses; releasing pedals stops before stationary steering
+ok 73 - holding brake reverses; releasing pedals stops before stationary steering
+  ---
+  duration_ms: 10.661875
+  type: 'test'
+  ...
+# Subtest: all three hills launch, sustain hover and land with wheels restored during a complete run
+ok 74 - all three hills launch, sustain hover and land with wheels restored during a complete run
+  ---
+  duration_ms: 247.397208
+  type: 'test'
+  ...
+# Subtest: hover retracts before landing and the flight corridor joins the road smoothly
+ok 75 - hover retracts before landing and the flight corridor joins the road smoothly
+  ---
+  duration_ms: 3.640834
+  type: 'test'
+  ...
+# Subtest: air steering is responsive, soft boundaries do not count as curb crashes, and braking cannot strand a glider
+ok 76 - air steering is responsive, soft boundaries do not count as curb crashes, and braking cannot strand a glider
+  ---
+  duration_ms: 18.684375
+  type: 'test'
+  ...
+# Subtest: boost gains lift, braking dives, and both return smoothly to the same landing
+ok 77 - boost gains lift, braking dives, and both return smoothly to the same landing
+  ---
+  duration_ms: 5.657041
+  type: 'test'
+  ...
+# Subtest: slow driving stays grounded and gliders clear obstacles beneath their flight corridor
+ok 78 - slow driving stays grounded and gliders clear obstacles beneath their flight corridor
+  ---
+  duration_ms: 5.223959
+  type: 'test'
+  ...
+# Subtest: invalid time and controls cannot poison the simulation
+ok 79 - invalid time and controls cannot poison the simulation
+  ---
+  duration_ms: 0.565083
+  type: 'test'
+  ...
+# Subtest: all takeoffs preserve uphill momentum instead of adding a vertical kick
+ok 80 - all takeoffs preserve uphill momentum instead of adding a vertical kick
+  ---
+  duration_ms: 3.49
+  type: 'test'
+  ...
+# Subtest: every flight clears the crest and has matching entry and exit tangents
+ok 81 - every flight clears the crest and has matching entry and exit tangents
+  ---
+  duration_ms: 12.757791
+  type: 'test'
+  ...
+# Subtest: wheel unfolding follows road clearance and eases into sustained glide
+ok 82 - wheel unfolding follows road clearance and eases into sustained glide
+  ---
+  duration_ms: 0.392375
+  type: 'test'
+  ...
+# Subtest: leaving the road preserves the full climbing attitude before hover deployment
+ok 83 - leaving the road preserves the full climbing attitude before hover deployment
+  ---
+  duration_ms: 1.966708
+  type: 'test'
+  ...
+# Subtest: camera, pitch and banking transition continuously as clearance and wheels increase
+ok 84 - camera, pitch and banking transition continuously as clearance and wheels increase
+  ---
+  duration_ms: 4.540709
+  type: 'test'
+  ...
+# Subtest: touchdown restores road framing even before the wheel animation has settled
+ok 85 - touchdown restores road framing even before the wheel animation has settled
+  ---
+  duration_ms: 0.267833
+  type: 'test'
+  ...
+# Subtest: the bridge fog requires three ordered manual crossings before clearing
+ok 86 - the bridge fog requires three ordered manual crossings before clearing
+  ---
+  duration_ms: 0.86825
+  type: 'test'
+  ...
+# Subtest: missing a beacon clears the attempt so the caller can retry from the entrance
+ok 87 - missing a beacon clears the attempt so the caller can retry from the entrance
+  ---
+  duration_ms: 0.129792
+  type: 'test'
+  ...
+# Subtest: jumping ahead or crossing several gates cannot bypass the fog skill segment
+ok 88 - jumping ahead or crossing several gates cannot bypass the fog skill segment
+  ---
+  duration_ms: 0.058083
+  type: 'test'
+  ...
+# Subtest: a 100 ms frame scores lateral position at the beacon plane, not at frame end
+ok 89 - a 100 ms frame scores lateral position at the beacon plane, not at frame end
+  ---
+  duration_ms: 0.057125
+  type: 'test'
+  ...
+# Subtest: reverse movement and invalid updates cannot earn fog beacons
+ok 90 - reverse movement and invalid updates cannot earn fog beacons
+  ---
+  duration_ms: 0.282458
+  type: 'test'
+  ...
+# Subtest: solo snapshots the nickname, finishes once, and restarts as a fresh game
+ok 91 - solo snapshots the nickname, finishes once, and restarts as a fresh game
+  ---
+  duration_ms: 1.185208
+  type: 'test'
+  ...
+# Subtest: clearing a solo race prevents a later free-drive finish from counting
+ok 92 - clearing a solo race prevents a later free-drive finish from counting
+  ---
+  duration_ms: 1.274833
+  type: 'test'
+  ...
+# Subtest: multiplayer uses the frozen full lineup, retaining departed racers and duplicate nicknames
+ok 93 - multiplayer uses the frozen full lineup, retaining departed racers and duplicate nicknames
+  ---
+  duration_ms: 0.450541
+  type: 'test'
+  ...
+# Subtest: repeated snapshots, reordered entrants, and reloads are deduplicated while rematches count
+ok 94 - repeated snapshots, reordered entrants, and reloads are deduplicated while rematches count
+  ---
+  duration_ms: 0.222833
+  type: 'test'
+  ...
+# Subtest: restoring terminal snapshots records the outcome without inventing a start
+ok 95 - restoring terminal snapshots records the outcome without inventing a start
+  ---
+  duration_ms: 0.136167
+  type: 'test'
+  ...
+# Subtest: DNF is a separate outcome and another player finishing never counts for the local player
+ok 96 - DNF is a separate outcome and another player finishing never counts for the local player
+  ---
+  duration_ms: 0.14525
+  type: 'test'
+  ...
+# Subtest: lobby, countdown outcomes, missing participants, and legacy invitation IDs are not captured
+ok 97 - lobby, countdown outcomes, missing participants, and legacy invitation IDs are not captured
+  ---
+  duration_ms: 0.274458
+  type: 'test'
+  ...
+# Subtest: blocked storage keeps in-memory deduplication and failed capture can retry safely
+ok 98 - blocked storage keeps in-memory deduplication and failed capture can retry safely
+  ---
+  duration_ms: 0.559667
+  type: 'test'
+  ...
+# Subtest: the stored event ledger stays bounded
+ok 99 - the stored event ledger stays bounded
+  ---
+  duration_ms: 23.653333
+  type: 'test'
+  ...
+# Subtest: solo tracking works on HTTP without randomUUID and when crypto is restricted
+ok 100 - solo tracking works on HTTP without randomUUID and when crypto is restricted
+  ---
+  duration_ms: 0.579042
+  type: 'test'
+  ...
+# Subtest: a hit knocks only its short rail span, hops, and ignores repeated impacts
+ok 101 - a hit knocks only its short rail span, hops, and ignores repeated impacts
+  ---
+  duration_ms: 1.877084
+  type: 'test'
+  ...
+# Subtest: scattered furniture settles on sloping ground and stays within a small radius
+ok 102 - scattered furniture settles on sloping ground and stays within a small radius
+  ---
+  duration_ms: 1.98825
+  type: 'test'
+  ...
+# Subtest: reset restores exact transforms and batched render matrices, then permits another hit
+ok 103 - reset restores exact transforms and batched render matrices, then permits another hit
+  ---
+  duration_ms: 5.1185
+  type: 'test'
+  ...
+# Subtest: prop trajectories agree at 30, 60 and 120 Hz
+ok 104 - prop trajectories agree at 30, 60 and 120 Hz
+  ---
+  duration_ms: 3.698416
+  type: 'test'
+  ...
+# Subtest: unknown or malformed impacts and invalid update times do not poison the renderer
+ok 105 - unknown or malformed impacts and invalid update times do not poison the renderer
+  ---
+  duration_ms: 1.693875
+  type: 'test'
+  ...
+# Subtest: an actual car impact uses the shared rail identity to move, settle and reset its renderer
+ok 106 - an actual car impact uses the shared rail identity to move, settle and reset its renderer
+  ---
+  duration_ms: 183.711417
+  type: 'test'
+  ...
+# Subtest: releasing the accelerator slows to a full stop without reaching a curb
+ok 107 - releasing the accelerator slows to a full stop without reaching a curb
+  ---
+  duration_ms: 17.045334
+  type: 'test'
+  ...
+# Subtest: holding only the accelerator cannot steer around the first corner
+ok 108 - holding only the accelerator cannot steer around the first corner
+  ---
+  duration_ms: 31.537041
+  type: 'test'
+  ...
+# Subtest: steering turns the heading in the requested direction and cannot rotate a stationary car
+ok 109 - steering turns the heading in the requested direction and cannot rotate a stationary car
+  ---
+  duration_ms: 0.620542
+  type: 'test'
+  ...
+# Subtest: braking before the corner and deliberately steering right reaches Stockton cleanly
+ok 110 - braking before the corner and deliberately steering right reaches Stockton cleanly
+  ---
+  duration_ms: 43.321
+  type: 'test'
+  ...
+# Subtest: manual throttle, cornering and braking remain consistent at different frame rates
+ok 111 - manual throttle, cornering and braking remain consistent at different frame rates
+  ---
+  duration_ms: 5.914041
+  type: 'test'
+  ...
+# Subtest: network playback keeps its interpolated world position on the road and across the plaza boundary
+ok 112 - network playback keeps its interpolated world position on the road and across the plaza boundary
+  ---
+  duration_ms: 2.402458
+  type: 'test'
+  ...
+# Subtest: network render positions never leak into a subsequent local simulation or restored checkpoint
+ok 113 - network render positions never leak into a subsequent local simulation or restored checkpoint
+  ---
+  duration_ms: 3.199291
+  type: 'test'
+  ...
+# Subtest: the square and surrounding streets have independent world positions, without an asphalt clamp
+ok 114 - the square and surrounding streets have independent world positions, without an asphalt clamp
+  ---
+  duration_ms: 64.218875
+  type: 'test'
+  ...
+# Subtest: a car crosses the plaza curb and climbs the south stairs onto the raised terrace
+ok 115 - a car crosses the plaza curb and climbs the south stairs onto the raised terrace
+  ---
+  duration_ms: 73.713834
+  type: 'test'
+  ...
+# Subtest: the solid monument stops a fast car, reverse backs out, and recovery preserves race statistics
+ok 116 - the solid monument stops a fast car, reverse backs out, and recovery preserves race statistics
+  ---
+  duration_ms: 309.790375
+  type: 'test'
+  ...
+# Subtest: parked cars stay solid on repeated contact and cannot be tunneled through at low frame rates
+ok 117 - parked cars stay solid on repeated contact and cannot be tunneled through at low frame rates
+  ---
+  duration_ms: 132.060791
+  type: 'test'
+  ...
+# Subtest: rolling off a terrace falls under gravity and settles without deploying hover wheels
+ok 118 - rolling off a terrace falls under gravity and settles without deploying hover wheels
+  ---
+  duration_ms: 71.071208
+  type: 'test'
+  ...
+# Subtest: a Union Square shortcut earns the Powell exit and can finish the race
+ok 119 - a Union Square shortcut earns the Powell exit and can finish the race
+  ---
+  duration_ms: 81.404375
+  type: 'test'
+  ...
+# Subtest: the north Powell corridor can be driven back into the square
+ok 120 - the north Powell corridor can be driven back into the square
+  ---
+  duration_ms: 66.39825
+  type: 'test'
+  ...
+# Subtest: opening the square preserves all three glides and a legitimate complete race
+ok 121 - opening the square preserves all three glides and a legitimate complete race
+  ---
+  duration_ms: 68.615
+  type: 'test'
+  ...
+# Subtest: world driving, stair contact, reversing and steering are deterministic at30/60/120Hz
+ok 122 - world driving, stair contact, reversing and steering are deterministic at30/60/120Hz
+  ---
+  duration_ms: 87.112167
+  type: 'test'
+  ...
+# Subtest: outdoor rail sections and cafe furniture scatter without braking the car or scoring a crash
+ok 123 - outdoor rail sections and cafe furniture scatter without braking the car or scoring a crash
+  ---
+  duration_ms: 15.779084
+  type: 'test'
+  ...
+# Subtest: reversing into furniture delivers the actual backward travel impulse
+ok 124 - reversing into furniture delivers the actual backward travel impulse
+  ---
+  duration_ms: 15.314792
+  type: 'test'
+  ...
+# Subtest: recovery preserves displaced props and a new run restores them
+ok 125 - recovery preserves displaced props and a new run restores them
+  ---
+  duration_ms: 48.4365
+  type: 'test'
+  ...
+# Subtest: props behind a solid terrace wall cannot be knocked by attempted blocked movement
+ok 126 - props behind a solid terrace wall cannot be knocked by attempted blocked movement
+  ---
+  duration_ms: 17.554541
+  type: 'test'
+  ...
+# Subtest: glancing along a building retains tangential speed without turning the car
+ok 127 - glancing along a building retains tangential speed without turning the car
+  ---
+  duration_ms: 6.529959
+  type: 'test'
+  ...
+# Subtest: the district boundary permits sliding and steering away without a reset
+ok 128 - the district boundary permits sliding and steering away without a reset
+  ---
+  duration_ms: 29.7305
+  type: 'test'
+  ...
+# Subtest: road-edge scrapes outside the square stay responsive and frame-rate independent
+ok 129 - road-edge scrapes outside the square stay responsive and frame-rate independent
+  ---
+  duration_ms: 7.981792
+  type: 'test'
+  ...
+# Subtest: Ferry finish completes across lanes and frame rates, or recovers missing gates without resetting time
+ok 130 - Ferry finish completes across lanes and frame rates, or recovers missing gates without resetting time
+  ---
+  duration_ms: 472.157583
+  type: 'test'
+  ...
+# Subtest: untimed exploration can finish at the Ferry Building without race gates
+ok 131 - untimed exploration can finish at the Ferry Building without race gates
+  ---
+  duration_ms: 0.435875
+  type: 'test'
+  ...
+# Subtest: exploration preserves the three plaza terraces and joins the existing city grade
+ok 132 - exploration preserves the three plaza terraces and joins the existing city grade
+  ---
+  duration_ms: 0.580333
+  type: 'test'
+  ...
+# Subtest: all four stair approaches and the side ramp reach their landings continuously
+ok 133 - all four stair approaches and the side ramp reach their landings continuously
+  ---
+  duration_ms: 12.934417
+  type: 'test'
+  ...
+# Subtest: the north stair side seams support tyres and the tall retaining faces block the whole car
+ok 134 - the north stair side seams support tyres and the tall retaining faces block the whole car
+  ---
+  duration_ms: 2.505417
+  type: 'test'
+  ...
+# Subtest: center terrace retaining faces block low cars without sealing stair and ramp landings
+ok 135 - center terrace retaining faces block low cars without sealing stair and ramp landings
+  ---
+  duration_ms: 0.44675
+  type: 'test'
+  ...
+# Subtest: real solids block the car while authored courts, sidewalks and Maiden Lane remain open
+ok 136 - real solids block the car while authored courts, sidewalks and Maiden Lane remain open
+  ---
+  duration_ms: 2.352084
+  type: 'test'
+  ...
+# Subtest: a car-width path reaches every plaza postcard from Post Street without climbing a retaining wall
+ok 137 - a car-width path reaches every plaza postcard from Post Street without climbing a retaining wall
+  ---
+  duration_ms: 292.6225
+  type: 'test'
+  ...
+# Subtest: knockable rail sections preserve every original post and form continuous authored rails
+ok 138 - knockable rail sections preserve every original post and form continuous authored rails
+  ---
+  duration_ms: 1.836542
+  type: 'test'
+  ...
+# Subtest: rendered prop identities match knockable collisions while structural fixtures stay solid
+ok 139 - rendered prop identities match knockable collisions while structural fixtures stay solid
+  ---
+  duration_ms: 1.593666
+  type: 'test'
+  ...
+# Subtest: all eight turn boundaries follow the actual route arcs and street sequence
+ok 140 - all eight turn boundaries follow the actual route arcs and street sequence
+  ---
+  duration_ms: 2.260833
+  type: 'test'
+  ...
+# Subtest: every arrow direction matches its turn projected into the actual reflected city camera
+ok 141 - every arrow direction matches its turn projected into the actual reflected city camera
+  ---
+  duration_ms: 7.572208
+  type: 'test'
+  ...
+# Subtest: outside chevron boards keep their complete diagonal footprints clear of the racing road
+ok 142 - outside chevron boards keep their complete diagonal footprints clear of the racing road
+  ---
+  duration_ms: 3.241667
+  type: 'test'
+  ...
+# Subtest: upcoming turns advance immediately at exits, including the waterfront turns and finish
+ok 143 - upcoming turns advance immediately at exits, including the waterfront turns and finish
+  ---
+  duration_ms: 0.278959
+  type: 'test'
+  ...
+# Subtest: braking advice gives a high-speed approach time to slow and stays quiet at safe speed
+ok 144 - braking advice gives a high-speed approach time to slow and stays quiet at safe speed
+  ---
+  duration_ms: 0.072667
+  type: 'test'
+  ...
+# Subtest: playable Blender kit has four independently animated wheels and all seated drivers
+ok 145 - playable Blender kit has four independently animated wheels and all seated drivers
+  ---
+  duration_ms: 4.558167
+  type: 'test'
+  ...
+# Subtest: garage exports map architecture separately from the racing payload
+ok 146 - garage exports map architecture separately from the racing payload
+  ---
+  duration_ms: 7.495042
+  type: 'test'
+  ...
+# Subtest: all founder choices survive server normalization and legacy saves migrate
+ok 147 - all founder choices survive server normalization and legacy saves migrate
+  ---
+  duration_ms: 1.265959
+  type: 'test'
+  ...
+# Subtest: racer names remain bounded plain text for shared selection markers
+ok 148 - racer names remain bounded plain text for shared selection markers
+  ---
+  duration_ms: 0.793167
+  type: 'test'
+  ...
+# Subtest: constant-speed motion stays smooth under jitter instead of chasing each arriving packet
+ok 149 - constant-speed motion stays smooth under jitter instead of chasing each arriving packet
+  ---
+  duration_ms: 6.96225
+  type: 'test'
+  ...
+# Per-frame motion deviation: 0.00000 m buffered, 0.17646 m old chase (100.0% reduction).
+# Subtest: heading crosses the angle boundary the short way and the world pose stays coherent at road/plaza handoff
+ok 150 - heading crosses the angle boundary the short way and the world pose stays coherent at road/plaza handoff
+  ---
+  duration_ms: 0.147875
+  type: 'test'
+  ...
+# Subtest: collision poses stop at the contact and authoritative counters cannot be replayed or rewound
+ok 151 - collision poses stop at the contact and authoritative counters cannot be replayed or rewound
+  ---
+  duration_ms: 0.395875
+  type: 'test'
+  ...
+# Subtest: recovery cuts the visual path instead of driving backwards through buildings, including same-step correction
+ok 152 - recovery cuts the visual path instead of driving backwards through buildings, including same-step correction
+  ---
+  duration_ms: 0.091875
+  type: 'test'
+  ...
+# Subtest: same-physics heartbeats replace metadata without filling or moving the motion timeline
+ok 153 - same-physics heartbeats replace metadata without filling or moving the motion timeline
+  ---
+  duration_ms: 1.577166
+  type: 'test'
+  ...
+# Subtest: stalls and new rounds reset promptly, while completed results stay exact
+ok 154 - stalls and new rounds reset promptly, while completed results stay exact
+  ---
+  duration_ms: 0.998167
+  type: 'test'
+  ...
+# Subtest: a fifteen-minute stream retains bounded memory and no growing playback delay
+ok 155 - a fifteen-minute stream retains bounded memory and no growing playback delay
+  ---
+  duration_ms: 166.248208
+  type: 'test'
+  ...
+# Subtest: repeated 650ms packet stalls and bursts keep catch-up bounded without forward jumps
+ok 156 - repeated 650ms packet stalls and bursts keep catch-up bounded without forward jumps
+  ---
+  duration_ms: 18.64275
+  type: 'test'
+  ...
+# Repeated-stall maximum movement 0.3667 m/frame; maximum buffered lag 681.7 ms.
+# Subtest: repeated collision stops never cross the latest contact or replay collision feedback
+ok 157 - repeated collision stops never cross the latest contact or replay collision feedback
+  ---
+  duration_ms: 5.498166
+  type: 'test'
+  ...
+# Subtest: countdown clock samples hand off to the racing physics clock without a pose jump
+ok 158 - countdown clock samples hand off to the racing physics clock without a pose jump
+  ---
+  duration_ms: 2.147291
+  type: 'test'
+  ...
+# (node:49849) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: stalled handshakes reach fallback even when the watchdog recreates the listener
+ok 159 - stalled handshakes reach fallback even when the watchdog recreates the listener
+  ---
+  duration_ms: 23.724417
+  type: 'test'
+  ...
+# Subtest: authenticated sockets with no room frame also exhaust the watchdog retry budget
+ok 160 - authenticated sockets with no room frame also exhaust the watchdog retry budget
+  ---
+  duration_ms: 1.9125
+  type: 'test'
+  ...
+# Subtest: new claims reset retry state and older-server admission chooses SSE immediately
+ok 161 - new claims reset retry state and older-server admission chooses SSE immediately
+  ---
+  duration_ms: 0.617833
+  type: 'test'
+  ...
+# Subtest: duplex claims privately, acknowledges snapshots immediately and batches later frames
+ok 162 - duplex claims privately, acknowledges snapshots immediately and batches later frames
+  ---
+  duration_ms: 5.518958
+  type: 'test'
+  ...
+# Subtest: terminal claim errors preserve their code and aborting an old listener leaves a new one usable
+ok 163 - terminal claim errors preserve their code and aborting an old listener leaves a new one usable
+  ---
+  duration_ms: 27.865334
+  type: 'test'
+  ...
+# Subtest: diagnostics distinguish invalid frames from browser callback failures without exposing data
+    # Subtest: decode
+    ok 1 - decode
+      ---
+      duration_ms: 7.816
+      type: 'test'
+      ...
+    # Subtest: receive
+    ok 2 - receive
+      ---
+      duration_ms: 1.039916
+      type: 'test'
+      ...
+    1..2
+ok 164 - diagnostics distinguish invalid frames from browser callback failures without exposing data
+  ---
+  duration_ms: 10.611916
+  type: 'test'
+  ...
+# Subtest: diagnostics allowlist error names and report socket close codes without close reasons
+ok 165 - diagnostics allowlist error names and report socket close codes without close reasons
+  ---
+  duration_ms: 0.722375
+  type: 'test'
+  ...
+# Subtest: the lap follows Post, Stockton, Geary and Powell before Bush and Grant
+ok 166 - the lap follows Post, Stockton, Geary and Powell before Bush and Grant
+  ---
+  duration_ms: 0.745375
+  type: 'test'
+  ...
+# Subtest: route metres remain continuous through rounded corners and offsets rotate with the road
+ok 167 - route metres remain continuous through rounded corners and offsets rotate with the road
+  ---
+  duration_ms: 22.342167
+  type: 'test'
+  ...
+# Subtest: Union Square is flat and the lap meets the original Powell/Post corner without a U-turn
+ok 168 - Union Square is flat and the lap meets the original Powell/Post corner without a U-turn
+  ---
+  duration_ms: 0.816625
+  type: 'test'
+  ...
+# Subtest: Apple has a level interior without changing the hill course or Powell sidewalks
+ok 169 - Apple has a level interior without changing the hill course or Powell sidewalks
+  ---
+  duration_ms: 2.506125
+  type: 'test'
+  ...
+# Subtest: authored square parcels exclude duplicate buildings while keeping roads and Maiden Lane open
+ok 170 - authored square parcels exclude duplicate buildings while keeping roads and Maiden Lane open
+  ---
+  duration_ms: 0.45575
+  type: 'test'
+  ...
+# Subtest: flights stay within straight hill corridors and every landing clears the following turn
+ok 171 - flights stay within straight hill corridors and every landing clears the following turn
+  ---
+  duration_ms: 0.949125
+  type: 'test'
+  ...
+# Subtest: city terrain blends between districts without cliffs and both road edges share the street grade
+ok 172 - city terrain blends between districts without cliffs and both road edges share the street grade
+  ---
+  duration_ms: 61.881375
+  type: 'test'
+  ...
+# Subtest: tour navigates the entire turning route at 30, 60 and 120 Hz and stops at the bay
+ok 173 - tour navigates the entire turning route at 30, 60 and 120 Hz and stops at the bay
+  ---
+  duration_ms: 167.325458
+  type: 'test'
+  ...
+# Subtest: named preview stops produce a valid camera and retain the chosen location
+ok 174 - named preview stops produce a valid camera and retain the chosen location
+  ---
+  duration_ms: 0.904125
+  type: 'test'
+  ...
+# Subtest: Ferry Building faces the Market finish with open approach space
+ok 175 - Ferry Building faces the Market finish with open approach space
+  ---
+  duration_ms: 1.294375
+  type: 'test'
+  ...
+# Subtest: historic pier order stays north of Washington and palm wells clear the driving corridor
+ok 176 - historic pier order stays north of Washington and palm wells clear the driving corridor
+  ---
+  duration_ms: 1.346209
+  type: 'test'
+  ...
+# Subtest: finish camera keeps clocktower and full waterfront building in the portrait and wide frames
+ok 177 - finish camera keeps clocktower and full waterfront building in the portrait and wide frames
+  ---
+  duration_ms: 1.086917
+  type: 'test'
+  ...
+1..177
+# tests 179
+# suites 0
+# pass 179
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2511.687166

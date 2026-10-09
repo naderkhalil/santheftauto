@@ -1,0 +1,522 @@
+{
+  "schemaVersion": 2,
+  "runId": "213ab80a-f73d-40ff-a0bf-b961b7676965",
+  "startedAt": "2026-10-09T02:54:29.810Z",
+  "finishedAt": "2026-10-09T02:54:55.127Z",
+  "node": "v22.21.0",
+  "platform": "darwin",
+  "scope": "Loopback HTTP/WebSocket/SSE transport and simulation; excludes browsers, rendering, assets, TLS and internet latency.",
+  "config": {
+    "base": "http://127.0.0.1:8791",
+    "requestedRooms": 2,
+    "playersPerRoom": 8,
+    "measuredSecondsRequested": 20,
+    "wire": "v2",
+    "inputTransport": "websocket",
+    "feedTransport": "duplex",
+    "inputHz": 20,
+    "heartbeatSeconds": 2
+  },
+  "actual": {
+    "rooms": 2,
+    "clients": 16,
+    "duplexClients": 16,
+    "sseClients": 0,
+    "measuredSeconds": 20.001667417,
+    "capacityRejected": 0,
+    "admissionRetries": 0,
+    "placementSupported": true,
+    "interrupted": false,
+    "failure": null
+  },
+  "requests": {
+    "setup:placement": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 7.367,
+        "p95": 7.805,
+        "p99": 7.805,
+        "max": 7.804917000000017,
+        "mean": 7.586000000000013
+      }
+    },
+    "setup:create": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "201": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 5.056,
+        "p95": 9.499,
+        "p99": 9.499,
+        "max": 9.499332999999979,
+        "mean": 7.2777289999999795
+      }
+    },
+    "setup:join": {
+      "attempts": 14,
+      "ok": 14,
+      "statuses": {
+        "201": 14
+      },
+      "latencyMs": {
+        "count": 14,
+        "p50": 3.739,
+        "p95": 5.761,
+        "p99": 5.761,
+        "max": 5.761334000000005,
+        "mean": 3.9627709285714383
+      }
+    },
+    "setup:selection": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 21.534,
+        "p95": 26.105,
+        "p99": 26.105,
+        "max": 26.10479200000003,
+        "mean": 19.4797734375
+      }
+    },
+    "setup:ready": {
+      "attempts": 16,
+      "ok": 16,
+      "statuses": {
+        "200": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 17.728,
+        "p95": 21.16,
+        "p99": 21.16,
+        "max": 21.160249999999962,
+        "mean": 18.328020875000004
+      }
+    },
+    "warmup:start": {
+      "attempts": 2,
+      "ok": 2,
+      "statuses": {
+        "200": 2
+      },
+      "latencyMs": {
+        "count": 2,
+        "p50": 16.073,
+        "p95": 16.236,
+        "p99": 16.236,
+        "max": 16.236208000000033,
+        "mean": 16.154541500000022
+      }
+    },
+    "warmup:heartbeat": {
+      "attempts": 44,
+      "ok": 44,
+      "statuses": {
+        "200": 44
+      },
+      "latencyMs": {
+        "count": 44,
+        "p50": 6.958,
+        "p95": 10.404,
+        "p99": 15.208,
+        "max": 15.207625000000007,
+        "mean": 7.4443542727272645
+      }
+    },
+    "measurement:heartbeat": {
+      "attempts": 157,
+      "ok": 126,
+      "statuses": {
+        "200": 126,
+        "network": 31
+      },
+      "latencyMs": {
+        "count": 157,
+        "p50": 8.677,
+        "p95": 53.597,
+        "p99": 376.359,
+        "max": 428.4262090000011,
+        "mean": 18.63937765605102
+      }
+    },
+    "cleanup:leave": {
+      "attempts": 16,
+      "ok": 0,
+      "statuses": {
+        "network": 16
+      },
+      "latencyMs": {
+        "count": 16,
+        "p50": 0.169,
+        "p95": 1.116,
+        "p99": 1.116,
+        "max": 1.115749999997206,
+        "mean": 0.2694193124989397
+      }
+    }
+  },
+  "errors": {
+    "count": 46,
+    "examples": [
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "websocket",
+        "code": "UNEXPECTED_CLOSE"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      },
+      {
+        "phase": "measurement",
+        "operation": "heartbeat",
+        "code": "TypeError"
+      }
+    ]
+  },
+  "throughput": {
+    "sseBodyBytes": 0,
+    "sseBodyBytesPerSecond": 0,
+    "sseBodyBytesPerClientSecond": 0,
+    "websocketResponseBodyBytes": 11428984,
+    "websocketResponseBodyBytesPerSecond": 571401.5617661042,
+    "feedBodyBytesPerSecond": 571401.5617661042,
+    "httpRequestBodyBytes": 3140,
+    "httpRequestBodyBytesPerSecond": 156.9869118677187,
+    "httpResponseBodyBytes": 4662,
+    "httpResponseBodyBytesPerSecond": 233.08056787493777,
+    "websocketBodyBytes": 682832,
+    "websocketBodyBytesPerSecond": 34138.75382307583,
+    "websocketInputFramesSent": 5104,
+    "websocketAcknowledgementBytes": 37952,
+    "websocketAcknowledgementsSent": 1232,
+    "serverAcceptedWebsocketInputs": null,
+    "deliveredInputsPerClientSecond": null,
+    "inputScheduleTicks": 396,
+    "skippedInputs": 1232
+  },
+  "streams": {
+    "frames": {
+      "tick": 6192
+    },
+    "arrivalIntervalMs": {
+      "count": 6192,
+      "p50": 50.686,
+      "p95": 53.451,
+      "p99": 58.266,
+      "max": 79.6877080000013,
+      "mean": 41.59800571333969
+    },
+    "localClockSnapshotAgeMs": {
+      "count": 6192,
+      "p50": 2,
+      "p95": 4,
+      "p99": 10,
+      "max": 34,
+      "mean": 2.4715762273901807
+    },
+    "latestPhases": {
+      "racing": 16
+    }
+  },
+  "server": {
+    "healthBefore": {
+      "status": "ok",
+      "platform": "cloudflare",
+      "perRoom": true,
+      "acceptingNewRooms": true,
+      "roomMetrics": [
+        {
+          "roomIndex": 0,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 8,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 0,
+          "sockets": 8,
+          "ticks": 101,
+          "acceptedInputs": 8,
+          "rejected": 0,
+          "frames": 200,
+          "bytes": 1006992
+        },
+        {
+          "roomIndex": 1,
+          "role": "durable-room",
+          "health": {
+            "workerId": null,
+            "accepting": false,
+            "activeRooms": 1,
+            "activePlayers": 8,
+            "activeRaces": 1,
+            "capacity": 1,
+            "playerCapacity": 8,
+            "availableSlots": 0,
+            "draining": false,
+            "overloaded": false
+          },
+          "streams": 0,
+          "sockets": 8,
+          "ticks": 101,
+          "acceptedInputs": 8,
+          "rejected": 0,
+          "frames": 192,
+          "bytes": 998272
+        }
+      ],
+      "metrics": {
+        "ticks": 202,
+        "streamFrames": 392,
+        "streamBytes": 2005264
+      },
+      "input": {
+        "acceptedInputs": 16
+      }
+    },
+    "healthAfter": null,
+    "healthSamples": [
+      {
+        "elapsedSeconds": 10.004175292,
+        "health": {
+          "status": "ok",
+          "platform": "cloudflare",
+          "perRoom": true,
+          "acceptingNewRooms": true,
+          "roomMetrics": [
+            {
+              "roomIndex": 0,
+              "role": "durable-room",
+              "health": {
+                "workerId": null,
+                "accepting": false,
+                "activeRooms": 1,
+                "activePlayers": 8,
+                "activeRaces": 1,
+                "capacity": 1,
+                "playerCapacity": 8,
+                "availableSlots": 0,
+                "draining": false,
+                "overloaded": false
+              },
+              "streams": 0,
+              "sockets": 8,
+              "ticks": 303,
+              "acceptedInputs": 1592,
+              "rejected": 0,
+              "frames": 2128,
+              "bytes": 4508856
+            },
+            {
+              "roomIndex": 1,
+              "role": "durable-room",
+              "health": {
+                "workerId": null,
+                "accepting": false,
+                "activeRooms": 1,
+                "activePlayers": 8,
+                "activeRaces": 1,
+                "capacity": 1,
+                "playerCapacity": 8,
+                "availableSlots": 0,
+                "draining": false,
+                "overloaded": false
+              },
+              "streams": 0,
+              "sockets": 8,
+              "ticks": 303,
+              "acceptedInputs": 1592,
+              "rejected": 0,
+              "frames": 2120,
+              "bytes": 4503672
+            }
+          ],
+          "metrics": {
+            "ticks": 606,
+            "streamFrames": 4248,
+            "streamBytes": 9012528
+          },
+          "input": {
+            "acceptedInputs": 3184
+          }
+        }
+      }
+    ],
+    "metricDelta": {},
+    "meanTickMs": null,
+    "inputLatencyMs": null,
+    "note": "WebSocket input has no per-message acknowledgement: no input latency is fabricated. Outbound feed acknowledgements enforce queue limits, not input latency. HTTP heartbeat RTT remains measured. Cloudflare metrics aggregate only this run’s known room actors; there is no global room census. Counters reset on actor eviction, so negative deltas invalidate the measurement. Server tick timings are null when the runtime exposes only counts."
+  },
+  "loadGenerator": {
+    "eventLoopDelayMs": {
+      "p50": 10.772479,
+      "p95": 11.272191,
+      "p99": 11.812863,
+      "max": 21.659647
+    },
+    "note": "This is the load-generator process, not the server event loop. Both compete for the local machine CPU; results are not remote throughput claims."
+  },
+  "cleanup": {
+    "ownedRooms": 2,
+    "attempts": 16,
+    "success": 0,
+    "alreadyGone": 0,
+    "failed": 16
+  }
+}
