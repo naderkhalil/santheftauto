@@ -30,7 +30,12 @@ export function createCar(){
     for(const [id,driver] of drivers)driver.visible=id===profile.driver;
     const sponsor=SPONSORS.find(s=>s.id===profile.sponsor)??SPONSORS[0];decals.visible=!!model&&!!sponsor.mark;
     const ctx=decalCanvas.getContext('2d')!;ctx.clearRect(0,0,512,256);if(sponsor.mark){ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 80px sans-serif';ctx.fillText(sponsor.mark,256,128,460);}decalMap.needsUpdate=true;
-    if(sponsor.logo){const id=sponsor.id,image=new Image();image.onload=()=>{if(disposed||profile.sponsor!==id)return;ctx.clearRect(0,0,512,256);ctx.drawImage(image,0,0,512,256);decalMap.needsUpdate=true;group.userData.visualRevision=(group.userData.visualRevision??0)+1;};image.src=sponsor.logo;}
+    if(sponsor.logo){const id=sponsor.id,image=new Image();image.onload=()=>{
+      if(disposed||profile.sponsor!==id)return;
+      const padding=sponsor.logoPadding??24,scale=Math.min((512-padding*2)/image.naturalWidth,(256-padding*2)/image.naturalHeight),width=image.naturalWidth*scale,height=image.naturalHeight*scale;
+      ctx.clearRect(0,0,512,256);ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.drawImage(image,(512-width)/2,(256-height)/2,width,height);
+      decalMap.needsUpdate=true;group.userData.visualRevision=(group.userData.visualRevision??0)+1;
+    };image.src=sponsor.logo;}
     group.userData.driverVisible=!!model;
   }
   const ready=loadRacerKit().then(kit=>{

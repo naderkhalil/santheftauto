@@ -353,9 +353,13 @@ export function createLegacyCar(): { group: THREE.Group; update: (dt: number, st
     sport.visible=style.id==='comet';roadster.visible=style.id==='tide';roof.visible=cabin.visible=!roadster.visible;
     decals.visible=!!sponsor.mark;
     const ctx=decalCanvas.getContext('2d')!;ctx.clearRect(0,0,512,256);ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);
-    ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 86px sans-serif';ctx.fillText(sponsor.mark,256,112,470);ctx.font='700 23px sans-serif';ctx.fillText('DEMO SPONSOR',256,203);decalMap.needsUpdate=true;
+    ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='900 86px sans-serif';ctx.fillText(sponsor.mark,256,128,470);decalMap.needsUpdate=true;
     currentSponsor=sponsor.id;
-    if(sponsor.logo){const image=new Image();image.onload=()=>{if(disposed||currentSponsor!==sponsor.id)return;ctx.clearRect(0,0,512,256);ctx.drawImage(image,0,0,512,256);decalMap.needsUpdate=true;};image.src=sponsor.logo;}
+    if(sponsor.logo){const image=new Image();image.onload=()=>{
+      if(disposed||currentSponsor!==sponsor.id)return;
+      const padding=sponsor.logoPadding??24,scale=Math.min((512-padding*2)/image.naturalWidth,(256-padding*2)/image.naturalHeight),width=image.naturalWidth*scale,height=image.naturalHeight*scale;
+      ctx.clearRect(0,0,512,256);ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.drawImage(image,(512-width)/2,(256-height)/2,width,height);decalMap.needsUpdate=true;
+    };image.src=sponsor.logo;}
     const dc=driverCanvas.getContext('2d')!;dc.fillStyle=driver.color;dc.fillRect(0,0,256,128);dc.fillStyle='#142d3f';dc.font='900 40px sans-serif';dc.textAlign='center';dc.textBaseline='middle';dc.fillText(driver.name.toUpperCase(),128,64);driverMap.needsUpdate=true;badge.visible=true;
     group.userData.profile={...profile};
   }

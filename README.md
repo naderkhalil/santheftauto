@@ -7,7 +7,7 @@ A browser-playable arcade racer through a compact, recognizable San Francisco. L
 **Start Race** offers **Single player** or **Multiplayer**. Multiplayer creates
 a private City Loop room for 2–8 players, including the host, before driver
 selection. Copy the invitation while choosing; friends see each other's driver,
-car and placeholder sponsor selections live. Each player confirms **Ready to
+car and sponsor selections live. Each player confirms **Ready to
 race** from the garage, then the host starts everyone currently in the room.
 There is no expected invite count or automatic start.
 

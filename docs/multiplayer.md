@@ -135,11 +135,15 @@ selection, sponsor or camera changes, rather than continuously rendering a stati
 scene. Sponsor changes update the hood and doors immediately. Sundrop Roadster,
 Comet Sport and Tide Roadster share one open cockpit body and equal physics. Each choice is sent to every racer and shown on their opponent cars.
 
-Fictional Orbit, Sprout and Spark logos live in `public/assets/sponsors` and are
-explicitly labeled demo sponsors. Replace or add approved local SVG/PNG artwork,
-then set the sponsor's `logo` path, `name`, `mark`, `color`, and `background` in the
-catalogue. Artwork uses a 2:1 canvas (512 × 256); keep the mark centered with
-padding. The same artwork appears in the garage, on the hood and both doors.
+NVIDIA, Roboflow and SF Compute logos live in `public/assets/sponsors`, with
+official source URLs recorded in [the asset sources](../public/assets/sponsors/SOURCES.md).
+The catalogue sets each brand's full `logo`, optional compact `tileLogo`,
+`name`, `mark`, `color`, `background`, and optional `logoPadding`. The garage
+uses square brand tiles: NVIDIA's white vertical lockup on green, Roboflow's
+light symbol on purple, and SF Compute's black symbol on white. Full logos
+appear on the hood and both doors, centered with padding on a 2:1 decal canvas
+(512 × 256) with their original proportions. NVIDIA uses extra clear space. Saved Orbit, Sprout and Spark selections migrate to
+NVIDIA, Roboflow and SF Compute, respectively.
 Independent removes sponsor decals. There are no advertiser payments, uploads,
 campaign scheduling or impression analytics in this version.
 
