@@ -1,0 +1,332 @@
+{
+  "checkedAt": "2026-10-09T15:38:45.139455+00:00",
+  "deploymentVersion": "ce654c22-d645-4d31-aa64-014eff80e11d",
+  "scope": "Read-only public HTTPS branding checks. No rooms created, no posts, no DNS overrides, no certificate verification bypass. Visible splash verification is performed separately in the browser.",
+  "expectedBundle": "/assets/index-DP566-e7.js",
+  "expectedImage": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+  "expectedFaviconSha256": "5b5ff1f48d9f4f279e92d87b4f2f12330118c82116c35789f062436dd51a3ffe",
+  "hosts": [
+    {
+      "host": "santheftauto.com",
+      "transport": "normal-DNS-normal-TLS",
+      "root": {
+        "path": "/",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "text/html",
+          "cache-control": "no-cache, public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "title": "San Theft Auto \u2014 Race San Francisco",
+        "scripts": [
+          "/assets/index-DP566-e7.js"
+        ],
+        "icons": [
+          "/favicon.svg"
+        ],
+        "socialMetadata": {
+          "og:title": "San Theft Auto \u2014 Race San Francisco",
+          "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "twitter:card": "summary_large_image"
+        },
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "htmlMime": true,
+          "titleSanTheftAuto": true,
+          "currentBundle": true,
+          "noOldBundle": true,
+          "v2SocialImageUnchanged": true,
+          "largeImageCard": true,
+          "faviconLinked": true,
+          "noBotChallenge": true
+        }
+      },
+      "favicon": {
+        "path": "/favicon.svg",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "cache-control": "public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "bytes": 364,
+        "sha256": "5b5ff1f48d9f4f279e92d87b4f2f12330118c82116c35789f062436dd51a3ffe",
+        "visibleText": "STA",
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "svgMime": true,
+          "matchesLocalFavicon": true,
+          "brandSTA": true
+        }
+      },
+      "health": {
+        "path": "/healthz",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "application/json",
+          "cache-control": "no-store",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "body": {
+          "status": "ok",
+          "platform": "cloudflare",
+          "acceptingNewRooms": true
+        },
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "cloudflareHealthy": true
+        }
+      },
+      "image": {
+        "path": "/social/san-theft-auto-v2.jpg",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "image/jpeg",
+          "cache-control": "public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "bytes": 84362,
+        "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "jpegMime": true,
+          "v2AssetUnchanged": true
+        }
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "transport": "normal-DNS-normal-TLS",
+      "root": {
+        "path": "/",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "text/html",
+          "cache-control": "no-cache, public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "title": "San Theft Auto \u2014 Race San Francisco",
+        "scripts": [
+          "/assets/index-DP566-e7.js"
+        ],
+        "icons": [
+          "/favicon.svg"
+        ],
+        "socialMetadata": {
+          "og:title": "San Theft Auto \u2014 Race San Francisco",
+          "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "twitter:card": "summary_large_image"
+        },
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "htmlMime": true,
+          "titleSanTheftAuto": true,
+          "currentBundle": true,
+          "noOldBundle": true,
+          "v2SocialImageUnchanged": true,
+          "largeImageCard": true,
+          "faviconLinked": true,
+          "noBotChallenge": true
+        }
+      },
+      "favicon": {
+        "path": "/favicon.svg",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "cache-control": "public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "bytes": 364,
+        "sha256": "5b5ff1f48d9f4f279e92d87b4f2f12330118c82116c35789f062436dd51a3ffe",
+        "visibleText": "STA",
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "svgMime": true,
+          "matchesLocalFavicon": true,
+          "brandSTA": true
+        }
+      },
+      "health": {
+        "path": "/healthz",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "application/json",
+          "cache-control": "no-store",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "body": {
+          "status": "ok",
+          "platform": "cloudflare",
+          "acceptingNewRooms": true
+        },
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "cloudflareHealthy": true
+        }
+      },
+      "image": {
+        "path": "/social/san-theft-auto-v2.jpg",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "image/jpeg",
+          "cache-control": "public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "bytes": 84362,
+        "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "jpegMime": true,
+          "v2AssetUnchanged": true
+        }
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "transport": "normal-DNS-normal-TLS",
+      "root": {
+        "path": "/",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "text/html",
+          "cache-control": "no-cache, public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "title": "San Theft Auto \u2014 Race San Francisco",
+        "scripts": [
+          "/assets/index-DP566-e7.js"
+        ],
+        "icons": [
+          "/favicon.svg"
+        ],
+        "socialMetadata": {
+          "og:title": "San Theft Auto \u2014 Race San Francisco",
+          "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+          "twitter:card": "summary_large_image"
+        },
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "htmlMime": true,
+          "titleSanTheftAuto": true,
+          "currentBundle": true,
+          "noOldBundle": true,
+          "v2SocialImageUnchanged": true,
+          "largeImageCard": true,
+          "faviconLinked": true,
+          "noBotChallenge": true
+        }
+      },
+      "favicon": {
+        "path": "/favicon.svg",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "cache-control": "public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "bytes": 364,
+        "sha256": "5b5ff1f48d9f4f279e92d87b4f2f12330118c82116c35789f062436dd51a3ffe",
+        "visibleText": "STA",
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "svgMime": true,
+          "matchesLocalFavicon": true,
+          "brandSTA": true
+        }
+      },
+      "health": {
+        "path": "/healthz",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "application/json",
+          "cache-control": "no-store",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "body": {
+          "status": "ok",
+          "platform": "cloudflare",
+          "acceptingNewRooms": true
+        },
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "cloudflareHealthy": true
+        }
+      },
+      "image": {
+        "path": "/social/san-theft-auto-v2.jpg",
+        "curlExit": 0,
+        "status": 200,
+        "tlsVerified": true,
+        "headers": {
+          "content-type": "image/jpeg",
+          "cache-control": "public, max-age=3600",
+          "server": "cloudflare"
+        },
+        "error": null,
+        "bytes": 84362,
+        "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+        "checks": {
+          "status200": true,
+          "tlsVerified": true,
+          "jpegMime": true,
+          "v2AssetUnchanged": true
+        }
+      },
+      "success": true
+    }
+  ],
+  "success": true
+}

@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-10-09T15:39:21.469247+00:00",
+  "workerVersion": "ce654c22-d645-4d31-aa64-014eff80e11d",
+  "sourceBaseCommit": "d28293c6f4decb72db95ad7d3b641cebf4deb184",
+  "bundle": "/assets/index-DP566-e7.js",
+  "scope": "San Theft Auto opening screen, UI wordmarks, favicon, package identity, and contributor README with current racing scope and future San Francisco open-world direction.",
+  "validation": {
+    "cloudflareBuild": "passed",
+    "desktop1280x720": "passed",
+    "mobile390x844": "passed",
+    "mobile375x667": "passed",
+    "raceSetupOpens": "passed",
+    "liveBrowserSplash": "passed",
+    "readmeLocalLinksAndAnchors": 57,
+    "publicOriginsReport": "deployment-verification.json"
+  },
+  "screenshots": [
+    "desktop.jpg",
+    "mobile.jpg",
+    "live-desktop.jpg"
+  ],
+  "compatibility": "Existing personal-best storage keys, Worker name and Durable Object namespace are preserved.",
+  "license": "Project-wide license selection pending; no license granted by this change."
+}

@@ -1,234 +1,175 @@
-# Whimsical SF
+# San Theft Auto
 
-A browser-playable arcade racer through a compact, recognizable San Francisco. Lap Union Square, climb Powell, enter Chinatown on Grant, and finish at the Ferry Building. Three exaggerated hills turn the coral coupe's wheels into hover pods for a glide over the city. Union Square also opens into a small driving playground, with reachable terraces and five postcards to discover.
+**[Play at santheftauto.com](https://santheftauto.com)**
 
-## Multiplayer
+A browser racing game built around San Francisco: its neighborhoods, steep
+streets, recognizable landmarks, and a few exaggerated hill flights. Race solo,
+share a room with friends, or take a slower drive through the city.
 
-**Start Race** offers **Single player** or **Multiplayer**. Multiplayer creates
-a private City Loop room for 2–8 players, including the host, before driver
-selection. Copy the invitation while choosing; friends see each other's driver,
-car and sponsor selections live. Each player confirms **Ready to
-race** from the garage, then the host starts everyone currently in the room.
-There is no expected invite count or automatic start.
+![San Theft Auto — racers in front of the San Francisco waterfront](public/social/san-theft-auto-v2.jpg)
 
-The room server controls driving, checkpoints and finish times. Selected cars
-and drivers race together without player-to-player contact. Results show the
-winner, shared finishing order and DNFs, retaining racers who left; the host can
-reopen the same room for another race. See [multiplayer setup](docs/multiplayer.md)
-for the full flow, hosting, sponsor artwork, reconnects and verification.
-Internet invitations require the game and its room server to run together on a
-public HTTPS origin; local play does not establish internet validation.
+We are building San Francisco incrementally, one map and neighborhood at a time.
+Racing is the playable foundation for the project’s
+[longer-term open-world direction](#direction-and-roadmap).
 
-## Cloudflare deployment
+## Play today
 
-The primary deployment uses Cloudflare Workers for the website and one Durable
-Object per multiplayer room. See the [Cloudflare runbook](docs/cloudflare.md)
-for account setup, deployment, recovery, validation, and the $500 monthly budget.
-Build with `npm run build:cloudflare`, preview with `npm run dev:cloudflare`, and
-publish with `npm run deploy:cloudflare`. The [Node/Render runbook](docs/launch.md)
-is retained as a fallback.
+**City Loop is the only enabled course.** It runs from Union Square up Powell,
+through Chinatown, and down to the Ferry Building. Street connections and
+landmarks draw from the real city; distances, hills, and handling are adapted
+for an arcade racer.
 
-## Usage analytics
-
-Production builds send page views, page leaves, and session IDs to
-[PostHog project 398694](https://us.posthog.com/project/398694). Open **Web analytics**
-there for unique visitors, visits (sessions), page views, and visit duration. In
-**Product analytics**, `$pageview` with **Unique users** counts visitors; unique
-`$session_id` values count sessions. Returning browsers retain an anonymous ID in
-local storage. These are browser-based estimates, not identified people; another
-device, cleared storage, or an ad blocker affects the counts.
-
-The supplied public project token is configured by default with the US ingestion
-host. If the project is in the EU, set `VITE_POSTHOG_HOST=https://eu.i.posthog.com`
-and use `https://eu.posthog.com/project/398694`. Optional build-time overrides are
-listed in [.env.example](.env.example); copy them into `.env.local` and rebuild.
-`VITE_POSTHOG_KEY` overrides the public project token. No personal API key or
-project ID is needed in the browser.
-
-Tracking is off in `npm run dev` and on in production builds, including
-`npm run preview`. Set `VITE_POSTHOG_ENABLED=false` to disable it, or `true` to
-explicitly enable development testing. After deploying, visit the site and check
-PostHog's **Activity** for `$pageview` events with a `$session_id`.
-
-Analytics loads independently of the game. It records race nicknames and the
-lineup explicitly through the gameplay events below; it does not record replays,
-other input values, or automatic button clicks. URL query strings and fragments
-(including private room codes) are removed from event URL/referrer properties
-before sending. Room credentials are never included in gameplay events.
-Page-leave events provide visit-duration data when the browser can deliver them.
-
-### Finishes and playing together
-
-| Event | When it is recorded |
+| Mode | What you can do |
 | --- | --- |
-| `game_started` | A solo race begins its countdown, or a multiplayer entrant first receives the active countdown/race. Opening setup alone does not count. |
-| `game_finished` | The player actually finishes a race. Multiplayer uses the server's finish time. |
-| `game_dnf` | The browser receives its own multiplayer did-not-finish result. This never counts as a finish. |
+| Single player | Choose a driver and car, race the course, and improve your local best time. |
+| Multiplayer | Create a private room for **2–8 players**, share its URL, and race friends on the same map. |
+| Free drive | Explore Union Square’s streets and terraces, find five postcards, and continue toward the bay without a timer. |
+| Watch a Run | Follow an automatic drive or jump to scenic views of Union Square, the Westin, Chinatown, and the waterfront. |
 
-Free exploration and Watch a Run are excluded. Each browser reports only its
-own race events. Repeated snapshots and reconnects in the same browser tab are
-deduplicated across reloads when session storage is available. A fresh rematch
-has a new `game_id`; reopening results does not create another start.
+Multiplayer shows everyone’s driver, car, and sponsor choices live. Each player
+confirms readiness; the host starts the current room when everyone is ready.
+The server controls driving, checkpoints, and finish times. Cars share the map
+without player-to-player collisions, and the results show finishing order and
+DNFs. The host can start a rematch in the same room.
 
-Every event includes `game_id`, `mode` (`solo` or `multiplayer`), `course`,
-`player_id`, `player_name`, `player_count` (including the player), `friends_count`
-(other players), `participant_names`, `friend_names`, and `participants` (IDs
-paired with names). Finishes add `finish_seconds`; DNFs add `dnf_reason`.
-Multiplayer participants come from the frozen starting lineup, including anyone
-who later leaves. Names are the nicknames players entered, not verified real
-identities or selected character names. Duplicate nicknames remain separate
-participants. PostHog still uses its anonymous browser ID for counting visitors;
-it does not identify or merge people by nickname.
+The race collection also shows six **Coming soon** routes: VC Circle, Cerebral
+Valley, Golden Gate Surfride, Lands End, Presidio Run, and Golden Gate → Hawk Hill.
+Their experimental code and assets are in the repository, but the current game
+does not launch them. See the [route plans](docs/city-races-prd.md) and
+[Cerebral Valley rebuild notes](docs/cerebral-valley-rebuild.md).
 
-To see the requested numbers in PostHog:
+Basic controls: **W / Up** to accelerate, **A/D or Left/Right** to steer,
+**S / Down** to brake or reverse, **Shift** to boost, **Space** to drift, and
+**Q** to recover. Touch and standard
+gamepads are supported. The [game guide](docs/game-guide.md) covers flight,
+exploration, graphics options, and scenic stops; the
+[multiplayer guide](docs/multiplayer.md) covers rooms, reconnects, and results.
 
-1. **People who finish:** In **Product analytics → Trends**, select
-   `game_finished` and **Unique users**. Use **Total count** for completed runs.
-2. **Completion rate:** Build a funnel from `game_started` to `game_finished`,
-   holding `game_id` constant so the finish must belong to the same race.
-3. **How many friends they played with:** Select `game_started`, filter
-   `mode = multiplayer`, and break down by `friends_count`.
-4. **Who played together:** In **Activity**, select `game_started` and add
-   `game_id`, `player_name`, `participant_names`, and `friends_count` as columns.
-   Events with the same `game_id` belong to the same race. Filter by that ID to
-   see each player's finish or DNF, or export the table.
+## Direction and roadmap
 
-Deploy both the frontend and room server for these events. Multiplayer game IDs
-are random round identifiers, not invitation codes; older servers with
-code-derived IDs are deliberately excluded from gameplay tracking. Collection
-starts after deployment and cannot reconstruct earlier games. Ad blockers,
-unavailable storage, or closing/disconnecting before a result arrives can cause
-missing or repeated browser events, so these are usage analytics rather than an
-authoritative results archive.
+Racing gives each neighborhood a useful first test: roads must connect, turns
+must read clearly, hills must feel good to drive, and landmarks must hold up
+both at street level and at speed. Solo and shared races make those maps
+playable while we improve their geometry, art, performance, and handling.
 
-## Run
+The immediate work is to strengthen City Loop and develop the experimental
+routes into coherent, playable neighborhoods. More complete maps and connections
+between them provide the groundwork for a fuller San Francisco.
+
+The longer-term goal is a **Grand Theft Auto–style open-world game set in
+San Francisco**. Broader open-world systems are a future aspiration, dependent
+on building out enough of the city. The available modes above describe the
+current racing release.
+
+## Run locally
+
+Use **Node 22.21.0 or later in the 22.x line** and npm. The repository pins
+Node **22.23.3** in [.node-version](.node-version). Exported game assets are
+included; Blender is needed only when regenerating them.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173/. Use **Take Flight** to race or **Watch a Run** for an automatic demonstration using the driving simulation. The tour stops at the bay. Its **Union Square**, **The Westin**, **Post St**, **Powell St**, **Bush St**, **Grant Ave**, **Washington St**, **Embarcadero**, and **The Bay** buttons preview those sections; drag to look around. **Union Square** frames the overall plaza, **The Westin** pauses across from the hotel, and **Post St** shows Apple and its neighbors. **Bush St** and **Washington St** pause at the uphill corner and bayward outlook. **Embarcadero** pauses at the waterfront approach, and **The Bay** frames the Ferry Building and bridge. **Resume** returns to driving.
+Open the URL printed by Vite, normally [localhost:5173](http://localhost:5173).
+The development server includes the room API, so **local multiplayer works with
+this same command**. No Cloudflare account is needed. Test with separate browser
+tabs or sessions. For another device on the same Wi-Fi, open Vite’s printed
+Network URL before creating the room; a localhost invite works only on its
+own computer.
 
-**Explore Union Square** starts an untimed drive on the square's southern promenade. Drive onto the plaza, climb its stairs and ramps, and explore the surrounding streets. This mode uses manual acceleration even when Auto Accelerate is enabled for races.
+To run the built game with the included single-process Node room server:
 
-Races have temporary gold chevrons around all eight curves, 50 m and 25 m approach boards, and a next-turn card with street names and speed-aware braking cues. Every marker stays outside the racing road and has no collision body. Explore Union Square removes the markers and turn card; the city, plaza entrances and existing driving remain open. Scenic driving shows the course markings, while architectural portrait stops keep them hidden.
+```sh
+VITE_POSTHOG_ENABLED=false npm run build
+npm start
+```
 
-The menu's **Explore the City** postcard opens an illustrated downtown map with the course highlighted among San Francisco's neighborhoods, streets, waterfront piers and Bay Bridge. It uses local SVG artwork and simplified geography, with no map service required.
+The default address is [localhost:3000](http://localhost:3000). `npm run preview`
+serves the static build only and does **not** supply multiplayer rooms.
 
-**Choose a Race** opens the seven-route collection. Alongside The City Loop, six new playable courses have their own maps, scenery, ordered checkpoints, and personal bests:
+## Where things live
 
-| Race | Route |
+The game uses **TypeScript, Three.js, Vite, Web Audio, and a shared arcade driving
+simulation**. The public deployment serves the site through Cloudflare Workers,
+with one Durable Object per multiplayer room. The Node server supports local
+development and an alternative hosting path.
+
+| Area | Source |
 | --- | --- |
-| VC Circle | Salesforce Tower → SoMa → a complete South Park lap |
-| Cerebral Valley | Hayes between Gough and Octavia → Anina and Patricia’s Green → Alamo Square skyline glide → Steiner and Page → 531 Page → Webster → Waller/Steiner and Café Réveille → Duboce Park |
-| Golden Gate Surfride | Panhandle → Golden Gate Park → Irving → Mollusk → Hook Fish → Ocean Beach |
-| Lands End | Legion of Honor → coastal trail → Sutro Baths → Cliff House → Ocean Beach |
-| Presidio Run | Arguello Gate → Inspiration Point → coastal overlook → Crissy Field |
-| Golden Gate → Hawk Hill | Crissy Field → Fort Point → Golden Gate Bridge → Battery Spencer → Hawk Hill |
+| Game entry, camera, rendering, controls, and UI | [src/main.ts](src/main.ts), [src/style.css](src/style.css) |
+| Shared driving rules and City Loop route | [src/driving.ts](src/driving.ts), [src/route.ts](src/route.ts), [src/playground.ts](src/playground.ts) |
+| Multiplayer client, protocol, and motion | [src/multiplayer.ts](src/multiplayer.ts), [src/multiplayer-protocol.ts](src/multiplayer-protocol.ts), [src/room-interpolation.ts](src/room-interpolation.ts) |
+| Authoritative rooms and hosting adapters | [server/](server/), [cloudflare/](cloudflare/) |
+| City and landmark rendering | [src/city-loop.ts](src/city-loop.ts), [src/union-square.ts](src/union-square.ts), [src/waterfront.ts](src/waterfront.ts) |
+| Drivers, cars, and garage previews | [src/car.ts](src/car.ts), [src/racer-profile.ts](src/racer-profile.ts), [src/racer-showroom.ts](src/racer-showroom.ts) |
+| Editable models, generators, and shipped assets | [art/source/](art/source/), [tools/blender/](tools/blender/), [public/assets/](public/assets/) |
 
-The bridge race includes **The Fog Run**: steer through three glowing beacons before continuing to Marin. A missed beacon returns to the fog entrance while retaining race time. Q recovers to the road, Escape pauses, and R restarts the selected race. Keyboard, touch, and standard gamepad controls work on the new courses; Auto Accelerate remains optional. For this release, these six additional courses are marked **Coming soon** and cannot be launched, including through old direct links. Their source and assets are preserved for future releases.
+## Contributing
 
-**Cerebral Valley** has a dedicated rebuild with real OpenStreetMap street/building footprints, USGS hill elevations, Blender architecture and street furniture, mature scanned trees, and photographic daylight. **Explore the Neighborhood** opens nine landmark views. Its 2.622 km route starts before Patricia’s Green and Anina, climbs Hayes, glides across Alamo Square toward the seven Painted Ladies and downtown skyline, then passes 531 Page and the actual Réveille corner. See [the rebuild notes](docs/cerebral-valley-rebuild.md) for asset regeneration and measured-versus-interpreted detail.
+Contributions are welcome, especially city and landmark improvements, clearer
+onboarding, driving feel, accessibility, multiplayer reliability, and rendering
+performance. Start with a focused change that can be reviewed and played on its
+own. For a new neighborhood or major system, describe the intended scope in an
+issue before building it.
 
-The five other new races remain their first playable versions, with procedural scenery and compressed geography. Their itineraries and future ideas are documented in [the race PRDs](docs/city-races-prd.md).
+- **City and art:** use the [Blender pipeline](BLENDER_ASSETS.md), retain editable
+  sources and regeneration steps, and record geographic references and asset
+  provenance. Include before/after views and note changes to asset size or detail.
+- **Gameplay and multiplayer:** keep client and server behavior consistent.
+  Include relevant regression checks; for room changes, exercise host and guest
+  in independent sessions through selection, start, finish, and rematch.
+- **UI and performance:** show the affected flow, viewport, and browser. Compare
+  rendering measurements in the same scene so visual improvements remain playable.
+- **Pull requests:** explain the problem, the resulting behavior, and what you
+  verified. Keep generated assets and their source changes together when needed.
 
-## Controls
-
-- Hold W / Up: accelerate
-- A, D / Left, Right: steer on the street and in the sky
-- S / Down: brake; keep holding after stopping to reverse throughout City Loop; dive in flight
-- Shift: boost; gain lift in flight
-- Space: drift
-- C: change chase camera
-- Q / **Unstick**: recover onto nearby clear pavement without losing time or earned progress
-- R: restart
-- Escape: pause
-- M: mute
-
-Hold the accelerator to build speed. Releasing it lets the car coast and slow down; brake before corners, then steer through the turn. The car keeps its heading until you steer. Hold drift with steering for tighter turns. Hover deploys automatically at a hill launch above 54 mph. Nine gold sun rings replenish boost, and wheels return upright before landing. Touch and standard gamepad controls are supported. **How to Play** includes optional auto-accelerate, three graphics settings, fullscreen, and best-time reset. Auto-accelerate holds the gas during races; you still steer and brake, and untimed exploration always uses manual gas. Only **Watch a Run** drives the course for you.
-
-## Union Square playground
-
-The car can leave the asphalt throughout the square and its neighboring blocks. Plaza terraces, the broad Geary steps, the Stockton flight, the Post entrance and the side ramps have driving surfaces that follow the visible architecture. Curbs and steps jostle the car; rolling off a terrace produces a small gravity-driven hop. Small handrails, café tables, parasols and chairs knock aside with a light clatter and settle on the paving; they do not stop the car or count as crashes. Buildings, the monument, planters, café pavilions, subway entrance and parked cars remain solid. Glancing contact with solid edges or the district boundary preserves motion along the surface, so you can keep driving and steer away.
-
-Find **five golden postcards** on the square's paving. The local map shows buildings, streets, stairs, gardens, your car and the remaining postcards; the HUD keeps count. Restarting the drive restores all five and resets displaced furniture. Returning to the street keeps the furniture where it landed. If you get wedged against an object, hold S after braking to reverse, or use **Q / Return to Street**. Recovery preserves the run's elapsed time and statistics.
-
-Temporary streetworks barricades mark the boundaries of this first explorable district. Powell remains connected to the racing course: head north to continue toward Chinatown, the three existing hill glides and the bay, or turn back before the climb to return to the square. This is a bounded playground around Union Square; the rest of the city retains the established racing corridor.
-
-The plaza is also open during a race. Union Square shortcuts count toward a valid race. Cross the first Powell checkpoint, then the remaining checkpoints in order. Untimed exploration does not set a personal best.
-
-## Course
-
-The approximately **2.33 km city loop** follows:
-
-**Post → Stockton → Geary → Powell → Bush → Grant → Washington → Embarcadero → Market / Ferry Building**
-
-The opening lap passes all four sides of Union Square. Its raised granite terraces, Dewey Monument, seven date palms, four jacaranda canopies, corner hearts and café pavilions sit between the historic Westin St. Francis, Macy's and I. Magnin on Geary, and the individual Post and Stockton storefronts. Broad stairs, retaining walls and a southeast subway entrance give the square its elevation and street-level scale.
-
-Apple faces south across Post, west of Stockton, with its public garden and Grand Hyatt behind it. Saks, Tiffany and the former Williams-Sonoma building complete the north frontage. Neiman Marcus occupies the southeast corner across Geary; Maiden Lane remains open between the smaller Stockton parcels. The previously empty outside corners now have authored hotel and retail buildings. [The geographic reference](art/references/union-square-layout.md) records the actual relationships and the game's approximate placements.
-
-The map now renders with the correct geographic handedness: Apple appears to the right of Saks when looking north, and Post's turn onto Stockton reads as a right turn. The earlier view mirrored those relationships despite correctly named map coordinates. Buildings extend around their sides and backs: the north hotels reach Sutter, Macy's reaches O'Farrell, and the Stockton parcels continue toward Grant around an open Maiden Lane. Detailed corner street signs, newspaper dispensers and bicycle racks add close street furniture.
-
-The blocks beyond Sutter now form connected street walls: 169 detailed building parcels across 41 blocks replace isolated center buildings and vacant strips around Powell/Bush, behind Grant and along the Washington descent. Narrow service alleys, paved sidewalks, corner crossings, tree wells, street signs and the same scanned asphalt on side streets complete the ground plane. Storefronts step with the hills; bay windows, cornices, fire escapes and rooftop equipment give turns and glides a finished view. These neighborhood buildings are original procedural architecture, not replicas of each real address.
-
-Powell's cable-car rails lead uphill to Bush and the Dragon Gate. Grant Avenue narrows into Chinatown's masonry storefronts, balconies, lanterns and green tiled roofs. Washington descends toward the bay; the Embarcadero connects to the Market Street finish.
-
-The street connections and landmark relationships establish a more recognizable city. Block lengths, building dimensions, turns and hill profiles are compressed or exaggerated for play; this is not a survey-accurate reconstruction. Three flight sections remain, on Powell, Grant and Washington.
-
-The waterfront is built from original Blender assets. Market faces the Ferry Building's long arcaded wings and 75 m clock tower, with a layered pale crown and four modeled clock faces. A jointed granite PortWalk, seawall, bikeway, maritime lamps and 43 date palms complete the shoreline. The paving and planting continue south of Market toward the bridge, giving the wide finish view a complete waterfront edge. Piers 1, 1½, 3 and 5 sit north of Washington, followed by Pier 7's open timber promenade near Broadway. The stretch between Washington and Market remains a furnished north Ferry Plaza and PortWalk; its game distance is stretched, so the named piers have not been moved into that gap. [Waterfront references and placement notes](art/references/waterfront.md) record the geographic interpretation.
-
-At the finish, the camera reveals the Ferry Building above animated turquoise water, with the silver Bay Bridge crossing south of it toward Yerba Buena Island. The bridge has four open steel towers, two suspension spans, a central anchorage and two road decks. Compact results preserve the view; portrait framing pulls back to retain the tower and wings. Bay movement, ferries and sailboats remain realtime Three.js effects.
-
-City Loop with valid plaza shortcuts uses the separate local-storage key `whimsical-sf-shortcuts-race-best-v4`. Older ordered-street-gate scores remain under `whimsical-sf-playground-race-best-v3`. Multiplayer does not update solo personal bests. Earlier manual-driving records remain under `whimsical-sf-manual-driving-best-v2`, and records from the former guided handling remain under their older key. Reset Best affects the current course only.
-
-## Stack and assets
-
-TypeScript, Three.js, Vite, deterministic custom arcade driving and Web Audio. Solo play requires no backend. Private multiplayer rooms use the included Node server; no paid service is required. Local Blender GLBs supply the Westin, Post frontage and surrounding hotels, Macy's/I. Magnin, Neiman Marcus, Stockton boutiques, Dewey Monument, date palms, Powell cable car, street furniture, Ferry Building, Embarcadero piers and Bay Bridge. Major architectural groups have separate distant models with Draco compression. Plaza and waterfront palms and four CC0 jacarandas use instancing; the stepped plaza and its remaining furnishings use authored Three.js geometry. The wider city, player car, Chinatown, bay water and vessels still use procedural geometry or shaders. Labels and many material details are generated locally.
-
-The asphalt maps and photographic sky use CC0 source assets. Additional source assets from earlier prototypes remain in the repository; see [asset credits](public/assets/CREDITS.md) and the adjacent source notes. Google Fonts is optional; system fallbacks keep the game playable once local assets are available.
-
-[BLENDER_ASSETS.md](BLENDER_ASSETS.md) documents the implemented asset pipeline, editable source files, placements, coordinate conventions and measured asset budgets. Blender review renders in `art/reviews/` include the north frontage, Apple, Neiman's rotunda, Maiden Lane, complete rear elevations and the street furniture. Local reflections, plaza shadows and contact shading support the game view. Apple has a level lot, and parcel reservations prevent duplicate background buildings and streets; the racing route and flight heights are retained.
-
-Open [art/source/waterfront.blend](art/source/waterfront.blend) to inspect the complete editable waterfront, organized into Ferry Building, piers, bridge, palms and review context. Its separate source files and rebuild scripts are listed in [the Blender pipeline](BLENDER_ASSETS.md). [The assembled review](art/reviews/waterfront-master.png) is a Blender render; the browser renders the exported GLBs with its own lighting and animated water.
-
-## Verify
+Run checks relevant to your change:
 
 ```sh
 npm test
+npm run test:multiplayer
 npm run build
-node tools/validate-waterfront.mjs
 ```
 
-Tests cover route geometry and driving behavior, including coasting to a stop, manual cornering, curb recovery, frame-rate consistency, braking, boost, collisions, the three flights, wheel retraction, airborne steering, controllable lift, slow driving and invalid inputs. Geographic regression checks protect Apple's level floor, Powell's full sidewalk grade, the accepted route elevations, and the open Maiden Lane gap. Camera-projection tests protect landmark order, the clockwise square lap and left/right driving controls in all four street headings.
+Cloudflare changes also use `npm run test:cloudflare` and the
+[local Worker workflow](docs/cloudflare.md#local-build-and-verification).
+Waterfront asset changes use `node tools/validate-waterfront.mjs`.
+The [game guide](docs/game-guide.md#verify) describes existing coverage and
+read-only browser diagnostics. Publishing is separate from local development;
+see the [Cloudflare runbook](docs/cloudflare.md) or the
+[Node hosting runbook](docs/launch.md).
 
-Playground checks cover continuous terrace and stair surfaces, car-width access to all five postcards, solid obstacles and parked cars, reversing and recovery, small terrace drops, ordered race gates, return through the Powell corridor, and a complete race with all three glides. World driving is checked at 30, 60 and 120 Hz. Additional checks cover knockable furniture, prop reset, and sliding along boundaries without losing all forward momentum. City parcel checks protect continuous street frontage, facade separation, all street corridors and rounded route clearances, while preserving the authored square and Chinatown.
+## Usage analytics
 
-Waterfront checks protect the Market approach, existing street elevations, pier order, planting clearance and finish framing at wide and narrow aspect ratios. The asset validator checks the five GLB containers, declared bounds, positive transforms, matching close/distant sections and reduced distant geometry. It does not independently decode Draco or establish browser performance.
+Development tracking is off by default. Production builds use the supplied
+public PostHog project configuration. **For a fork, disable tracking with
+`VITE_POSTHOG_ENABLED=false` or set your own `VITE_POSTHOG_KEY` and
+`VITE_POSTHOG_HOST` before building.** Settings are build-time values. See
+[.env.example](.env.example) and the [analytics guide](docs/analytics.md) for the
+recorded events, nickname/lineup data, and privacy handling.
 
-The `#world` canvas exposes read-only data attributes for frame rate, draw calls, submitted triangles, texture count, hero asset loading, progress, altitude, airborne state, hover deployment, throttle, steering, speed and heading. Additional attributes report world X/Y/Z, whether the car is in the playground, untimed free-drive mode and the postcard count. `data-waterfront-assets="blender"` marks completed waterfront asset loading. `window.sfNightRun` provides read-only diagnostic snapshots.
+## Assets and licensing
 
-## Recovery checkpoints
+The project combines original Blender models and generated geometry with
+third-party materials, scenery, geographic references, and brand artwork.
+Playable cars and drivers use the same Blender kit in selection and racing.
+Sources and attribution are recorded in [asset credits](public/assets/CREDITS.md),
+[sponsor artwork sources](public/assets/sponsors/SOURCES.md), and the
+[Blender pipeline](BLENDER_ASSETS.md).
 
-The complete city-map and manual-driving version before opening the square is saved at `pre-union-square-playground` (`4cb84f4`).
+**There is currently no project-wide license file.** Individual dependency and
+asset licenses apply to their respective material; they do not establish a
+blanket license for the repository or its brand artwork. License clarification
+is needed before treating the whole project as freely reusable open-source work.
 
-The corrected city orientation, full block returns and new Blender street furniture are saved at `union-square-orientation-v3`.
+## More documentation
 
-The preceding square, corrected parcels, terraces and storefront assets are saved at `union-square-fidelity-v2`. It predates the latest map handedness correction, deeper blocks and Blender street furniture.
-
-Preserve these existing tags:
-
-| Tag | Commit | Version |
-| --- | --- | --- |
-| `union-square-fidelity-v2` | `68520d0` | Wider square, corrected parcels and terraces before the renderer orientation fix |
-| `union-square-blender-v1` | `ffae8dc` | First Westin, monument, palms and cable-car Blender pass, before the wider square corrections |
-| `pre-art-direction-v2` | `3f03057` | Connected city loop before the Blender art pass |
-| `pre-city-loop` | `d47bae0` | Previous linear course, smooth hill glides and Ferry Building/Bay Bridge finish |
-| `whimsical-sf-v1` | `e147015` | First exaggerated-hill and hover-wheel version |
-| `pre-whimsical-sf` | `8e7c7af` | Original sunny street-racing prototype |
-
-To compare the previous course without changing this checkout:
-
-```sh
-git worktree add ../SF1-before-city-loop pre-city-loop
-```
+- [Detailed game guide and historical checkpoints](docs/game-guide.md)
+- [Multiplayer behavior and local setup](docs/multiplayer.md)
+- [Multiplayer flow and acceptance criteria](docs/multiplayer-flow-prd.md)
+- [City race plans](docs/city-races-prd.md)
+- [Cerebral Valley development](docs/cerebral-valley-rebuild.md)
+- [Map quality audit](docs/map-quality-audit.md)
+- [Blender assets and rebuilding](BLENDER_ASSETS.md)

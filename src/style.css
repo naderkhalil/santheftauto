@@ -22,7 +22,7 @@ canvas#world{touch-action:none}
 .race-hud{text-shadow:0 2px 8px #062438a0}
 .topbar{text-shadow:0 1px 10px #08283860}
 
-/* Whimsical SF: a bright postcard wrapped around a playable city. */
+/* San Theft Auto: a bright postcard wrapped around a playable city. */
 :root{--acid:#ffe15a;--line:#fff6dc40;color:#fff8e7;background:#148fb2}
 .brand-mark{color:#fff7db;text-shadow:3px 3px 0 #f26458;letter-spacing:-2px}
 .brand-word{font-size:9px;letter-spacing:1.6px}

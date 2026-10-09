@@ -24,7 +24,7 @@ export function playerStatus(player: RacerSnapshot, now: number) {
 }
 
 export function setupMarkup() {
-  return `<header class="mp-header"><a class="mp-wordmark" aria-label="Whimsical SF">SF<span>WHIMSICAL<br>SAN FRANCISCO</span></a><nav class="mp-steps" aria-label="Race setup">${['mode','driver','car','grid'].map((step,i)=>`<button data-step="${step}"><span>0${i+1}</span>${['PLAY','DRIVER','CAR','ROOM'][i]}</button>`).join('')}</nav><button id="mp-close" class="mp-icon" aria-label="Close race setup">×</button></header>
+  return `<header class="mp-header"><a class="mp-wordmark" aria-label="San Theft Auto">STA<span>SAN THEFT<br>AUTO</span></a><nav class="mp-steps" aria-label="Race setup">${['mode','driver','car','grid'].map((step,i)=>`<button data-step="${step}"><span>0${i+1}</span>${['PLAY','DRIVER','CAR','ROOM'][i]}</button>`).join('')}</nav><button id="mp-close" class="mp-icon" aria-label="Close race setup">×</button></header>
   <section class="mp-room-strip" id="mp-room-strip" aria-label="Your private room" hidden>
     <div class="mp-room-strip-top"><div class="mp-room-meta"><strong id="mp-strip-title"></strong><span id="mp-count"></span></div><div class="mp-share"><label class="mp-sr-only" for="mp-link">Invite link</label><input id="mp-link" readonly><button id="mp-copy" class="mp-secondary">Copy invite</button></div></div>
     <details class="mp-party"><summary id="mp-party-summary">Players in your room</summary><label class="mp-nickname">Your nickname<input id="mp-nickname" maxlength="24" autocomplete="nickname"></label><div class="mp-party-list" id="mp-party-list"></div></details>

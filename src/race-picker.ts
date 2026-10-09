@@ -68,7 +68,7 @@ export function courseMap(course: CourseDefinition, dotId?: string): string {
 
 export function mountRacePicker(app:HTMLElement, trigger?:HTMLElement): () => void {
   const dialog=document.createElement('dialog');dialog.className='race-atlas';dialog.setAttribute('aria-labelledby','atlas-title');
-  dialog.innerHTML=`<header class="atlas-header"><div><small>WHIMSICAL SF / THE RACE COLLECTION</small><h2 id="atlas-title">Pick your side of the city.</h2><p>Start with The City Loop. More San Francisco adventures are coming soon.</p></div><button class="atlas-close" aria-label="Close race collection">×</button></header>
+  dialog.innerHTML=`<header class="atlas-header"><div><small>SAN THEFT AUTO / THE RACE COLLECTION</small><h2 id="atlas-title">Pick your side of the city.</h2><p>Start with The City Loop. More San Francisco adventures are coming soon.</p></div><button class="atlas-close" aria-label="Close race collection">×</button></header>
     <div class="atlas-grid"><a class="atlas-card" href="${raceUrl()}"><div class="atlas-map">${cityMapSvg('atlas')}</div><div class="atlas-card-copy"><small>01 / THE ORIGINAL · 2.3 KM</small><h3>The City Loop</h3><p>Union Square, Chinatown, and three hills with wings.</p><span>UNION SQUARE → FERRY BUILDING <b>↗</b></span></div></a>
     ${COURSES.map((course,i)=>`<article class="atlas-card atlas-coming-soon" style="--course-accent:${course.accent}"><div class="atlas-map">${courseMap(course)}</div><div class="atlas-card-copy"><small>${String(i+2).padStart(2,'0')} / COMING SOON</small><h3>${course.name}</h3><p>${course.subtitle}</p><span>COMING SOON</span></div></article>`).join('')}</div><footer class="atlas-footnote">The City Loop is available now. More routes are on the way.</footer>`;
   app.append(dialog);
