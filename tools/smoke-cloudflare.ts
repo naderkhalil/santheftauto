@@ -14,54 +14,60 @@ import { RacerSnapshotBuffer } from '../src/room-interpolation.ts';
 
 // Deliberately separate from the loopback-only load runner; no arbitrary target,
 // room count, player count, parallel runs, or user-provided session credentials.
-const ORIGIN = 'https://whimsical-sf.nader-khalil.workers.dev';
+const APPROVED_ORIGINS = new Set(['https://whimsical-sf.nader-khalil.workers.dev', 'https://santheftauto.com', 'https://www.santheftauto.com']);
+const ORIGIN = process.env.SF1_SMOKE_ORIGIN || 'https://whimsical-sf.nader-khalil.workers.dev';
+const PEER_ORIGIN = process.env.SF1_SMOKE_PEER_ORIGIN || ORIGIN;
+if (!APPROVED_ORIGINS.has(ORIGIN) || !APPROVED_ORIGINS.has(PEER_ORIGIN)) throw Error('SMOKE_ORIGIN_NOT_APPROVED');
+const MODE = process.env.SF1_SMOKE_MODE || 'full';
+if (!['full', 'start'].includes(MODE)) throw Error('SMOKE_MODE_NOT_APPROVED');
+const MAX_DURATION_MS = MODE === 'start' ? 45_000 : 170_000;
 const OUTPUT = resolve(process.env.SF1_SMOKE_REPORT || 'docs/checkpoints/2026-10-08/launch/cloudflare-public-smoke.json');
 type Admission = { id: string; token: string; generation: number; room: RoomSnapshot; transport: string };
-type Client = Admission & { label: 'Host' | 'Guest'; socket?: WebSocket; latest: RoomSnapshot; ready: boolean; sequence: number; pilot: DemoAutopilot; delayMs: number; frames: number; bytes: number; inputs: number; acknowledgements: number;
+type Client = Admission & { label: 'Host' | 'Guest'; origin: string; socket?: WebSocket; latest: RoomSnapshot; ready: boolean; sequence: number; pilot: DemoAutopilot; delayMs: number; frames: number; bytes: number; inputs: number; acknowledgements: number;
   motion: RacerSnapshotBuffer; receivedAt: number; physicsRound: string | null; physicsAt: number | null;
   motionMetrics: { sampleCount: number; posesChecked: number; invalidPoses: number; physicsFramesChecked: number; peakPhysicsAgeMs: number; maxBufferSize: number } };
 
 const began = performance.now(), startedAt = new Date().toISOString(), clients: Client[] = [];
-const requests: { operation: string; status: number; elapsedMs: number }[] = [];
+const requests: { operation: string; origin: string; status: number; elapsedMs: number }[] = [];
 const failures: string[] = [];
 const checks: Record<string, boolean> = {};
 let phase = 'setup', stopping = false, cleanup = false, failure: string | null = null;
 let inputTimer: ReturnType<typeof setInterval> | undefined, heartbeatTimer: ReturnType<typeof setInterval> | undefined;
 let finalOrder: unknown[] = [], cleanupSuccess = 0, cleanupAlreadyGone = 0;
-const ceiling = setTimeout(() => { stopping = true; }, 170_000);
+const ceiling = setTimeout(() => { stopping = true; }, MAX_DURATION_MS);
 const interrupted = () => { stopping = true; };
 process.on('SIGINT', interrupted); process.on('SIGTERM', interrupted);
 
-async function post(path: string, body: unknown, operation: string, client?: Client, expected = 200) {
+async function post(path: string, body: unknown, operation: string, client?: Client, expected = 200, origin = client?.origin ?? ORIGIN) {
   if (stopping && !cleanup) throw Error('SMOKE_DEADLINE_OR_INTERRUPTION');
   const before = performance.now();
-  const response = await fetch(ORIGIN + path, {
-    method: 'POST', redirect: 'error', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', ...(client ? { Authorization: `Bearer ${client.token}`, 'X-Room-Generation': String(client.generation) } : {}) },
-    body: JSON.stringify(body), signal: AbortSignal.timeout(cleanup ? 4500 : Math.max(1, Math.min(7000, 170_000 - (performance.now() - began)))),
+  const response = await fetch(origin + path, {
+    method: 'POST', redirect: 'error', headers: { Origin: origin, 'Content-Type': 'application/json', ...(client ? { Authorization: `Bearer ${client.token}`, 'X-Room-Generation': String(client.generation) } : {}) },
+    body: JSON.stringify(body), signal: AbortSignal.timeout(cleanup ? 4500 : Math.max(1, Math.min(7000, MAX_DURATION_MS - (performance.now() - began)))),
   });
-  requests.push({ operation, status: response.status, elapsedMs: Math.round((performance.now() - before) * 100) / 100 });
+  requests.push({ operation, origin, status: response.status, elapsedMs: Math.round((performance.now() - before) * 100) / 100 });
   const data = await response.json() as any;
   if (response.status !== expected) throw Object.assign(Error(`${operation}:HTTP_${response.status}`), { status: response.status });
   return data;
 }
 const command = (client: Client, body: unknown, operation: string, expected = 200) => post(`/api/rooms/${client.room.code}/command`, body, operation, client, expected);
-async function admit(path: string, body: unknown, operation: string) {
-  try { return await post(path, body, operation, undefined, 201) as Admission; }
+async function admit(path: string, body: unknown, operation: string, origin = ORIGIN) {
+  try { return await post(path, body, operation, undefined, 201, origin) as Admission; }
   catch (error) {
     const status = (error as {status?:number}).status;
     if (status !== undefined && status < 500) throw error;
     // One lost-response recovery uses the identical admission key, never a new room.
-    return await post(path, body, operation + '-same-key-retry', undefined, 201) as Admission;
+    return await post(path, body, operation + '-same-key-retry', undefined, 201, origin) as Admission;
   }
 }
-function own(admission: Admission, label: Client['label'], delayMs: number) {
-  const client: Client = { ...admission, label, delayMs, latest: admission.room, ready: false, sequence: 0, pilot: new DemoAutopilot(), frames: 0, bytes: 0, inputs: 0, acknowledgements: 0,
+function own(admission: Admission, label: Client['label'], delayMs: number, origin = ORIGIN) {
+  const client: Client = { ...admission, label, origin, delayMs, latest: admission.room, ready: false, sequence: 0, pilot: new DemoAutopilot(), frames: 0, bytes: 0, inputs: 0, acknowledgements: 0,
     motion: new RacerSnapshotBuffer(), receivedAt: performance.now(), physicsRound: null, physicsAt: null,
     motionMetrics: { sampleCount: 0, posesChecked: 0, invalidPoses: 0, physicsFramesChecked: 0, peakPhysicsAgeMs: 0, maxBufferSize: 0 } };
   clients.push(client); assert.equal(admission.transport, 'duplex-v2', 'Deployed server must negotiate native duplex transport'); return client;
 }
 async function waitFor(predicate: () => boolean, label: string, timeout = 10_000) {
-  const deadline = Math.min(began + 170_000, performance.now() + timeout);
+  const deadline = Math.min(began + MAX_DURATION_MS, performance.now() + timeout);
   while (performance.now() < deadline) {
     if (stopping) throw Error('SMOKE_DEADLINE_OR_INTERRUPTION');
     if (failures.length) throw Error(failures[0]);
@@ -71,7 +77,7 @@ async function waitFor(predicate: () => boolean, label: string, timeout = 10_000
   throw Error('TIMEOUT_' + label);
 }
 async function connect(client: Client) {
-  const socket = new WebSocket(ORIGIN.replace('https:', 'wss:') + `/api/rooms/${client.room.code}/socket`, { origin: ORIGIN, handshakeTimeout: 7000, perMessageDeflate: false });
+  const socket = new WebSocket(client.origin.replace('https:', 'wss:') + `/api/rooms/${client.room.code}/socket`, { origin: client.origin, handshakeTimeout: 7000, perMessageDeflate: false });
   client.socket = socket;
   let pending = 0, lastAck = performance.now();
   socket.on('open', () => socket.send(JSON.stringify({ type: 'claim', token: client.token, generation: client.generation })));
@@ -124,11 +130,14 @@ function sampleMotion(client: Client, now: number) {
 }
 
 try {
-  const health = await fetch(ORIGIN + '/healthz', { redirect: 'error', signal: AbortSignal.timeout(7000) });
-  assert.equal(health.status, 200); assert.equal((await health.json() as any).platform, 'cloudflare'); checks.httpsCloudflare = true;
+  for (const origin of new Set([ORIGIN, PEER_ORIGIN])) {
+    const health = await fetch(origin + '/healthz', { redirect: 'error', signal: AbortSignal.timeout(7000) });
+    assert.equal(health.status, 200); assert.equal((await health.json() as any).platform, 'cloudflare');
+  }
+  checks.httpsCloudflare = true;
   const placement = await post('/api/rooms/placement', {}, 'placement');
   const host = own(await admit('/api/rooms', { idempotencyKey: placement.idempotencyKey, profile: { ...DEFAULT_PROFILE, name: 'Smoke host' } }, 'create'), 'Host', 0);
-  const guest = own(await admit(`/api/rooms/${host.room.code}/join`, { idempotencyKey: `smoke_${randomUUID()}`, profile: { ...DEFAULT_PROFILE, name: 'Smoke guest', driver: 'sam', car: 'comet' } }, 'join'), 'Guest', 2000);
+  const guest = own(await admit(`/api/rooms/${host.room.code}/join`, { idempotencyKey: `smoke_${randomUUID()}`, profile: { ...DEFAULT_PROFILE, name: 'Smoke guest', driver: 'sam', car: 'comet' } }, 'join', PEER_ORIGIN), 'Guest', 2000, PEER_ORIGIN);
   await Promise.all(clients.map(connect)); checks.nativeDuplex = true;
   heartbeatTimer = setInterval(() => { if (!stopping && !cleanup) for (const client of clients) if (client.socket?.readyState === WebSocket.OPEN) client.socket.send(JSON.stringify({ type: 'heartbeat' })); }, 2000);
   await command(guest, { type: 'profile', profile: { ...DEFAULT_PROFILE, name: 'Smoke guest', driver: 'jensen', car: 'tide' }, revision: 1 }, 'live-selection');
@@ -154,22 +163,28 @@ try {
     }
   }, 50);
   await waitFor(() => guest.latest.players.some(player => player.id === host.id && player.state.speed > 0) && host.latest.players.some(player => player.id === guest.id && player.state.speed > 0), 'PEER_MOVEMENT'); checks.peerMovement = true;
-  await waitFor(() => clients.every(client => client.latest.phase === 'results'), 'COMPLETE_RACE', 145_000);
-  assert.deepEqual(host.latest.results, guest.latest.results, 'Both peers must receive identical final results');
-  const results = host.latest.results!, entries = results.entries;
-  assert.deepEqual(entries.map(entry => entry.place), [1, 2]); assert.ok(entries.every(entry => entry.finishTime !== null && entry.dnfReason === null));
-  assert.ok(entries[0].finishTime! < entries[1].finishTime!); assert.equal(entries[0].gap, 0); assert.ok(entries[1].gap! > 0);
-  checks.orderedFinishes = true; checks.identicalResults = true;
+  if (MODE === 'start') {
+    const sampleStart = performance.now();
+    await waitFor(() => performance.now() - sampleStart >= 3000, 'BOUNDED_RACE_SAMPLES', 5000);
+    phase = 'movement';
+  } else {
+    await waitFor(() => clients.every(client => client.latest.phase === 'results'), 'COMPLETE_RACE', 145_000);
+    assert.deepEqual(host.latest.results, guest.latest.results, 'Both peers must receive identical final results');
+    const results = host.latest.results!, entries = results.entries;
+    assert.deepEqual(entries.map(entry => entry.place), [1, 2]); assert.ok(entries.every(entry => entry.finishTime !== null && entry.dnfReason === null));
+    assert.ok(entries[0].finishTime! < entries[1].finishTime!); assert.equal(entries[0].gap, 0); assert.ok(entries[1].gap! > 0);
+    checks.orderedFinishes = true; checks.identicalResults = true;
+    finalOrder = entries.map(entry => ({ racer: entry.id === host.id ? 'Host' : 'Guest', place: entry.place, finishSeconds: entry.finishTime, gapSeconds: entry.gap, tied: entry.tied, dnf: entry.dnfReason, driver: entry.profile.driver, car: entry.profile.car }));
+    phase = 'rematch';
+    await command(guest, { type: 'rematch' }, 'non-host-rematch-rejected', 403);
+    await command(host, { type: 'rematch' }, 'host-rematch');
+    await waitFor(() => clients.every(client => client.latest.phase === 'lobby'), 'REMATCH_LOBBY');
+    assert.ok(clients.every(client => client.latest.players.length === 2 && client.latest.players.every(player => !player.ready)));
+    assert.deepEqual(guest.latest.lastResults, results); checks.hostRematch = true;
+  }
   assert.ok(clients.every(client => client.motionMetrics.physicsFramesChecked > 0)); checks.physicsTimestamps = true;
   assert.ok(clients.every(client => client.motionMetrics.sampleCount > 0 && client.motionMetrics.posesChecked > 0 && client.motionMetrics.invalidPoses === 0)); checks.finiteBufferedPoses = true;
   assert.ok(clients.every(client => client.motionMetrics.maxBufferSize <= 32)); checks.boundedMotionHistory = true;
-  finalOrder = entries.map(entry => ({ racer: entry.id === host.id ? 'Host' : 'Guest', place: entry.place, finishSeconds: entry.finishTime, gapSeconds: entry.gap, tied: entry.tied, dnf: entry.dnfReason, driver: entry.profile.driver, car: entry.profile.car }));
-  phase = 'rematch';
-  await command(guest, { type: 'rematch' }, 'non-host-rematch-rejected', 403);
-  await command(host, { type: 'rematch' }, 'host-rematch');
-  await waitFor(() => clients.every(client => client.latest.phase === 'lobby'), 'REMATCH_LOBBY');
-  assert.ok(clients.every(client => client.latest.players.length === 2 && client.latest.players.every(player => !player.ready)));
-  assert.deepEqual(guest.latest.lastResults, results); checks.hostRematch = true;
 } catch (error) {
   failure = error instanceof Error ? error.message : 'SMOKE_FAILED';
 } finally {
@@ -181,11 +196,11 @@ try {
   for (const client of clients) client.socket?.terminate();
   process.off('SIGINT', interrupted); process.off('SIGTERM', interrupted);
   const report = {
-    startedAt, finishedAt: new Date().toISOString(), origin: ORIGIN, durationSeconds: Math.round((performance.now() - began) / 10) / 100,
+    startedAt, finishedAt: new Date().toISOString(), origin: ORIGIN, peerOrigin: PEER_ORIGIN, mode: MODE, durationSeconds: Math.round((performance.now() - began) / 10) / 100,
     scope: 'One disposable public room and two owned automated racers over HTTPS/WSS. Functional acceptance smoke; not a load, capacity, billing, browser-rendering, or cross-device test.',
     phaseReached: phase, success: failure === null && failures.length === 0 && cleanupSuccess + cleanupAlreadyGone === clients.length,
     failure, protocolErrors: failures, checks, results: finalOrder, requests,
-    clients: clients.map(client => ({ racer: client.label, frames: client.frames, inboundBodyBytes: client.bytes, controlFramesSent: client.inputs, feedAcknowledgementsSent: client.acknowledgements,
+    clients: clients.map(client => ({ racer: client.label, origin: client.origin, frames: client.frames, inboundBodyBytes: client.bytes, controlFramesSent: client.inputs, feedAcknowledgementsSent: client.acknowledgements,
       motion: { ...client.motionMetrics, peakPhysicsAgeMs: Math.round(client.motionMetrics.peakPhysicsAgeMs * 100) / 100 } })),
     motionMeasurement: 'Buffered poses sampled on the 50ms control timer, not browser frames or FPS. Physics age is serverNow minus simulationAt plus local time since the latest frame; it excludes unknown one-way network transit. Metrics are bounded aggregates, with no room identities, player credentials, or pose histories.',
     cleanup: { ownedPlayers: clients.length, left: cleanupSuccess, alreadyGone: cleanupAlreadyGone, failed: clients.length - cleanupSuccess - cleanupAlreadyGone },

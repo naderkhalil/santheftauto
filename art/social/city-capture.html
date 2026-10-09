@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>San Theft Auto — City screenshot</title>
+    <style>
+      #capture-controls { position: fixed; z-index: 10000; top: 16px; left: 50%; transform: translateX(-50%); padding: 12px 16px; border: 1px solid #174e4e35; border-radius: 10px; background: #f4efdf; color: #174e4e; box-shadow: 0 6px 24px #12282424; text-align: center; font: 12px/1.4 system-ui, sans-serif; }
+      #capture-controls button { padding: 9px 14px; border: 0; border-radius: 5px; background: #174e4e; color: #fff8e8; font: 700 12px/1.4 system-ui, sans-serif; cursor: pointer; }
+      #capture-controls p { margin: 6px 0 0; font-size: 10px; }
+      body.capture-clean > :not(#app),
+      body.capture-clean #app > :not(canvas#world),
+      body.capture-clean dialog { display: none !important; }
+      body.capture-clean, body.capture-clean * { cursor: none !important; }
+      body.capture-clean canvas#world { display: block !important; visibility: visible !important; opacity: 1 !important; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <aside id="capture-controls" aria-label="Screenshot controls">
+      <button id="capture-hide" type="button">Hide interface for screenshot</button>
+      <p>Choose a tour view first. Reload to show the interface again.</p>
+    </aside>
+    <script type="module">
+      const hide = document.querySelector('#capture-hide');
+      hide.addEventListener('click', () => {
+        document.body.classList.add('capture-clean');
+        document.body.dataset.capture = 'clean';
+      });
+      // Vite development only. Run with VITE_POSTHOG_ENABLED=false for capture.
+      if (import.meta.env.DEV) {
+        void import('/src/main.ts');
+      } else {
+        hide.disabled = true;
+        document.querySelector('#capture-controls p').textContent = 'Open this page through the local Vite development server.';
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,866 @@
+{
+  "checkedAt": "2026-10-09T15:29:43.070335+00:00",
+  "deploymentVersion": "a4887b4a-9123-449c-ab92-ea0796c2b9a2",
+  "scope": "Read-only public HTTPS crawler and image checks. No social posts, room access, API mutations, gameplay smoke, DNS overrides, or certificate validation bypass. Synthetic invite query checks static HTML only.",
+  "expectedImage": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+  "localAsset": {
+    "bytes": 84362,
+    "dimensions": [
+      1200,
+      630
+    ],
+    "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+    "matchesReleasedChecksum": true
+  },
+  "html": [
+    {
+      "host": "santheftauto.com",
+      "path": "/",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "santheftauto.com",
+      "path": "/",
+      "crawler": "Applebot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "santheftauto.com",
+      "path": "/?room=ABCDEF12",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "santheftauto.com",
+      "path": "/?room=ABCDEF12",
+      "crawler": "Applebot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "path": "/",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "path": "/",
+      "crawler": "Applebot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "path": "/?room=ABCDEF12",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "path": "/?room=ABCDEF12",
+      "crawler": "Applebot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "path": "/",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "path": "/",
+      "crawler": "Applebot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "path": "/?room=ABCDEF12",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "path": "/?room=ABCDEF12",
+      "crawler": "Applebot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/html",
+        "cache-control": "no-cache, public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "title": "San Theft Auto \u2014 Race San Francisco",
+      "metadata": {
+        "og:type": "website",
+        "og:locale": "en_US",
+        "og:site_name": "San Theft Auto",
+        "og:title": "San Theft Auto \u2014 Race San Francisco",
+        "og:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "og:url": "https://santheftauto.com/",
+        "og:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:secure_url": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "og:image:type": "image/jpeg",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge.",
+        "twitter:card": "summary_large_image",
+        "twitter:title": "San Theft Auto \u2014 Race San Francisco",
+        "twitter:description": "Race your friends through San Francisco. Pick your driver, share a room, and take on the hills. Play free in your browser.",
+        "twitter:image": "https://santheftauto.com/social/san-theft-auto-v2.jpg",
+        "twitter:image:alt": "San Theft Auto. Coral and teal roadsters above the game\u2019s San Francisco waterfront, Ferry Building, and Bay Bridge."
+      },
+      "canonical": [
+        "https://santheftauto.com/"
+      ],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "htmlMime": true,
+        "ogImageExact": true,
+        "ogSecureImageExact": true,
+        "twitterImageExact": true,
+        "largeImageCard": true,
+        "dimensionsDeclared": true,
+        "imageMimeDeclared": true,
+        "titleAndDescription": true,
+        "imageAlt": true,
+        "canonicalApex": true,
+        "noV1ImageReference": true,
+        "noBotChallenge": true,
+        "noRobotsHeaderBlock": true,
+        "gameBundleUnchanged": true
+      },
+      "success": true
+    }
+  ],
+  "images": [
+    {
+      "host": "santheftauto.com",
+      "path": "/social/san-theft-auto-v2.jpg",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "image/jpeg",
+        "content-length": "84362",
+        "cache-control": "public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "bytes": 84362,
+      "dimensions": [
+        1200,
+        630
+      ],
+      "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "mimeJpeg": true,
+        "dimensions1200x630": true,
+        "under5MB": true,
+        "exactSize": true,
+        "matchesLocalAsset": true,
+        "matchesReleasedChecksum": true,
+        "noBotChallenge": true
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "path": "/social/san-theft-auto-v2.jpg",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "image/jpeg",
+        "content-length": "84362",
+        "cache-control": "public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "bytes": 84362,
+      "dimensions": [
+        1200,
+        630
+      ],
+      "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "mimeJpeg": true,
+        "dimensions1200x630": true,
+        "under5MB": true,
+        "exactSize": true,
+        "matchesLocalAsset": true,
+        "matchesReleasedChecksum": true,
+        "noBotChallenge": true
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "path": "/social/san-theft-auto-v2.jpg",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "image/jpeg",
+        "content-length": "84362",
+        "cache-control": "public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "bytes": 84362,
+      "dimensions": [
+        1200,
+        630
+      ],
+      "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c",
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "mimeJpeg": true,
+        "dimensions1200x630": true,
+        "under5MB": true,
+        "exactSize": true,
+        "matchesLocalAsset": true,
+        "matchesReleasedChecksum": true,
+        "noBotChallenge": true
+      },
+      "success": true
+    }
+  ],
+  "robots": [
+    {
+      "host": "santheftauto.com",
+      "path": "/robots.txt",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-length": "1248",
+        "cache-control": "public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "rules": [],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "noDisallowDirectives": true,
+        "noBotChallenge": true
+      },
+      "success": true
+    },
+    {
+      "host": "www.santheftauto.com",
+      "path": "/robots.txt",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-length": "1248",
+        "cache-control": "public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "rules": [],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "noDisallowDirectives": true,
+        "noBotChallenge": true
+      },
+      "success": true
+    },
+    {
+      "host": "whimsical-sf.nader-khalil.workers.dev",
+      "path": "/robots.txt",
+      "crawler": "Twitterbot",
+      "transport": "normal-DNS-normal-TLS",
+      "curlExit": 0,
+      "status": 200,
+      "headers": {
+        "content-type": "text/plain; charset=utf-8",
+        "content-length": "1248",
+        "cache-control": "public, max-age=3600",
+        "server": "cloudflare"
+      },
+      "error": null,
+      "rules": [],
+      "checks": {
+        "status200": true,
+        "tlsVerified": true,
+        "noDisallowDirectives": true,
+        "noBotChallenge": true
+      },
+      "success": true
+    }
+  ],
+  "success": true,
+  "limitations": [
+    "Social platforms may retain old preview caches independently.",
+    "This checks crawler-visible metadata and asset integrity, not a posted card inside Messages or X."
+  ]
+}

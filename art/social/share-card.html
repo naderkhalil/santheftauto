@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200, initial-scale=1" />
+    <title>San Theft Auto — Social cover artwork</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=DM+Sans:wght@500;600;700;800&display=block" rel="stylesheet" />
+    <style>
+      :root { color-scheme: light; font-family: 'DM Sans', Arial, sans-serif; background: #f4efdf; color: #174e4e; }
+      * { box-sizing: border-box; }
+      html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+      #cover { position: relative; isolation: isolate; width: 1200px; height: 630px; overflow: hidden; background: #f4efdf; }
+      .city { position: absolute; inset: 0; width: 1200px; height: 630px; object-fit: cover; }
+      .text-scrim { position: absolute; inset: 0; background: linear-gradient(90deg, #f4efdf 0%, #f4efdf 28%, #f4efdfed 34%, #f4efdf90 43%, #f4efdf00 57%), linear-gradient(0deg, #f4efdf 0%, #f4efdfef 7%, #f4efdf00 25%); }
+      .racers { position: absolute; left: 380px; top: 55px; width: 820px; height: 550px; z-index: 2; mask-image: linear-gradient(90deg, transparent 0%, #000 17%); }
+      .eyebrow { position: absolute; top: 48px; left: 62px; display: flex; align-items: center; gap: 11px; font-size: 10px; line-height: 14px; font-weight: 800; letter-spacing: 2.2px; }
+      .eyebrow::before { content: ''; width: 23px; height: 5px; background: #ec7558; transform: skewX(-22deg); }
+      h1 { position: absolute; z-index: 3; left: 56px; top: 87px; margin: 0; font: 900 148px/.795 'Barlow Condensed', Impact, 'Arial Narrow', sans-serif; letter-spacing: -2.8px; transform: skewX(-6deg); transform-origin: left bottom; }
+      h1 span { display: block; }
+      h1 .theft { color: #e97153; }
+      .copy { position: absolute; z-index: 3; left: 62px; top: 461px; margin: 0; font-size: 19px; line-height: 1.42; font-weight: 600; letter-spacing: -.35px; }
+      .footer { position: absolute; z-index: 4; left: 62px; right: 62px; top: 568px; padding-top: 17px; border-top: 1px solid #174e4e38; display: flex; align-items: center; justify-content: space-between; }
+      .play { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 800; letter-spacing: 2.25px; }
+      .play::before { content: ''; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid #e97153; }
+      .url { font-size: 18px; line-height: 20px; font-weight: 800; letter-spacing: -.65px; }
+      .grain { position: absolute; z-index: 5; inset: 0; pointer-events: none; opacity: .027; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.87' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%230c3433' filter='url(%23grain)' d='M0 0h180v180H0z'/%3E%3C/svg%3E"); }
+      #render-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    </style>
+  </head>
+  <body data-ready="loading">
+    <main id="cover" aria-label="San Theft Auto. Race San Francisco. Bring your friends.">
+      <img class="city" src="./city-waterfront.jpg" alt="The game's Blender-built Ferry Building and Bay Bridge on the San Francisco waterfront" />
+      <div class="text-scrim" aria-hidden="true"></div>
+      <canvas id="racers" class="racers" width="1640" height="1100" aria-label="Jensen in a coral roadster races Sam in a teal roadster"></canvas>
+      <div class="eyebrow">SAN FRANCISCO / ONLINE ARCADE</div>
+      <h1><span>SAN</span><span class="theft">THEFT</span><span>AUTO</span></h1>
+      <p class="copy">Race San Francisco.<br />Bring your friends.</p>
+      <div class="footer"><span class="play">PLAY IN YOUR BROWSER</span><span class="url">santheftauto.com</span></div>
+      <div class="grain" aria-hidden="true"></div>
+      <output id="render-status" aria-live="polite">Loading cover assets</output>
+    </main>
+    <script type="module" src="./share-card.ts"></script>
+  </body>
+</html>

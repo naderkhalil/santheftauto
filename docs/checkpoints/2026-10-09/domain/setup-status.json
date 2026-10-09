@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-09T14:53:58Z",
+  "worker": "whimsical-sf",
+  "hostnames": ["santheftauto.com", "www.santheftauto.com"],
+  "registrar": "Namecheap",
+  "nameservers": ["brett.ns.cloudflare.com", "sreeni.ns.cloudflare.com"],
+  "registrarSaved": true,
+  "registryDelegationVerified": true,
+  "cloudflareZoneActive": true,
+  "workerCustomDomainsDeployed": true,
+  "deploymentScope": "Routing triggers only; existing Worker code, assets, and Durable Object namespace preserved.",
+  "dnsPlan": "Free",
+  "preservedMailRecords": {"mxCount": 5, "spf": "v=spf1 include:spf.efwd.registrar-servers.com ~all"},
+  "publicDns": {
+    "authoritativeCloudflare": "Both Worker records present; apex returns Cloudflare addresses.",
+    "googleResolver": "Apex and www return Cloudflare addresses.",
+    "cloudflareResolver": "Apex returns Cloudflare addresses; managed certificate validation TXT records are published.",
+    "localResolver": "Old answers were still cached during verification."
+  },
+  "alwaysUseHttps": true,
+  "httpRedirectVerified": "301 to the same HTTPS hostname, preserving the invite query; checked against the authoritative Cloudflare address.",
+  "certificateStatus": "Pending Validation (TXT), managed by Cloudflare",
+  "customDomainHttpsVerified": false,
+  "customDomainMultiplayerSmokeRun": false,
+  "remaining": "Wait for managed certificate issuance and DNS cache propagation, then verify both HTTPS pages/assets and run the bounded two-player domain smoke documented in docs/cloudflare.md.",
+  "existingWorkersDevHealth": {"status": "ok", "platform": "cloudflare", "acceptingNewRooms": true}
+}

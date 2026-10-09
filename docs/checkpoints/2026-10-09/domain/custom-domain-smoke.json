@@ -1,0 +1,146 @@
+{
+  "startedAt": "2026-10-09T15:18:14.529Z",
+  "finishedAt": "2026-10-09T15:18:28.300Z",
+  "origin": "https://santheftauto.com",
+  "peerOrigin": "https://www.santheftauto.com",
+  "mode": "start",
+  "durationSeconds": 13.77,
+  "scope": "One disposable public room and two owned automated racers over HTTPS/WSS. Functional acceptance smoke; not a load, capacity, billing, browser-rendering, or cross-device test.",
+  "phaseReached": "movement",
+  "success": true,
+  "failure": null,
+  "protocolErrors": [],
+  "checks": {
+    "httpsCloudflare": true,
+    "nativeDuplex": true,
+    "liveSelection": true,
+    "hostAndReadinessGates": true,
+    "sharedCountdown": true,
+    "peerMovement": true,
+    "physicsTimestamps": true,
+    "finiteBufferedPoses": true,
+    "boundedMotionHistory": true
+  },
+  "results": [],
+  "requests": [
+    {
+      "operation": "placement",
+      "origin": "https://santheftauto.com",
+      "status": 200,
+      "elapsedMs": 36.12
+    },
+    {
+      "operation": "create",
+      "origin": "https://santheftauto.com",
+      "status": 201,
+      "elapsedMs": 503.35
+    },
+    {
+      "operation": "join",
+      "origin": "https://www.santheftauto.com",
+      "status": 201,
+      "elapsedMs": 118.98
+    },
+    {
+      "operation": "live-selection",
+      "origin": "https://www.santheftauto.com",
+      "status": 200,
+      "elapsedMs": 118.04
+    },
+    {
+      "operation": "host-selection",
+      "origin": "https://santheftauto.com",
+      "status": 200,
+      "elapsedMs": 86.95
+    },
+    {
+      "operation": "host-ready",
+      "origin": "https://santheftauto.com",
+      "status": 200,
+      "elapsedMs": 317.02
+    },
+    {
+      "operation": "not-ready-start-rejected",
+      "origin": "https://santheftauto.com",
+      "status": 409,
+      "elapsedMs": 56.87
+    },
+    {
+      "operation": "non-host-start-rejected",
+      "origin": "https://www.santheftauto.com",
+      "status": 403,
+      "elapsedMs": 72.58
+    },
+    {
+      "operation": "guest-selection",
+      "origin": "https://www.santheftauto.com",
+      "status": 200,
+      "elapsedMs": 113.45
+    },
+    {
+      "operation": "guest-ready",
+      "origin": "https://www.santheftauto.com",
+      "status": 200,
+      "elapsedMs": 221.56
+    },
+    {
+      "operation": "host-start",
+      "origin": "https://santheftauto.com",
+      "status": 200,
+      "elapsedMs": 132.75
+    },
+    {
+      "operation": "owned-player-leave",
+      "origin": "https://www.santheftauto.com",
+      "status": 200,
+      "elapsedMs": 180.44
+    },
+    {
+      "operation": "owned-player-leave",
+      "origin": "https://santheftauto.com",
+      "status": 200,
+      "elapsedMs": 961.66
+    }
+  ],
+  "clients": [
+    {
+      "racer": "Host",
+      "origin": "https://santheftauto.com",
+      "frames": 125,
+      "inboundBodyBytes": 77086,
+      "controlFramesSent": 101,
+      "feedAcknowledgementsSent": 33,
+      "motion": {
+        "sampleCount": 196,
+        "posesChecked": 392,
+        "invalidPoses": 0,
+        "physicsFramesChecked": 115,
+        "peakPhysicsAgeMs": 61.72,
+        "maxBufferSize": 32
+      }
+    },
+    {
+      "racer": "Guest",
+      "origin": "https://www.santheftauto.com",
+      "frames": 125,
+      "inboundBodyBytes": 77086,
+      "controlFramesSent": 61,
+      "feedAcknowledgementsSent": 33,
+      "motion": {
+        "sampleCount": 196,
+        "posesChecked": 392,
+        "invalidPoses": 0,
+        "physicsFramesChecked": 115,
+        "peakPhysicsAgeMs": 61.8,
+        "maxBufferSize": 32
+      }
+    }
+  ],
+  "motionMeasurement": "Buffered poses sampled on the 50ms control timer, not browser frames or FPS. Physics age is serverNow minus simulationAt plus local time since the latest frame; it excludes unknown one-way network transit. Metrics are bounded aggregates, with no room identities, player credentials, or pose histories.",
+  "cleanup": {
+    "ownedPlayers": 2,
+    "left": 2,
+    "alreadyGone": 0,
+    "failed": 0
+  }
+}

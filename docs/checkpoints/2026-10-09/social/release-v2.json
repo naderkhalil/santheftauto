@@ -1,0 +1,34 @@
+{
+  "recordedAt": "2026-10-09T15:30:10.720728+00:00",
+  "workerVersion": "a4887b4a-9123-449c-ab92-ea0796c2b9a2",
+  "sourceBaseCommit": "d59cdfeeeb61dde050ee0df1f9d5a65c9468c812",
+  "sourceIncludesUncommittedDomainAndShareChanges": true,
+  "uploadedAssets": [
+    "/index.html",
+    "/social/san-theft-auto-v2.jpg"
+  ],
+  "unchangedGameBundle": "/assets/index-3FJHGtxZ.js",
+  "artwork": {
+    "source": "art/social/share-card.html",
+    "backgroundSource": "art/social/city-waterfront.jpg",
+    "captureSource": "art/social/city-capture.html",
+    "method": "Browser capture of the actual game waterfront in The Bay tour view; composed with approved cars, drivers and typography using repository-native HTML and Three.js.",
+    "asset": "public/social/san-theft-auto-v2.jpg",
+    "dimensions": [
+      1200,
+      630
+    ],
+    "bytes": 84362,
+    "sha256": "8024986b50834403e518bc24ec4f6598882c40ee2c0879ac58d082879fedd11c"
+  },
+  "validation": {
+    "cloudflareProductionBuild": "passed",
+    "artworkSourceTypecheck": "passed",
+    "visualReview": "passed",
+    "crawlerVerification": "share-preview-v2-verification.json",
+    "crawlerHtmlChecksPassed": 12,
+    "imageChecksPassed": 3,
+    "allHostnamesNormalDnsAndTls": true
+  },
+  "limitation": "Messages and X may retain cached previews. Origin metadata and image delivery verified without posting."
+}

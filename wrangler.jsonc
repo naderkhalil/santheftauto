@@ -5,6 +5,10 @@
   "main": "cloudflare/index.ts",
   "compatibility_date": "2026-10-08",
   "workers_dev": true,
+  "routes": [
+    { "pattern": "santheftauto.com", "custom_domain": true },
+    { "pattern": "www.santheftauto.com", "custom_domain": true }
+  ],
   "preview_urls": false,
   "assets": {
     "directory": "./dist-cloudflare",

@@ -150,9 +150,10 @@ Changing Worker runtime variables cannot change an existing browser bundle.
 ## Account, secrets, and first deployment
 
 The checked-in Worker name is `whimsical-sf`, with `workers_dev: true` and preview
-URLs disabled. Use its account-provided `workers.dev` hostname first. Do not
-invent a public URL or use a custom domain until the actual deployment reports
-one and the domain configuration is authorized.
+URLs disabled. Its custom domains are `santheftauto.com` and
+`www.santheftauto.com`. The original
+`whimsical-sf.nader-khalil.workers.dev` hostname remains enabled for existing
+links. All three hostnames use the same Worker and Durable Object namespace.
 
 ```sh
 npx wrangler login
@@ -175,15 +176,75 @@ account, Worker version/deployment identifier, source revision, and returned
 HTTPS URL. Confirm `/healthz`, load the game, and run the deployed host/guest
 checks below before sharing the URL widely.
 
-`PUBLIC_ORIGIN` is initially unset: the requested Worker origin is the allowed
-browser origin. Once choosing a canonical domain, set `vars.PUBLIC_ORIGIN` in
-`wrangler.jsonc` to its exact HTTPS origin, configure the authorized Worker custom
-domain, and deploy the matching configuration. Do not include a path, query, or
-fragment. This setting also rejects API requests made to an alternate
-`workers.dev` hostname; static pages may still load there, so distribute only
-the canonical URL and verify invites after the switch. Avoid changing origins
-during active races because browser session storage and local URLs are tied to
-the origin.
+Keep `PUBLIC_ORIGIN` unset: the requested Worker origin is the allowed browser
+origin. This lets same-origin APIs and WebSockets work on both custom domains and
+the original `workers.dev` hostname. Setting it to only one origin would reject
+API requests from the other two even though their static pages still load.
+Share `https://santheftauto.com/` for new games. Invitation links derive from the
+current browser origin. Browser session storage is per-origin, so players should
+finish an existing race on its original hostname rather than switch mid-race.
+
+### Custom domain DNS
+
+Namecheap remains the registrar. Its Custom DNS nameservers are
+`brett.ns.cloudflare.com` and `sreeni.ns.cloudflare.com`; Cloudflare manages the
+zone on its Free DNS/SSL plan. The two `custom_domain` routes in
+`wrangler.jsonc` create Worker-managed DNS records and certificates. Use
+`npx wrangler triggers deploy` to apply routing-only changes without replacing
+the deployed game bundle. Do not create parking A records or a CNAME to
+`workers.dev` for these names.
+
+The migration preserved the five Namecheap forwarding MX records and the SPF
+TXT record. Namecheap's old parking A record and `www` parking CNAME were
+removed. Future email changes belong in Cloudflare DNS. Cloudflare's Always Use
+HTTPS setting redirects HTTP requests to HTTPS while preserving paths and invite
+queries; both apex and `www` serve the game directly.
+
+After a DNS change, confirm the registrar delegation, Cloudflare zone activation,
+valid HTTPS on both hostnames, `/healthz`, assets, and same-origin WebSockets.
+For one bounded two-player room spanning both hostnames:
+
+```sh
+SF1_SMOKE_ORIGIN=https://santheftauto.com \
+SF1_SMOKE_PEER_ORIGIN=https://www.santheftauto.com \
+SF1_SMOKE_MODE=start \
+SF1_SMOKE_REPORT=docs/checkpoints/2026-10-09/domain/custom-domain-smoke.json \
+node --experimental-strip-types tools/smoke-cloudflare.ts
+```
+
+This checks room creation, joining, readiness, race start, movement, and cleanup;
+it is not a full-race or load test. The smoke tool accepts only the three owned
+production origins above. DNS caches can retain old answers during propagation.
+
+### Link previews
+
+`index.html` includes Open Graph and X/Twitter large-image card metadata in the
+initial HTML, so sharing does not depend on JavaScript or loading the game.
+All three hostnames use the public image at
+`https://santheftauto.com/social/san-theft-auto-v2.jpg` and the title
+"San Theft Auto — Race San Francisco". The canonical URL does not redirect
+players or remove room queries from their actual invitation URLs.
+
+The 1200 × 630 cover preserves the game's own cars and drivers over an actual
+screenshot of the Blender-built Ferry Building and Bay Bridge. The source
+screenshot is `art/social/city-waterfront.jpg`. To recapture it, start Vite with
+`VITE_POSTHOG_ENABLED=false`, open `/art/social/city-capture.html` at 1200 × 630,
+choose **Watch a Run → The Bay**, let the camera settle, then use **Hide interface
+for screenshot**. Reload to restore the controls.
+
+The composition source is `art/social/share-card.html`. Open it at 1200 × 630,
+wait for `body[data-ready="true"]`, then capture the full viewport as JPEG.
+Check the exported dimensions after resizing the browser. Only the exported
+cover is published; authoring pages and the raw screenshot are outside the
+production build entry points. Keep older versioned covers available for cached cards.
+
+When replacing the artwork, use a new versioned filename and update both the
+Open Graph and Twitter image URLs. Rebuild and deploy the assets, then verify
+the raw HTML and image with a crawler user agent on the apex, `www`, and
+`workers.dev` hostnames. Image requests must return 200 with `image/jpeg`, valid
+HTTPS, and no authentication or bot challenge. Messaging apps and X may retain
+previews they previously cached; a successful origin check does not purge those
+third-party caches.
 
 ## Preserve the Durable Object namespace
 

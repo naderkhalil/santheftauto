@@ -1,0 +1,28 @@
+{
+  "recordedAt": "2026-10-09T15:18:26Z",
+  "workerVersion": "b0a739bb-962e-4a09-b7d4-a01c9ada99cc",
+  "sourceBaseCommit": "d59cdfeeeb61dde050ee0df1f9d5a65c9468c812",
+  "sourceIncludesUncommittedDomainAndShareChanges": true,
+  "uploadedAssets": ["/index.html", "/social/san-theft-auto-v1.jpg"],
+  "unchangedGameBundle": "/assets/index-3FJHGtxZ.js",
+  "artwork": {
+    "source": "art/social/share-card.html",
+    "method": "Browser capture of repository-native HTML and Three.js using the game's own car, driver, and Bay Bridge models",
+    "asset": "public/social/san-theft-auto-v1.jpg",
+    "dimensions": [1200, 630],
+    "bytes": 61974,
+    "sha256": "79cdd3a30888c8b7ad74f1d7555eb90a7f3c49daa297cca91fcccab4988bd3a5"
+  },
+  "validation": {
+    "cloudflareProductionBuild": "passed",
+    "artworkSourceTypecheck": "passed",
+    "visualReview": "passed",
+    "crawlerVerification": "share-preview-verification.json",
+    "crawlerHtmlChecksPassed": 12,
+    "imageChecksPassed": 3,
+    "allHostnamesNormalDnsAndTls": true,
+    "domainMultiplayerSmoke": "../domain/custom-domain-smoke.json",
+    "domainMultiplayerChecksPassed": 9
+  },
+  "limitation": "Messages and X may cache old cards. Crawler metadata and image delivery were verified without creating a public post."
+}
