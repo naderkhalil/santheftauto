@@ -1,0 +1,44 @@
+{
+  "character_id": "sam",
+  "name": "Sam Altman",
+  "status": "concept_ready_for_mesh",
+  "style_reference": "art/characters/direction/mark-meshy-bust-input-v1.png",
+  "identity_reference": {
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Meeting_with_Masayoshi_Son_and_Sam_Altman_%28February_3%2C_2025%29_%283x4_cropped_on_Altman%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "local_source": "/private/tmp/sf-founder-photo-reference/sam.jpg",
+    "reference_only": true,
+    "copied_to_repository": false
+  },
+  "prompt_file": "art/characters/roster/sam/concept-prompt.txt",
+  "prompt_sha256": "da09a1e65692c3ec7f2064fa8faf6fe9864491ed274c8bde8dc60575e6fc0052",
+  "generation": {
+    "provider": "OpenAI",
+    "mode": "authorized_cli_api_fallback",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "size": "1024x1024",
+    "command": "bundled image_gen.py edit",
+    "input_count": 2,
+    "session_id": 93275,
+    "elapsed_seconds": 90.1,
+    "completed_date": "2026-10-09"
+  },
+  "output": "art/characters/roster/sam/sam-cartoon-bust-v1.png",
+  "raw_output": "output/imagegen/roster/sam-cartoon-bust-v1.png",
+  "approval": {
+    "user_approved_this_image": false,
+    "user_approved_style_reference": true,
+    "internal_visual_review": "passed",
+    "review_notes": "Pass: recognizable narrower face, individually shaped hooded eyes and long nose, short dark swept hair, light stubble and charcoal crewneck; differs clearly from Mark and Dario."
+  },
+  "production_status": "concept_only_not_deployed",
+  "image": {
+    "format": "PNG",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "bytes": 1125299,
+    "sha256": "2f6b660f2be028e727b94b837d9bfa90d322fb279340b12a811effdfd6844085"
+  }
+}

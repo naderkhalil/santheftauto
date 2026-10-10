@@ -1,0 +1,60 @@
+{
+  "source": "feifei-meshy-v1.glb",
+  "destination": "feifei-meshy-v1.blend",
+  "blender_version": "4.5.9 LTS",
+  "geometry_modified": false,
+  "materials_modified": false,
+  "reopened_and_verified": true,
+  "file_bytes": 96731048,
+  "meshes": [
+    {
+      "object": "Mesh_0",
+      "vertices": 912665,
+      "polygons": 1715030,
+      "triangles": 1715030,
+      "materials": [
+        "Material_0"
+      ],
+      "modifiers": []
+    }
+  ],
+  "mesh_count": 1,
+  "vertices": 912665,
+  "triangles": 1715030,
+  "material_count": 1,
+  "textures": [
+    {
+      "name": "Image_0",
+      "size": [
+        4096,
+        4096
+      ],
+      "packed": true,
+      "color_space": "sRGB"
+    },
+    {
+      "name": "Image_1",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": true,
+      "color_space": "Non-Color"
+    },
+    {
+      "name": "Image_2",
+      "size": [
+        4096,
+        4096
+      ],
+      "packed": true,
+      "color_space": "Non-Color"
+    }
+  ],
+  "all_textures_packed": true,
+  "collections": [
+    "feifei \u2014 Meshy source (unmodified)"
+  ],
+  "cameras": 0,
+  "lights": 0
+}

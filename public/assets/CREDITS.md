@@ -40,14 +40,43 @@ Street relationships, approximate building footprints, named parcels and stairs 
 
 The terraced plaza composition also references the public [Union Square overview photograph](https://commons.wikimedia.org/wiki/File:San_Francisco_Union_Square.jpg). Its pixels are not used as a runtime texture. Terrace elevations, planted beds, seven palm placements, four jacaranda placements, furnishings and the subway entrance are an original game interpretation rather than a surveyed reconstruction.
 
-## Playable character surfaces
+## Playable characters and surfaces
 
-The four stylized driver sculptures, their clothing construction, and the
-leather/jersey/poplin/twill/rib material maps are original generated project work.
-Their editable source is `art/source/racers-and-garage.blend`; generators are
-`tools/blender/racer_characters.py`, `racer_materials.py`, and `racer_surfaces.py`.
-The small seamless texture sources live in `art/textures/racers/` and are embedded
-in `racer-kit.glb`. No photographs are projected onto the faces or garments.
+The seven parody drivers are Dario Amodei, Sam Altman, Elon Musk, Jensen Huang,
+Mira Murati, Fei-Fei Li, and Mark Zuckerberg. The current cartoon characters use
+project-directed OpenAI image concepts and Meshy 7.1 textured 3D sculpts, followed
+by Blender optimization and original cockpit arms/hands. These are stylized
+interpretations, not scans; the depicted people and organizations do not sponsor
+or endorse the game.
+
+Each character has a distinct source concept, mesh and painted material. Jensen's
+black jacket retains its leather folds, seams and controlled sheen. The other
+characters' fabrics use a softer finish. Public photographs informed the
+concepts; the reference photographs themselves are not bundled as runtime
+textures.
+
+Source concepts, exact prompts, model/settings and reference URLs are retained
+in `art/characters/direction/` and `art/characters/roster/<id>/`. Dense source
+GLBs, packed Blender files and Meshy task/checksum records are in
+`art/characters/meshy-mark/` and `art/characters/roster/<id>/`.
+`tools/blender/build_cartoon_runtime.py` produces the lightweight portrait and
+cockpit variants embedded in `models/racer-kit.glb`. See the
+[Blender pipeline](../../BLENDER_ASSETS.md) for reproduction and validation.
+
+Meshy's [terms](https://www.meshy.ai/terms-of-use) and
+[pricing FAQ](https://www.meshy.ai/pricing), checked October 9, 2026, describe
+paid-plan output ownership and distribution. Generation used the user's paid
+API credits. Provider terms and any rights in depicted identities remain
+separate from the project's code license; no broader asset relicensing claim
+is made here. Detailed provenance is in
+[the Mark pilot](../../art/characters/meshy-mark/README.md).
+
+Earlier character experiments used the MakeHuman hm08 mesh and facial morph
+assets under **CC0 1.0 Universal**. Those experiments remain in the authoring
+archive and are no longer the runtime driver meshes. Upstream:
+[makehumancommunity/makehuman at a8bc2d54](https://github.com/makehumancommunity/makehuman/tree/a8bc2d54ff0ac92e78ff71431b1023eda42bf482).
+The vendored subset, source hashes and upstream asset license remain in
+`art/third-party/makehuman/`. MakeHuman application code is not bundled.
 
 ## Runtime decoder
 

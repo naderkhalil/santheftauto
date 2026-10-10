@@ -4,6 +4,9 @@ export const DRIVERS = [
   { id: 'sam', name: 'Sam Altman', short: 'Sam', color: '#b8a3ff', emoji: '✳', title: 'THE LAUNCH GUY', bio: 'The next lap will change everything.', move: 'One more launch', stat: 'HYPE 100 · ETA SOON' },
   { id: 'elon', name: 'Elon Musk', short: 'Elon', color: '#80c8f8', emoji: '↗', title: 'THE ROCKET WILDCARD', bio: 'Missed the turn. Entered orbit.', move: 'Unscheduled space program', stat: 'THRUST 100 · CHILL 0' },
   { id: 'jensen', name: 'Jensen Huang', short: 'Jensen', color: '#c4f36a', emoji: '▧', title: 'THE GPU DADDY', bio: 'Fully accelerated.', move: 'Full leather acceleration', stat: 'JACKET 100 · VRAM 999' },
+  { id: 'mira', name: 'Mira Murati', short: 'Mira', color: '#ecb8ca', emoji: '◇', title: 'THE STRATEGIST', bio: 'Thinking three turns ahead.', move: 'Three turns ahead', stat: 'FOCUS 100 · PLAN B READY' },
+  { id: 'feifei', name: 'Fei-Fei Li', short: 'Fei-Fei', color: '#efc680', emoji: '◎', title: 'THE VISIONARY', bio: 'I saw that turn coming.', move: 'Perfect vision', stat: 'VISION 100 · CORNERS SEEN' },
+  { id: 'mark', name: 'Mark Zuckerberg', short: 'Mark', color: '#a9cbe8', emoji: '↝', title: 'THE SPEEDRUNNER', bio: 'Move fast. Miss the turn.', move: 'Move fast', stat: 'SPEED 100 · TURN TBD' },
 ] as const;
 export const CARS = [
   { id: 'sundrop', name: 'Sundrop Roadster', color: '#427e7c', roof: '#ffe4aa', description: 'The original city flyer' },

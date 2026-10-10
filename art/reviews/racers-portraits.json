@@ -1,5 +1,5 @@
 {
-  "source": "/Users/naderkhalil/Projects/SF1/art/source/racers-and-garage.blend",
+  "source": "/Users/naderkhalil/Projects/SF1/public/assets/models/racer-kit.glb",
   "sourceUnmodified": true,
   "coordinateConvention": "Game Y-up/+Z-front becomes Blender Z-up/-Y-front.",
   "lighting": "Identical neutral area lights; orthographic front and 32-degree views; AgX no exposure adjustment.",
@@ -7,51 +7,51 @@
     {
       "root": "Standing_dario",
       "label": "DARIO AMODEI",
-      "meshObjects": 15,
+      "meshObjects": 14,
       "blenderBounds": [
         [
           -0.3838351368904114,
-          -0.26600369811058044,
+          -0.26600533723831177,
           0.022665169090032578
         ],
         [
-          0.3837970197200775,
-          0.18261465430259705,
-          2.086899995803833
+          0.3837969899177551,
+          0.15161922574043274,
+          1.9454498291015625
         ]
       ]
     },
     {
       "root": "Standing_sam",
       "label": "SAM ALTMAN",
-      "meshObjects": 16,
+      "meshObjects": 15,
       "blenderBounds": [
         [
           -0.3771079480648041,
-          -0.26600369811058044,
+          -0.26600533723831177,
           0.02211236022412777
         ],
         [
-          0.376919686794281,
-          0.16065385937690735,
-          2.026214122772217
+          0.3768869936466217,
+          0.14878784120082855,
+          1.9004313945770264
         ]
       ]
     },
     {
       "root": "Standing_elon",
       "label": "ELON MUSK",
-      "meshObjects": 17,
+      "meshObjects": 16,
       "blenderBounds": [
         [
           -0.4168185293674469,
-          -0.26600369811058044,
+          -0.26600533723831177,
           0.022996854037046432
         ],
         [
-          0.4168137311935425,
-          0.1723289042711258,
-          2.0841598510742188
+          0.4168137013912201,
+          0.14885205030441284,
+          1.961439609527588
         ]
       ]
     },
@@ -62,13 +62,64 @@
       "blenderBounds": [
         [
           -0.3838798999786377,
-          -0.26600369811058044,
+          -0.26600533723831177,
           0.0213826522231102
         ],
         [
           0.38377904891967773,
-          0.15931276977062225,
-          1.9175610542297363
+          0.14881247282028198,
+          1.814092993736267
+        ]
+      ]
+    },
+    {
+      "root": "Standing_mira",
+      "label": "MIRA MURATI",
+      "meshObjects": 16,
+      "blenderBounds": [
+        [
+          -0.35682594776153564,
+          -0.2660053074359894,
+          0.021559549495577812
+        ],
+        [
+          0.35687243938446045,
+          0.1873093545436859,
+          1.839824914932251
+        ]
+      ]
+    },
+    {
+      "root": "Standing_feifei",
+      "label": "FEI-FEI LI",
+      "meshObjects": 16,
+      "blenderBounds": [
+        [
+          -0.36082756519317627,
+          -0.26600533723831177,
+          0.021227864548563957
+        ],
+        [
+          0.3608335256576538,
+          0.19023606181144714,
+          1.8009600639343262
+        ]
+      ]
+    },
+    {
+      "root": "Standing_mark",
+      "label": "MARK ZUCKERBERG",
+      "meshObjects": 13,
+      "blenderBounds": [
+        [
+          -0.38079726696014404,
+          -0.26600533723831177,
+          0.02222292125225067
+        ],
+        [
+          0.38087236881256104,
+          0.1487942337989807,
+          1.91050386428833
         ]
       ]
     }
@@ -80,7 +131,7 @@
     "/Users/naderkhalil/Projects/SF1/art/reviews/racers-portraits-lineup.png"
   ],
   "pixels": [
-    2048,
+    3584,
     1360
   ],
   "engine": "BLENDER_EEVEE_NEXT"

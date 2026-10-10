@@ -93,6 +93,15 @@ def sculpt_garment(actor, garment, kind='jacket'):
                 amount += sleeve * ((.0045 if leather else .0032) * elbow + .003 * cuff)
         vertex.co += vertex.normal * amount
     garment.data.update()
+    # Voxel density is useful while shaping folds but wasteful on the final
+    # broad fabric panels. Collapse after sculpting so curvature and creases
+    # guide the reduction; keep small sewn details as separate geometry.
+    bpy.ops.object.select_all(action='DESELECT')
+    garment.select_set(True)
+    bpy.context.view_layer.objects.active = garment
+    reduction = garment.modifiers.new('Final garment surface budget', 'DECIMATE')
+    reduction.ratio = .42
+    bpy.ops.object.modifier_apply(modifier=reduction.name)
 
 
 def jacket_construction(actor, wrists):

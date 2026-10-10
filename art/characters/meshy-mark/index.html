@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Mark — Cartoon to 3D review</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #29332d; background: #f5f4ee; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    [hidden] { display: none !important; }
+    main { width: min(1660px, 100%); margin: 0 auto; padding: clamp(20px, 3vw, 46px); }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 30px; }
+    .eyebrow { margin: 0 0 12px; color: #727b70; font-size: 10px; font-weight: 650; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 0; font: 400 clamp(30px, 3.5vw, 49px)/1.12 Georgia, "Times New Roman", serif; letter-spacing: -.03em; }
+    .intro { max-width: 395px; margin: 0; color: #687365; font-size: 13px; line-height: 1.75; }
+    .comparison { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(22px, 3vw, 42px); }
+    section { min-width: 0; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 58px; border-top: 1px solid #cbd2c5; }
+    h2 { margin: 0; font-size: 18px; font-weight: 550; letter-spacing: -.02em; }
+    .tag { color: #78816f; font-size: 10px; white-space: nowrap; }
+    figure { margin: 0; }
+    .reference { display: block; width: 100%; height: clamp(390px, 64vh, 730px); object-fit: contain; border-radius: 4px; background: #dededb; }
+    figcaption, .viewer-caption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 12px 0; color: #77806f; font-size: 11px; line-height: 1.65; }
+    a { color: #425e46; text-underline-offset: 4px; }
+    a:hover { color: #173c27; }
+    .reference-note { margin: 14px 0 20px; color: #687365; font-size: 12px; line-height: 1.8; }
+    .secondary { padding-top: 18px; border-top: 1px solid #dce0d4; }
+    .secondary img { width: 100%; height: auto; display: block; border-radius: 4px; }
+    .viewer { position: relative; width: 100%; height: clamp(390px, 64vh, 730px); overflow: hidden; border-radius: 4px; background: #e8e6de; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    .viewer[data-state="loading"] canvas, .viewer[data-state="error"] canvas { visibility: hidden; }
+    .state { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 28px; text-align: center; }
+    #model-status { max-width: 360px; margin: 0; color: #697361; font-size: 13px; line-height: 1.75; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 13px; }
+    .button-group { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+    button { min-height: 40px; padding: 9px 12px; border: 1px solid #cbd2c3; border-radius: 5px; background: #fbfcf7; color: #53634e; font: inherit; font-size: 11px; cursor: pointer; }
+    button:hover:not(:disabled) { background: #e8eddf; border-color: #95a288; }
+    button[aria-pressed="true"] { background: #354e3b; border-color: #354e3b; color: #f8f8ee; }
+    button:disabled { cursor: default; opacity: .45; }
+    :is(a, button, canvas):focus-visible { outline: 2px solid #537a58; outline-offset: 4px; }
+    .view-note { margin: 13px 0 0; padding-top: 13px; border-top: 1px solid #dce0d4; color: #77806f; font-size: 11px; line-height: 1.7; }
+    footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid #dce0d4; color: #7c8474; font-size: 11px; line-height: 1.8; }
+    @media (max-width: 850px) {
+      header { display: block; margin-bottom: 25px; }
+      .intro { margin-top: 18px; max-width: 560px; }
+      .comparison { grid-template-columns: 1fr; gap: 24px; }
+      .viewer { height: clamp(390px, 64svh, 640px); }
+      .secondary { display: none; }
+    }
+    @media (max-width: 380px) { main { padding: 16px; } button { padding-inline: 9px; } .tag { font-size: 9px; } }
+  </style>
+</head>
+<body data-ready="loading">
+  <main>
+    <header>
+      <div><p class="eyebrow">San Theft Auto / Character workshop</p><h1>One character. Get the face right.</h1></div>
+      <p class="intro">The cartoon is the target. This first 3D study is here to inspect its likeness, silhouette, and expression before taking it further.</p>
+    </header>
+    <div class="comparison">
+      <section aria-labelledby="reference-heading">
+        <div class="section-heading"><h2 id="reference-heading">The cartoon direction</h2><span class="tag">From approved concept</span></div>
+        <figure>
+          <img class="reference" src="../direction/mark-meshy-bust-input-v1.png" width="1024" height="1024" alt="Cartoon Mark bust used to create this model: warm skin, short brown curls, blue eyes, a calm closed-mouth smile, and charcoal crewneck.">
+          <figcaption><span>The single portrait used for this model</span><a href="../direction/mark-meshy-bust-input-v1.png" target="_blank" rel="noopener">Full resolution ↗</a></figcaption>
+        </figure>
+        <p class="reference-note">Look for the same relaxed face, clear blue eyes, grouped curls, and natural proportions. Every angle should feel like the same character.</p>
+        <figure class="secondary">
+          <img src="../direction/mark-concept-cartoon-v1.png" width="1536" height="1024" alt="Approved cartoon concept sheet showing Mark's portrait and full body, wearing a charcoal crewneck, jeans, and off-white sneakers.">
+          <figcaption><span>Original approved concept</span><a href="../direction/mark-cartoon-turnaround-v1.png" target="_blank" rel="noopener">Modeling turnaround ↗</a></figcaption>
+        </figure>
+      </section>
+      <section aria-labelledby="model-heading">
+        <div class="section-heading"><h2 id="model-heading">The first 3D study</h2><span class="tag">Meshy · Awaiting review</span></div>
+        <div class="viewer" id="viewer" data-state="loading">
+          <canvas id="prototype" tabindex="0" aria-label="Interactive 3D Mark study. Drag to rotate, use arrow keys to turn, or choose a view below." aria-describedby="viewer-help"></canvas>
+          <div class="state" id="load-state"><p id="model-status" role="status">Opening the 3D study…</p><button id="retry" type="button" hidden>Try again</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="button-group" role="group" aria-label="Camera angle">
+            <button id="front" type="button" aria-pressed="false" disabled>Front</button>
+            <button id="three-quarter" type="button" aria-pressed="true" disabled>¾ view</button>
+            <button id="profile" type="button" aria-pressed="false" disabled>Profile</button>
+            <button id="back" type="button" aria-pressed="false" disabled>Back</button>
+          </div>
+          <div class="button-group" role="group" aria-label="Framing">
+            <button id="bust" type="button" aria-pressed="true" disabled>Bust</button>
+            <button id="face" type="button" aria-pressed="false" disabled>Face</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="button-group" role="group" aria-label="Surface display">
+            <button id="studio" type="button" aria-pressed="true" disabled>Studio</button>
+            <button id="paint" type="button" aria-pressed="false" disabled>Paint only</button>
+            <button id="clay" type="button" aria-pressed="false" disabled>Clay</button>
+          </div>
+          <button id="rotate-model" type="button" disabled title="Turn the model 90 degrees to correct the direction it faces">Turn model 90°</button>
+        </div>
+        <p class="viewer-caption"><span id="viewer-help">Drag to rotate · Scroll or pinch to zoom · Arrow keys to turn</span><a id="model-link" href="mark-meshy-v1.glb" download hidden>Download model</a></p>
+        <p class="view-note" id="surface-note">Studio shows the exported materials under soft light. Compare paint and clay to see which details come from color and which are in the shape.</p>
+      </section>
+    </div>
+    <footer>This is an isolated art review. The 3D study has not been approved or added to the game.</footer>
+  </main>
+  <script type="module" src="./preview.ts"></script>
+</body>
+</html>

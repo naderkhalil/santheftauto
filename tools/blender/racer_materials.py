@@ -20,11 +20,11 @@ import bpy
 import numpy as np
 
 
-VERSION = 2
+VERSION = 3
 SIZE = 128
 ROOT = Path(__file__).resolve().parents[2]
 TEXTURE_DIR = ROOT / 'art/textures/racers'
-TILE_METRES = {'leather': .064, 'jersey': .032, 'poplin': .032, 'twill': .032, 'rib': .032}
+TILE_METRES = {'leather': .064, 'jersey': .032, 'poplin': .032, 'twill': .032, 'rib': .032, 'suiting': .040}
 _SURFACES = {}
 
 
@@ -118,7 +118,16 @@ def _surface(kind):
         x, y = u * count, v * count
         warp = np.cos(math.pi * x) ** 6
         weft = np.cos(math.pi * y) ** 6
-        if kind == 'twill':
+        if kind == 'suiting':
+            # Fine worsted weave: soft intersecting fibres, without cotton's
+            # strong diagonal or the ribbed edges of a sweatshirt.
+            over = .5 + .5 * np.sin(tau * (x - y) / 4)
+            relief = warp * over + weft * (1 - over)
+            fiber = .5 + .5 * np.sin(tau * (41 * u + 37 * v))
+            height = .000031 * relief + .000004 * fiber
+            variation = .980 + .026 * relief + .004 * fiber
+            roughness = .80 + .04 * (1 - relief)
+        elif kind == 'twill':
             over = .5 + .5 * np.sin(tau * (x - y) / 3)
             relief = warp * over + weft * (1 - over)
             height = .000055 * relief
@@ -219,15 +228,21 @@ def build_character_materials(ident, spec):
     so the glTF exporter embeds each referenced source image only once.
     """
     fabrics = {'jensen': ('leather', 'charcoal pebbled leather'), 'dario': ('jersey', 'cotton jersey'),
-               'sam': ('poplin', 'woven cotton poplin'), 'elon': ('twill', 'charcoal cotton twill')}
+               'sam': ('poplin', 'woven cotton poplin'), 'elon': ('twill', 'charcoal cotton twill'),
+               'mira': ('suiting', 'dark tailored suiting'), 'feifei': ('suiting', 'blue tailored suiting'),
+               'mark': ('jersey', 'textured charcoal crewneck')}
     if ident not in fabrics:
         raise ValueError('Unknown racer character: ' + ident)
     kind, label = fabrics[ident]
     color = spec['cloth']
+    tailored = ident in ('mira', 'feifei')
+    trim = (_material(ident + ' / tailored woven edges', kind, color, .94)
+            if tailored else _material(ident + ' / soft rib knit trim', 'rib', color, .88))
+    inner_color = spec.get('tee', '#eee8db' if tailored else '#e1d9c7' if ident in ('dario', 'sam') else '#343739')
     return {
         'cloth': _material(ident + ' / ' + label, kind, color),
-        'trim': _material(ident + ' / soft rib knit trim', 'rib', color, .88),
+        'trim': trim,
         'seam': _material(ident + ' / softly worn tailored seam', kind, color, 1.13 if kind == 'leather' else .94, seam=True),
         'pants': _material(ident + ' / fine woven trousers', 'twill', spec['pants']),
-        'tee': _material(ident + ' / soft cotton undershirt', 'jersey', '#e1d9c7' if ident in ('dario', 'sam') else '#343739'),
+        'tee': _material(ident + ' / soft cotton undershirt', 'jersey', inner_color),
     }

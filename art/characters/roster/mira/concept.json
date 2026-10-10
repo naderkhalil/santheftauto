@@ -1,0 +1,32 @@
+{
+  "character": "mira",
+  "name": "Mira Murati",
+  "status": "concept_generated_internal_visual_review_passed",
+  "user_approved": false,
+  "approved_style_reference": "art/characters/direction/mark-meshy-bust-input-v1.png",
+  "image_generation": {
+    "provider": "OpenAI",
+    "mode": "authorized_cli_api_fallback",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "size": "1024x1024",
+    "image_inputs": 2,
+    "attempts": 1,
+    "prompt": "concept-prompt.txt",
+    "output": "mira-cartoon-bust-v1.png",
+    "sha256": "8b5af871ba06d161afde7781bd0e24d6ffe3ed297b72fc66035789ec03f6b799"
+  },
+  "identity_reference": {
+    "local_temporary_path": "/private/tmp/sf-founder-photo-reference/mira.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/b1/Guests_at_the_2026_Met_Gala_274_%28Mira_Murati%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "sha256": "31d876ac3c9e0c598fa58d483b46c85912a1cd8b304da81cfe4d9dda350913f7",
+    "photo_in_repository": false
+  },
+  "review": {
+    "inspected": true,
+    "result": "passed_for_3d_source",
+    "notes": "Long face, defined nose and chin, arched brows and long brown waves distinguish identity; matching faceted style and clear tailored clothing. Original reference is a profile, so three-quarter reconstruction is interpretive."
+  },
+  "purpose": "Single-view source for isolated cartoon 3D bust generation; not integrated into game.",
+  "recorded_at": "2026-10-09T22:21:13.462087+00:00"
+}

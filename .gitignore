@@ -14,3 +14,23 @@ dist-cloudflare/
 
 # Python caches from the Blender asset builders.
 __pycache__/
+
+# Temporary head-only sculpt proofs; final kit and reviewed images are tracked.
+art/characters/heads-preview.glb
+
+# Dense generation originals exceed GitHub's file limit. Keep them locally;
+# the optimized editable Blender workspaces and runtime exports are tracked.
+art/characters/meshy-mark/*-meshy-v1.glb
+art/characters/meshy-mark/*-meshy-v1.blend
+art/characters/roster/*/*-meshy-v1.glb
+art/characters/roster/*/*-meshy-v1.blend
+
+# Private generation job/account state and duplicate image-generator output.
+art/characters/direction/generation-status.json
+art/characters/meshy-mark/generation.json
+art/characters/roster/*/generation.json
+art/characters/roster/roster-status.json
+output/
+
+# Local browser proof includes the user's surrounding Safari tabs.
+art/runtime-cartoon/game-safari-dario.png

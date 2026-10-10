@@ -9,7 +9,7 @@ export function createCar(){
   const group=new THREE.Group();group.name='Playable Blender roadster';
   let fallback:ReturnType<typeof createLegacyCar>|null=createLegacyCar();group.add(fallback.group);
   let model:THREE.Object3D|null=null,disposed=false,profile:RacerProfile={...DEFAULT_PROFILE},hover=0;
-  const drivers=new Map<string,THREE.Object3D>();
+  let kitSource:THREE.Group|null=null,driver:THREE.Object3D|null=null,driverId='';
   const remoteMeshes:Array<{mesh:THREE.Mesh;castShadow:boolean}>=[];
   const originalShadows=new WeakMap<THREE.Mesh,boolean>();
   let remote=false,remoteDriverVisible=true;
@@ -26,8 +26,22 @@ export function createCar(){
   const glowMaterial=new THREE.MeshStandardMaterial({color:'#86f4e2',emissive:'#27d7cf',emissiveIntensity:0,transparent:true,opacity:0});
   const glows:THREE.Mesh[]=[];
   function syncDriverVisibility(){
-    for(const [id,driver] of drivers)driver.visible=id===profile.driver&&(!remote||remoteDriverVisible);
-    group.userData.driverVisible=!!model&&(!remote||remoteDriverVisible);
+    if(driver)driver.visible=!remote||remoteDriverVisible;
+    group.userData.driverVisible=!!driver&&(!remote||remoteDriverVisible);
+  }
+  function createDriver(kit:THREE.Group,id:string){
+    const actor=cloneRacerPart(kit,`Seated_${id}`);
+    actor.scale.multiplyScalar(.88);actor.position.set(-.35,.30,-.37);
+    return actor;
+  }
+  function selectDriver(){
+    if(!kitSource||driverId===profile.driver)return;
+    // The kit owns geometry/textures. Each car only keeps one driver's small
+    // object tree and isolated materials, even after browsing the whole roster.
+    const next=createDriver(kitSource,profile.driver),previous=driver;
+    driver=next;driverId=profile.driver;body.add(next);
+    if(previous)releaseRacerPart(previous);
+    cacheRemoteMeshes();
   }
   function cacheRemoteMeshes(){
     remoteMeshes.length=0;
@@ -50,10 +64,12 @@ export function createCar(){
   }
   cacheRemoteMeshes();
   function customize(next:RacerProfile){
+    if(disposed)return;
     group.userData.visualRevision=(group.userData.visualRevision??0)+1;
     profile=normalizeProfile(next);fallback?.customize(profile);group.userData.profile={...profile};
     const car=CARS.find(c=>c.id===profile.car)??CARS[0];
     model?.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m instanceof THREE.MeshStandardMaterial&&m.name==='Coupe paint')m.color.set(car.color);});
+    selectDriver();
     syncDriverVisibility();
     const sponsor=SPONSORS.find(s=>s.id===profile.sponsor)??SPONSORS[0];decals.visible=!!model&&!!sponsor.mark;
     const ctx=decalCanvas.getContext('2d')!;ctx.clearRect(0,0,512,256);if(sponsor.mark){ctx.fillStyle=sponsor.background;ctx.fillRect(0,0,512,256);ctx.fillStyle=sponsor.color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='700 80px sans-serif';ctx.fillText(sponsor.mark,256,128,460);}decalMap.needsUpdate=true;
@@ -66,26 +82,44 @@ export function createCar(){
   }
   const ready=loadRacerKit().then(kit=>{
     if(disposed)return;
-    model=cloneRacerPart(kit,'Vehicle');body.add(model);
+    // Validate the complete vehicle and roster before replacing the playable
+    // fallback. A malformed kit must not leave a half-built car on the road.
+    let vehicle:THREE.Object3D|null=null,firstDriver:THREE.Object3D|null=null;
+    try{
+      vehicle=cloneRacerPart(kit,'Vehicle');
+      for(const name of ['Wheel_FL','Wheel_FR','Wheel_RL','Wheel_RR','Steering'])if(!vehicle.getObjectByName(name))throw new Error(`Blender vehicle pivot is missing: ${name}`);
+      for(const {id} of DRIVERS)if(!kit.getObjectByName(`Seated_${id}`))throw new Error(`Blender driver is missing: ${id}`);
+      firstDriver=createDriver(kit,profile.driver);
+    }catch(error){if(vehicle)releaseRacerPart(vehicle);if(firstDriver)releaseRacerPart(firstDriver);throw error;}
+    model=vehicle;kitSource=kit;driver=firstDriver;driverId=profile.driver;body.add(model,driver);
     for(const axle of ['F','R'])for(const side of [-1,1]){
-      const wheel=model.getObjectByName(`Wheel_${axle}${side<0?'L':'R'}`);if(!wheel)throw new Error('Blender wheel pivot is missing');
+      const wheel=model.getObjectByName(`Wheel_${axle}${side<0?'L':'R'}`)!;
       const mount=new THREE.Group(),fold=new THREE.Group(),steer=new THREE.Group();mount.position.copy(wheel.position);wheel.removeFromParent();wheel.position.set(0,0,0);mount.add(fold);fold.add(steer);steer.add(wheel);group.add(mount);
       wheels.push({mount,fold,steer,spin:wheel,side,front:axle==='F'});
       const glow=new THREE.Mesh(new THREE.TorusGeometry(.25,.019,8,32),glowMaterial);glow.rotation.y=Math.PI/2;glow.position.x=side*.14;steer.add(glow);glows.push(glow);
     }
-    for(const d of DRIVERS){const driver=cloneRacerPart(kit,`Seated_${d.id}`);driver.scale.multiplyScalar(.88);driver.position.set(-.35,.30,-.37);body.add(driver);drivers.set(d.id,driver);}
     fallback?.dispose();fallback=null;cacheRemoteMeshes();customize(profile);group.userData.asset='blender';
   }).catch(error=>{group.userData.asset='fallback';console.warn('Blender racer unavailable; keeping the playable fallback.',error);});
   function update(dt:number,state:CarState){
+    if(disposed)return;
     if(fallback){fallback.update(dt,state);Object.assign(group.userData,{hover:fallback.group.userData.hover,wheelFoldDegrees:fallback.group.userData.wheelFoldDegrees});return;}
     const step=Math.max(0,Math.min(dt,.1));hover=THREE.MathUtils.damp(hover,THREE.MathUtils.clamp(state.glide??(state.airborne?1:0),0,1),10,step);
     for(const wheel of wheels){wheel.spin.rotation.x+=(state.speed/.384*(1-hover)+hover*22)*step;wheel.steer.rotation.y=wheel.front?state.steer*.43*(1-hover):0;wheel.fold.rotation.z=-wheel.side*hover*Math.PI/2;wheel.mount.position.x=wheel.side*(.9+hover*.30);wheel.mount.position.y=.4+hover*.055;}
     body.rotation.z=THREE.MathUtils.damp(body.rotation.z,-state.steer*.03*(1-hover),8,step);body.position.y=Math.sin(state.time*3.6)*.022*hover-(state.landing??0)*.05;
-    for(const driver of drivers.values())if(driver.visible)driver.rotation.z=-state.steer*.035;
+    if(driver?.visible)driver.rotation.z=-state.steer*.035;
     const wheel=model?.getObjectByName('Steering');if(wheel)wheel.rotation.z=state.steer*.22;
     model?.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m instanceof THREE.MeshStandardMaterial&&m.name==='Tail lamp'){m.emissive.set('#b14435');m.emissiveIntensity=state.braking?2:.18;}});
     glowMaterial.opacity=hover;glowMaterial.emissiveIntensity=hover*(state.boosting?4:2);group.userData.hover=hover;group.userData.wheelFoldDegrees=hover*90;group.userData.hoverAltitude=state.altitude??0;
   }
-  function dispose(){disposed=true;fallback?.dispose();if(model)releaseRacerPart(model);drivers.forEach(releaseRacerPart);for(const wheel of wheels)releaseRacerPart(wheel.spin);glows.forEach(g=>g.geometry.dispose());decals.children.forEach(o=>{if(o instanceof THREE.Mesh)o.geometry.dispose();});decalMaterial.dispose();decalMap.dispose();glowMaterial.dispose();group.removeFromParent();}
+  function dispose(){
+    if(disposed)return;
+    disposed=true;fallback?.dispose();
+    // Detached wheel nodes still share the vehicle's cloned materials. Release
+    // them together so each material is disposed exactly once per car.
+    if(model){for(const wheel of wheels)model.add(wheel.spin);releaseRacerPart(model);}
+    if(driver)releaseRacerPart(driver);
+    kitSource=null;driver=null;remoteMeshes.length=0;
+    glows.forEach(g=>g.geometry.dispose());decals.children.forEach(o=>{if(o instanceof THREE.Mesh)o.geometry.dispose();});decalMaterial.dispose();decalMap.dispose();glowMaterial.dispose();group.removeFromParent();
+  }
   return {group,ready,customize,update,dispose,setRemoteDetail};
 }

@@ -1,0 +1,16 @@
+{
+  "file": "art/runtime-cartoon/racer-kit.glb",
+  "bytes": 13110716,
+  "sha256": "b1265f70988e32d1f23afa7e82bade066849e17757e670e0ad6a5f4fd6c9eebd",
+  "drivers": [
+    "dario",
+    "sam",
+    "elon",
+    "jensen",
+    "mira",
+    "feifei",
+    "mark"
+  ],
+  "vehicle_preservation": "Exact source node transforms/materials and encoded geometry copied; only resource indices change.",
+  "source_vehicle_sha256": "edf0b6597b18c0c51e7711294b8c591ce50d0ab80915f5634a38b5efc423d7fc"
+}

@@ -230,8 +230,9 @@ export class Multiplayer {
   private renderChoices() {
     for (const kind of ['driver', 'car', 'sponsor'] as const) this.dialog.querySelectorAll<HTMLButtonElement>(`[data-${kind}]`).forEach(button => button.setAttribute('aria-pressed', String(button.dataset[kind] === this.profile[kind])));
     const driver = DRIVERS.find(d => d.id === this.profile.driver) ?? DRIVERS[0];
-    this.text('mp-driver-number', `0${DRIVERS.indexOf(driver) + 1} / 04`);
+    this.text('mp-driver-number', `${String(DRIVERS.indexOf(driver) + 1).padStart(2, '0')} / ${String(DRIVERS.length).padStart(2, '0')}`);
     this.text('mp-driver-move', driver.name); this.text('mp-driver-bio', driver.bio); this.text('mp-driver-stat', '');
+    this.dialog.querySelector<HTMLCanvasElement>('#mp-showroom')!.setAttribute('aria-label', this.step === 'driver' ? `3D portrait of ${driver.name}. Drag to look around.` : 'Live 3D car preview. Drag to look around.');
     this.text('mp-car-title', carName(this.profile.car)); this.text('mp-car-description', 'Open cockpit · Equal performance');
   }
   private renderLineup() {
@@ -240,8 +241,10 @@ export class Multiplayer {
     for (const driver of DRIVERS) {
       const picks = racers.filter(p => p.driver === driver.id);
       const tag = this.dialog.querySelector(`[data-tags="${driver.id}"]`)!;
-      // The full roster remains in the room strip; cap the overlay to keep figures visible.
-      tag.innerHTML = picks.slice(0, 3).map(p => `<span class="mp-pick-tag ${p.id === this.id || p.id === 'local' ? 'is-you' : 'is-friend'}" style="--tag-color:${driver.color}">${escape(p.name)}${p.id === this.id || p.id === 'local' ? ' · YOU' : ''}${p.connected ? '' : ' · OFFLINE'}</span>`).join('') + (picks.length > 3 ? `<span class="mp-pick-tag is-friend">+${picks.length - 3} players</span>` : '');
+      // Stable card markers remain clickable and readable regardless of camera
+      // framing. The room strip keeps the complete roster for shared picks.
+      const ordered = [...picks].sort((a, b) => Number(b.id === this.id || b.id === 'local') - Number(a.id === this.id || a.id === 'local'));
+      tag.innerHTML = ordered.slice(0, 2).map(p => `<span class="mp-pick-tag ${p.id === this.id || p.id === 'local' ? 'is-you' : 'is-friend'}" style="--tag-color:${driver.color}" title="${escape(p.name)}${p.connected ? '' : ' · Offline'}">${p.id === this.id || p.id === 'local' ? 'YOU' : escape(p.name)}${p.connected ? '' : ' · OFFLINE'}</span>`).join('') + (picks.length > 2 ? `<span class="mp-pick-tag is-friend">+${picks.length - 2}</span>` : '');
     }
   }
 
@@ -514,6 +517,12 @@ export class Multiplayer {
     };
     ['mp-kicker', 'mp-title', 'mp-subtitle'].forEach((id, i) => this.text(id, headings[this.step][i]));
     this.dialog.querySelectorAll<HTMLElement>('[data-panel]').forEach(panel => panel.hidden = panel.dataset.panel !== this.step);
+    const visual = this.dialog.querySelector<HTMLElement>('#mp-visual')!;
+    const visualParent = this.dialog.querySelector(this.step === 'driver' ? '#mp-portrait-mount' : '.mp-flow')!;
+    if (visual.parentElement !== visualParent) visualParent.append(visual);
+    const selectedDriver = DRIVERS.find(driver => driver.id === this.profile.driver) ?? DRIVERS[0];
+    this.dialog.querySelector<HTMLCanvasElement>('#mp-showroom')!.setAttribute('aria-label', this.step === 'driver' ? `3D portrait of ${selectedDriver.name}. Drag to look around.` : 'Live 3D car preview. Drag to look around.');
+    this.text('mp-roster-note', room ? 'Your friends’ picks appear here live.' : 'Find your kind of fast.');
     this.dialog.querySelectorAll<HTMLButtonElement>('[data-step]').forEach(button => {
       button.setAttribute('aria-current', button.dataset.step === this.step ? 'step' : 'false');
       button.disabled = this.pending || this.pendingAction || (locked && button.dataset.step !== 'grid') || (!room && button.dataset.step === 'grid') || (this.step === 'mode' && button.dataset.step !== 'mode');

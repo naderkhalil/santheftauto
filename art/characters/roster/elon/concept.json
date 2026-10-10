@@ -1,0 +1,32 @@
+{
+  "character": "elon",
+  "name": "Elon Musk",
+  "status": "concept_generated_internal_visual_review_passed",
+  "user_approved": false,
+  "approved_style_reference": "art/characters/direction/mark-meshy-bust-input-v1.png",
+  "image_generation": {
+    "provider": "OpenAI",
+    "mode": "authorized_cli_api_fallback",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "size": "1024x1024",
+    "image_inputs": 2,
+    "attempts": 1,
+    "prompt": "concept-prompt.txt",
+    "output": "elon-cartoon-bust-v1.png",
+    "sha256": "e5a6518191760cdd9a7758d57afd53b6f5b44d68fc5c7267dac26dce598ea4f8"
+  },
+  "identity_reference": {
+    "local_temporary_path": "/private/tmp/sf-founder-photo-reference/elon.jpg",
+    "source_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5e/Elon_Musk_-_54820081119_%28cropped%29.jpg/960px-Elon_Musk_-_54820081119_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "sha256": "e6122e5093dc3706bd21263ab6a7069d77138462b0a057e0329cfa6460a95019",
+    "photo_in_repository": false
+  },
+  "review": {
+    "inspected": true,
+    "result": "passed_for_3d_source",
+    "notes": "Distinct broad cheeks and jaw, hooded eyes, compact nose and swept brown hair; matches faceted cartoon style. Clothing and full bust silhouette clean."
+  },
+  "purpose": "Single-view source for isolated cartoon 3D bust generation; not integrated into game.",
+  "recorded_at": "2026-10-09T22:21:13.448616+00:00"
+}

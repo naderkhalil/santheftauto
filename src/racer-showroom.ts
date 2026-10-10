@@ -4,12 +4,13 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createAtmosphere } from './atmosphere';
 import { createCar } from './car';
 import { createRacerLoader, cloneRacerPart, loadRacerKit, releaseRacerPart, RACER_ASSET_VERSION } from './racer-assets';
 import { DRIVERS, type RacerProfile } from './racer-profile';
 
-/** The playable models, rendered at display resolution with the city's materials. */
+/** Approved cartoon portraits in a soft studio, beside the playable car preview. */
 export class RacerShowroom {
   private renderer: THREE.WebGLRenderer;
   private composer: EffectComposer;
@@ -27,9 +28,11 @@ export class RacerShowroom {
   private lineupCamera = new THREE.OrthographicCamera(-5, 5, 2, -2, .1, 100);
   private atmosphere: ReturnType<typeof createAtmosphere>;
   private portraitKey: THREE.DirectionalLight;
+  private portraitEnvironment: THREE.WebGLRenderTarget;
   private mode = 'driver';
-  private selected = 'jensen';
+  private selected: string = DRIVERS[0].id;
   private rotation = .48;
+  private portraitRotation = -.08;
   private dragX: number | null = null;
   private last = 0;
   private dirty = true;
@@ -64,30 +67,41 @@ export class RacerShowroom {
       }
     });
 
-    // A seamless warm portrait space lets the sculpt and clothes carry the lineup.
-    this.portraitScene.background = new THREE.Color('#eee9dc');
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: '#e2ddcf', roughness: .92 }));
+    // One large portrait keeps facial detail legible as the roster grows.
+    this.portraitScene.background = new THREE.Color('#e8e6de');
+    const room = new RoomEnvironment();
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.portraitEnvironment = pmrem.fromScene(room, .05);
+    this.portraitScene.environment = this.portraitEnvironment.texture;
+    this.portraitScene.environmentIntensity = .4;
+    room.dispose();
+    pmrem.dispose();
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ color: '#687062', opacity: .12 }));
     floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -.018;
+    floor.position.y = .997;
     floor.receiveShadow = true;
     this.lineup.add(floor);
-    this.portraitScene.add(new THREE.HemisphereLight('#fff6e8', '#b0a998', 1.15));
-    this.portraitKey = new THREE.DirectionalLight('#fff3dd', 2.6);
-    this.portraitKey.position.set(-3, 7, -5);
-    this.portraitKey.target.position.set(0, 1, 0);
+    this.portraitScene.add(new THREE.HemisphereLight('#fffbf1', '#b4b5b0', .55));
+    this.portraitKey = new THREE.DirectionalLight('#fff4e4', 1.7);
+    this.portraitKey.position.set(-1.6, 3.5, -2.5);
+    this.portraitKey.target.position.set(0, 1.6, 0);
     this.portraitKey.castShadow = true;
-    this.portraitKey.shadow.mapSize.set(4096, 4096);
-    Object.assign(this.portraitKey.shadow.camera, { left: -9, right: 9, top: 5, bottom: -5, near: .5, far: 30 });
-    this.portraitKey.shadow.bias = -.00004;
-    this.portraitKey.shadow.normalBias = .012;
+    this.portraitKey.shadow.mapSize.set(2048, 2048);
+    // Frame the single bust closely enough to retain eyelid and nose shadows.
+    Object.assign(this.portraitKey.shadow.camera, { left: -1.5, right: 1.5, top: 1.5, bottom: -1.5, near: .1, far: 8 });
+    this.portraitKey.shadow.camera.updateProjectionMatrix();
+    this.portraitKey.shadow.bias = -.000025;
+    this.portraitKey.shadow.normalBias = .002;
     this.portraitKey.shadow.radius = 3;
     this.portraitScene.add(this.portraitKey, this.portraitKey.target);
-    const portraitFill = new THREE.DirectionalLight('#dce9f2', 1.1);
-    portraitFill.position.set(4, 3, -2);
-    this.portraitScene.add(portraitFill);
-    const rim = new THREE.DirectionalLight('#fff3da', 1.4);
-    rim.position.set(2, 5, 3);
-    this.portraitScene.add(rim);
+    const portraitFill = new THREE.DirectionalLight('#e5eef5', .5);
+    portraitFill.position.set(2, 2.2, -1.4);
+    portraitFill.target.position.y = 1;
+    this.portraitScene.add(portraitFill, portraitFill.target);
+    const rim = new THREE.DirectionalLight('#fff7e8', .7);
+    rim.position.set(1.5, 2.8, 1.8);
+    rim.target.position.y = 1;
+    this.portraitScene.add(rim, rim.target);
 
     // Canvas antialias alone does not cover an offscreen composer. Multisample
     // its actual render target, then smooth the remaining subpixel trim/shadows.
@@ -123,11 +137,12 @@ export class RacerShowroom {
         const actor = new THREE.Group();
         actor.name = `Portrait / ${driver.id}`;
         actor.add(cloneRacerPart(kit, `Standing_${driver.id}`));
-        actor.scale.setScalar(1.35);
+        actor.visible = driver.id === this.selected;
         this.prepareMaterials(actor);
         this.lineup.add(actor);
         this.founders.push(actor);
       });
+      this.canvas.dataset.loaded = 'true';
       this.resize();
     });
     const building = createRacerLoader().loadAsync(`/assets/models/racer-garage.glb?v=${RACER_ASSET_VERSION}`).then(asset => {
@@ -156,24 +171,22 @@ export class RacerShowroom {
       this.prepareMaterials(this.car.group);
       this.scene.updateMatrixWorld(true);
       this.atmosphere.bakeCityReflections(this.car.group);
-      this.portraitScene.environment = this.scene.environment;
-      this.portraitScene.environmentIntensity = .25;
       this.canvas.dataset.loaded = 'true';
       this.resize();
     }).catch(error => { this.canvas.dataset.loaded = 'error'; console.warn('Racer showroom assets could not load.', error); });
 
-    this.lineupCamera.position.set(0, 2.7, -12);
-    this.lineupCamera.lookAt(0, 1.36, 0);
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(canvas);
     canvas.addEventListener('pointerdown', event => {
-      if (this.mode !== 'car') return;
+      if (this.mode !== 'car' && this.mode !== 'driver') return;
       this.dragX = event.clientX;
       canvas.setPointerCapture(event.pointerId);
     });
     canvas.addEventListener('pointermove', event => {
       if (this.dragX === null) return;
-      this.rotation = THREE.MathUtils.clamp(this.rotation + (event.clientX - this.dragX) * .004, -.65, .75);
+      const delta = (event.clientX - this.dragX) * .004;
+      if (this.mode === 'driver') this.portraitRotation = THREE.MathUtils.euclideanModulo(this.portraitRotation + delta + Math.PI, Math.PI * 2) - Math.PI;
+      else this.rotation = THREE.MathUtils.clamp(this.rotation + delta, -.65, .75);
       this.dragX = event.clientX;
       this.resize();
     });
@@ -205,16 +218,23 @@ export class RacerShowroom {
     this.camera.position.set(Math.sin(this.rotation) * distance, aspect < 1 ? 2.2 : 2.0, -Math.cos(this.rotation) * distance);
     this.camera.lookAt(0, .92, .15);
     this.camera.updateProjectionMatrix();
-    const horizontal = Math.max(3.65, 1.68 * aspect), vertical = horizontal / aspect;
-    Object.assign(this.lineupCamera, { left: -horizontal, right: horizontal, top: vertical, bottom: -vertical });
-    this.lineupCamera.updateProjectionMatrix();
+    let portraitBounds: THREE.Box3 | undefined;
     this.founders.forEach((actor, i) => {
-      actor.position.x = -horizontal * [-.75, -.25, .25, .75][i];
-      actor.rotation.y = (i < 2 ? -1 : 1) * .045;
+      actor.visible = DRIVERS[i].id === this.selected;
+      actor.rotation.y = this.portraitRotation;
+      if (actor.visible) portraitBounds = new THREE.Box3().setFromObject(actor);
     });
+    const bustHeight = portraitBounds ? portraitBounds.max.y - portraitBounds.min.y : 1;
+    const top = (portraitBounds?.max.y ?? 2) + bustHeight * .055;
+    // Frame the face and upper shoulders consistently. Fitting the entire bust
+    // width made broad jackets shrink the face, especially on narrow screens.
+    const vertical = Math.max(bustHeight * .80, bustHeight * .64 / aspect) / 2;
+    const horizontal = vertical * aspect;
+    Object.assign(this.lineupCamera, { left: -horizontal, right: horizontal, top: vertical, bottom: -vertical });
+    this.lineupCamera.position.set(0, top - vertical, -6);
+    this.lineupCamera.lookAt(0, top - vertical, 0);
+    this.lineupCamera.updateProjectionMatrix();
     this.lineupCamera.updateMatrixWorld();
-    const head = new THREE.Vector3(0, 2.86, 0).project(this.lineupCamera);
-    this.canvas.closest('dialog')?.style.setProperty('--tag-y', `${Math.max(0, (1 - head.y) * height / 2 - 34)}px`);
   }
 
   setMode(mode: string) {
@@ -231,8 +251,10 @@ export class RacerShowroom {
     this.resize();
   }
   setProfile(profile: RacerProfile) {
+    const changedDriver = this.selected !== profile.driver;
     this.selected = profile.driver;
     this.car.customize(profile);
+    if (changedDriver) { this.portraitRotation = -.08; this.resize(); }
     this.dirty = true;
     this.renderer.shadowMap.needsUpdate = true;
   }
@@ -245,14 +267,6 @@ export class RacerShowroom {
     this.dirty = false;
     const dt = this.last ? Math.min(.05, (now - this.last) / 1000) : 0;
     this.last = now;
-    this.founders.forEach((actor, i) => {
-      actor.scale.setScalar(DRIVERS[i].id === this.selected ? 1.38 : 1.35);
-      actor.updateWorldMatrix(true, true);
-      const bounds = new THREE.Box3().setFromObject(actor);
-      const head = new THREE.Vector3(0, bounds.max.y + .06, 0).project(this.lineupCamera);
-      const tags = this.canvas.closest('dialog')?.querySelector<HTMLElement>(`[data-tags="${DRIVERS[i].id}"]`);
-      if (tags) tags.style.top = `${Math.max(0, (1 - head.y) * this.canvas.clientHeight / 2 - 30)}px`;
-    });
     this.car.update(dt, { speed: 0, steer: 0, braking: false, boosting: false, time: now / 1000 });
     const carMode = this.mode === 'car';
     const camera = carMode ? this.camera : this.lineupCamera;
@@ -261,6 +275,9 @@ export class RacerShowroom {
     this.pass.scene = scene;
     this.ao.camera = camera;
     this.ao.scene = scene;
+    // The painted character textures already carry their sculpted shading.
+    // Extra screen-space occlusion muddies eyes and hair; keep it for the car.
+    this.ao.enabled = carMode;
     this.composer.render();
     this.renderer.shadowMap.autoUpdate = false;
   }
@@ -286,6 +303,7 @@ export class RacerShowroom {
     this.release(this.garage);
     this.release(this.lineup);
     this.portraitKey.shadow.map?.dispose();
+    this.portraitEnvironment.dispose();
     this.ao.dispose();
     this.smaa.dispose();
     this.composer.dispose();

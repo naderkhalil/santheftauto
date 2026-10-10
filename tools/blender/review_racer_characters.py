@@ -4,7 +4,7 @@ Example:
   Blender --background --python tools/blender/review_racer_characters.py -- \
     --input art/source/racers-and-garage.blend --output art/reviews/racers-before.png
 
-The contact sheet has four columns, front above three-quarter. Matching neutral
+The contact sheet shows the requested roster, front above three-quarter. Matching neutral
 studio light and camera scale expose geometry/material differences fairly.
 Accepts the source .blend or exported .glb; neither input is modified.
 """
@@ -20,7 +20,8 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[2]
 IDENTITIES = [('dario', 'DARIO AMODEI'), ('sam', 'SAM ALTMAN'),
-              ('elon', 'ELON MUSK'), ('jensen', 'JENSEN HUANG')]
+              ('elon', 'ELON MUSK'), ('jensen', 'JENSEN HUANG'), ('mira', 'MIRA MURATI'),
+              ('feifei', 'FEI-FEI LI'), ('mark', 'MARK ZUCKERBERG')]
 
 
 def arguments():
@@ -30,7 +31,8 @@ def arguments():
     parser.add_argument('--panel-width', type=int, default=512)
     parser.add_argument('--row-height', type=int, default=680)
     parser.add_argument('--samples', type=int, default=32)
-    parser.add_argument('--lineup', action='store_true', help='Also render all four complete standing models.')
+    parser.add_argument('--lineup', action='store_true', help='Also render the complete standing models.')
+    parser.add_argument('--ids', default='', help='Comma-separated subset of driver IDs for close studies.')
     parser.add_argument('--validate-only', action='store_true', help='Inspect source roots/bounds without rendering.')
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else [])
     if not 128 <= args.panel_width <= 2048 or not 256 <= args.row_height <= 2048:
@@ -101,9 +103,12 @@ def main():
     else:
         raise RuntimeError('Input must be a .blend, .glb, or .gltf file.')
     scene = bpy.context.scene
+    selected = set(args.ids.split(',')) if args.ids else None
+    identities = [(ident,name) for ident,name in IDENTITIES if selected is None or ident in selected]
+    if not identities: raise RuntimeError('No known driver IDs selected.')
     actors = []
     source_report = []
-    for ident, display in IDENTITIES:
+    for ident, display in identities:
         name = 'Standing_' + ident
         actor = bpy.data.objects.get(name)
         if actor is None:
@@ -122,12 +127,13 @@ def main():
     for actor in actors:
         for obj in descendants(actor):
             obj.hide_render = False
-    for actor, x in zip(actors, [-1.26, -.42, .42, 1.26]):
-        actor.location.x = x
-        actor.location.y = actor.location.z = 0
+    for actor in actors:
+        actor.location.x = actor.location.y = actor.location.z = 0
     bpy.context.view_layer.update()
     top = max(bounds(actor)[1].z for actor in actors)
-    upper, lower = top + .10, top - 1.11
+    upper, lower = top + .08, top - .68
+    step = (upper - lower) * args.panel_width / args.row_height
+    for i, actor in enumerate(actors): actor.location.x = (i - (len(actors)-1)/2) * step
     center = (upper + lower) / 2
     try:
         scene.render.engine = 'BLENDER_EEVEE_NEXT'
@@ -137,7 +143,7 @@ def main():
         scene.eevee.taa_render_samples = args.samples
     if hasattr(scene, 'eevee') and hasattr(scene.eevee, 'taa_samples'):
         scene.eevee.taa_samples = args.samples
-    scene.render.resolution_x = args.panel_width * 4
+    scene.render.resolution_x = args.panel_width * len(actors)
     scene.render.resolution_y = args.row_height
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = 'PNG'
@@ -195,7 +201,7 @@ def main():
     if hasattr(strip, 'visible_shadow'):
         strip.visible_shadow = False
     labels = [label(display, actor.location.x, lower + .038, ink)
-              for actor, (_, display) in zip(actors, IDENTITIES)]
+              for actor, (_, display) in zip(actors, identities)]
     headings = [label('', actor.location.x, upper - .046, ink, .027) for actor in actors]
     output.parent.mkdir(parents=True, exist_ok=True)
     row_paths = []
@@ -222,17 +228,19 @@ def main():
     sheet.file_format = 'PNG'
     sheet.save()
     if args.lineup:
-        for actor in actors:
+        for i, actor in enumerate(actors):
             actor.rotation_euler.z = 0
+            actor.location.x = (i-(len(actors)-1)/2)*.84
         for heading in headings:
             heading.hide_render = True
-        for text in labels:
+        for text, actor in zip(labels, actors):
             text.location.z = -.13
+            text.location.x = actor.location.x
         strip.hide_render = True
         camera.location.z = (top - .2) / 2
         point_at(camera, (0, 0, camera.location.z))
-        camera_data.ortho_scale = 4.1
-        scene.render.resolution_y = round(scene.render.resolution_x * (top + .36) / 4.1)
+        camera_data.ortho_scale = len(actors) * .84 + .3
+        scene.render.resolution_y = round(scene.render.resolution_x * (top + .36) / camera_data.ortho_scale)
         scene.render.filepath = str(output.with_name(output.stem + '-lineup.png'))
         bpy.ops.render.render(write_still=True)
         row_paths.append(scene.render.filepath)

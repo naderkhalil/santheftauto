@@ -1,0 +1,32 @@
+{
+  "character": "feifei",
+  "name": "Fei-Fei Li",
+  "status": "concept_generated_internal_visual_review_passed",
+  "user_approved": false,
+  "approved_style_reference": "art/characters/direction/mark-meshy-bust-input-v1.png",
+  "image_generation": {
+    "provider": "OpenAI",
+    "mode": "authorized_cli_api_fallback",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "size": "1024x1024",
+    "image_inputs": 2,
+    "attempts": 1,
+    "prompt": "concept-prompt.txt",
+    "output": "feifei-cartoon-bust-v1.png",
+    "sha256": "fcb178286f2922bd102e36e2ed85edb11b7d197e235cde203dea89f971330667"
+  },
+  "identity_reference": {
+    "local_temporary_path": "/private/tmp/sf-founder-photo-reference/feifei.jpg",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Fei-Fei_Li_at_AI_for_Good_2017.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "sha256": "462704e2846a40cc5002020250a755a4c9215a2979acbf738c85f3d65f91772e",
+    "photo_in_repository": false
+  },
+  "review": {
+    "inspected": true,
+    "result": "passed_for_3d_source",
+    "notes": "Soft oval cheeks, expressive eyes and smile, side-part shoulder-length hair remain distinct from Mira. Matching faceted style and teal jacket. Generated mouth is subtly open rather than the requested closed-mouth smile; natural and suitable."
+  },
+  "purpose": "Single-view source for isolated cartoon 3D bust generation; not integrated into game.",
+  "recorded_at": "2026-10-09T22:21:13.463640+00:00"
+}

@@ -1,13 +1,14 @@
 /** Validate the racer runtime contract and compare exported cost/transforms.
- * node tools/validate-racers.mjs [kit.glb] [--baseline report.json] [--report report.json] [--garage-sha256 hash]
+ * node tools/validate-racers.mjs [kit.glb] [--baseline kit.glb|report.json] [--report report.json] [--garage-sha256 hash]
  * Counts use glTF accessor metadata, including Draco-compressed primitives;
- * this validates structure/bounds, not the contents of the compressed stream.
+ * character positions, normals and UVs are also decoded with the shipped decoder.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import * as THREE from 'three';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,14 +32,14 @@ assert.ok(bytes.length >= 28, 'GLB contains its header and chunks');
 assert.equal(bytes.readUInt32LE(0), 0x46546c67, 'GLB magic');
 assert.equal(bytes.readUInt32LE(4), 2, 'glTF 2');
 assert.equal(bytes.readUInt32LE(8), bytes.length, 'GLB declared length');
-assert.ok(bytes.length <= 25 * 1024 * 1024, 'Asset fits the deployed static-asset size limit');
-let gltf, binaryLength = 0;
+assert.ok(bytes.length <= 16 * 1024 * 1024, 'The shared cartoon racer download stays within its 16 MiB quality budget');
+let gltf, binaryLength = 0, binary;
 for (let cursor = 12; cursor < bytes.length;) {
   assert.ok(cursor + 8 <= bytes.length, 'Chunk header fits');
   const length = bytes.readUInt32LE(cursor), type = bytes.readUInt32LE(cursor + 4);
   assert.ok(length % 4 === 0 && cursor + 8 + length <= bytes.length, 'Chunk is aligned and bounded');
   if (type === 0x4e4f534a) { assert.equal(gltf, undefined, 'One JSON chunk'); gltf = JSON.parse(bytes.subarray(cursor + 8, cursor + 8 + length).toString()); }
-  else if (type === 0x004e4942) binaryLength += length;
+  else if (type === 0x004e4942) { binaryLength += length; binary = bytes.subarray(cursor + 8, cursor + 8 + length); }
   cursor += 8 + length;
 }
 assert.ok(gltf?.nodes?.length && gltf?.meshes?.length, 'Nodes and meshes exist');
@@ -111,7 +112,12 @@ const topLevel = scene.nodes.map(index => {
   assert.ok(!stats.bounds.isEmpty() && [...stats.bounds.min.toArray(), ...stats.bounds.max.toArray()].every(Number.isFinite), 'Root has finite nonempty bounds');
   return { name: gltf.nodes[index].name, ...stats, bounds: [stats.bounds.min.toArray(), stats.bounds.max.toArray()] };
 });
-const identities = ['dario', 'sam', 'elon', 'jensen'];
+const identities = ['dario', 'sam', 'elon', 'jensen', 'mira', 'feifei', 'mark'];
+// Visual review may adjust the portrait LOD; race-driver cost remains bounded
+// independently because many drivers can be visible in one multiplayer frame.
+// Dario's glasses and curls need higher LODs; aggressive collapse loses his
+// torso silhouette. The same strict framing/decode checks apply to every actor.
+const characterBudgets = { portraitTriangles: 62000, portraitTriangleOverrides: { dario: 92000 }, seatedTriangles: 18000, seatedTriangleOverrides: { dario: 40000 }, portraitDraws: 1, seatedDraws: 3, textureDimensions: { baseColor: 2048, normal: 1024, metallicRoughness: 512 } };
 const required = ['Vehicle', 'Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR', 'Steering', ...identities.flatMap(id => ['Standing_' + id, 'Seated_' + id])];
 const contract = required.map(name => {
   const ids = gltf.nodes.flatMap((node, index) => node.name === name ? [index] : []);
@@ -141,65 +147,234 @@ for (const material of gltf.materials) if (material.name !== 'Windscreen') {
 }
 assert.ok(gltf.materials.some(material => material.name === 'Coupe paint'), 'Runtime paint customization keeps its material name');
 assert.ok(!gltf.nodes.some(node => ['Garage', 'Ivory roof', 'Cabin glass'].includes(node.name)), 'Kit excludes garage and obsolete opaque cockpit pieces');
-const outerwearNames = ['dario / cotton jersey', 'sam / woven cotton poplin', 'elon / charcoal cotton twill', 'jensen / charcoal pebbled leather'];
-const outerwear = outerwearNames.map((name, actor) => {
+// Portraits and race drivers share each character's authored PBR artwork. The
+// only untextured character surfaces are the small cockpit sleeves and hands.
+const decoderPath = path.join(root, 'public/assets/draco');
+const decoderModule = { exports: {} };
+new Function('module', 'exports', 'require', '__dirname', '__filename', fs.readFileSync(path.join(decoderPath, 'draco_wasm_wrapper.js'), 'utf8'))(
+  decoderModule, decoderModule.exports, createRequire(import.meta.url), decoderPath, path.join(decoderPath, 'draco_wasm_wrapper.js'));
+const draco = await decoderModule.exports({ wasmBinary: fs.readFileSync(path.join(decoderPath, 'draco_decoder.wasm')) });
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+const imageHash = image => {
+  const view = gltf.bufferViews[gltf.images[image].bufferView];
+  return digest(binary.subarray(view.byteOffset ?? 0, (view.byteOffset ?? 0) + view.byteLength));
+};
+function characterTextureMemory(imageIndex) {
+  const image = gltf.images[imageIndex], view = gltf.bufferViews[image.bufferView];
+  const data = binary.subarray(view.byteOffset ?? 0, (view.byteOffset ?? 0) + view.byteLength);
+  let width, height;
+  if (image.mimeType === 'image/png' && data.length >= 24) {
+    width = data.readUInt32BE(16); height = data.readUInt32BE(20);
+  } else if (image.mimeType === 'image/jpeg') {
+    assert.equal(data.readUInt16BE(0), 0xffd8, `${image.name}: JPEG signature`);
+    const frameMarkers = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf]);
+    for (let offset = 2; offset + 8 < data.length;) {
+      if (data[offset++] !== 0xff) continue;
+      while (data[offset] === 0xff) offset++;
+      const marker = data[offset++];
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) continue;
+      const length = data.readUInt16BE(offset);
+      assert.ok(length >= 2 && offset + length <= data.length, `${image.name}: bounded JPEG segment`);
+      if (frameMarkers.has(marker)) { height = data.readUInt16BE(offset + 3); width = data.readUInt16BE(offset + 5); break; }
+      offset += length;
+    }
+  }
+  assert.ok(Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0, `${image.name}: readable character atlas dimensions`);
+  let mipmappedRGBA8Bytes = 0;
+  for (let w = width, h = height;; w = Math.max(1, Math.floor(w / 2)), h = Math.max(1, Math.floor(h / 2))) {
+    mipmappedRGBA8Bytes += w * h * 4;
+    if (w === 1 && h === 1) break;
+  }
+  return { image: imageIndex, name: image.name, width, height, encodedBytes: view.byteLength, decodedRGBA8Bytes: width * height * 4, mipmappedRGBA8Bytes };
+}
+function decodeSurface(primitive, name, textured) {
+  const compressed = primitive.extensions?.KHR_draco_mesh_compression;
+  assert.ok(compressed, `${name}: optimized character surface uses the shipped Draco pipeline`);
+  const view = gltf.bufferViews[compressed.bufferView];
+  const encoded = binary.subarray(view.byteOffset ?? 0, (view.byteOffset ?? 0) + view.byteLength);
+  const buffer = new draco.DecoderBuffer(), decoder = new draco.Decoder(), mesh = new draco.Mesh();
+  try {
+    buffer.Init(encoded, encoded.length);
+    const status = decoder.DecodeBufferToMesh(buffer, mesh);
+    assert.ok(status.ok(), `${name}: optimized mesh decodes`);
+    const position = gltf.accessors[primitive.attributes.POSITION];
+    assert.equal(mesh.num_points(), position.count, `${name}: decoded vertices match accessor metadata`);
+    assert.equal(mesh.num_faces() * 3, gltf.accessors[primitive.indices].count, `${name}: decoded triangle count matches metadata`);
+    for (const [semantic, components] of [['POSITION', 3], ['NORMAL', 3], ...(textured ? [['TEXCOORD_0', 2]] : [])]) {
+      indexIn(primitive.attributes[semantic], gltf.accessors, `${name}: ${semantic}`);
+      assert.ok(Number.isInteger(compressed.attributes?.[semantic]), `${name}: compression preserves ${semantic}`);
+      const accessor = gltf.accessors[primitive.attributes[semantic]];
+      assert.equal(accessor.count, position.count, `${name}: every vertex has ${semantic}`);
+      assert.equal(accessor.type, 'VEC' + components, `${name}: ${semantic} component layout`);
+      const attribute = decoder.GetAttributeByUniqueId(mesh, compressed.attributes[semantic]);
+      assert.ok(attribute?.ptr, `${name}: decoded ${semantic} exists`);
+      assert.equal(attribute.num_components(), components, `${name}: decoded ${semantic} component count`);
+      const values = new draco.DracoFloat32Array();
+      try {
+        assert.ok(decoder.GetAttributeFloatForAllPoints(mesh, attribute, values), `${name}: ${semantic} decodes`);
+        assert.equal(values.size(), position.count * components, `${name}: complete ${semantic} stream`);
+        const low = Array(components).fill(Infinity), high = Array(components).fill(-Infinity);
+        for (let index = 0; index < values.size(); index++) {
+          const value = values.GetValue(index), axis = index % components;
+          assert.ok(Number.isFinite(value), `${name}: finite decoded ${semantic}`);
+          low[axis] = Math.min(low[axis], value); high[axis] = Math.max(high[axis], value);
+          if (semantic === 'NORMAL') assert.ok(Math.abs(value) <= 1.005, `${name}: bounded shading normal`);
+        }
+        if (semantic === 'NORMAL') for (let index = 0; index < values.size(); index += 3) {
+          const lengthSquared = values.GetValue(index) ** 2 + values.GetValue(index + 1) ** 2 + values.GetValue(index + 2) ** 2;
+          assert.ok(lengthSquared > .98 && lengthSquared < 1.02, `${name}: shading normals are unit length, not zero vectors`);
+        }
+        if (semantic === 'POSITION') for (let axis = 0; axis < 3; axis++) {
+          assert.ok(low[axis] >= position.min[axis] - .001 && high[axis] <= position.max[axis] + .001, `${name}: decoded position fits advertised bounds`);
+        }
+        if (semantic === 'TEXCOORD_0') {
+          assert.ok(low.every(value => value >= -.005) && high.every(value => value <= 1.005), `${name}: UVs stay inside the baked atlas`);
+          // Portrait and driving LODs can occupy different portions of one
+          // shared atlas. Reject collapsed UVs without fixing their packing.
+          assert.ok(low.every((value, axis) => high[axis] - value > .1), `${name}: UVs span a usable part of the baked artwork`);
+        }
+      } finally { draco.destroy(values); }
+    }
+  } finally { draco.destroy(mesh); draco.destroy(decoder); draco.destroy(buffer); }
+}
+function actorPrimitives(index, parent = new THREE.Matrix4()) {
+  const node = gltf.nodes[index], world = parent.clone().multiply(matrices[index]);
+  return [...(node.mesh === undefined ? [] : gltf.meshes[node.mesh].primitives.map(primitive => ({ primitive, world }))), ...(node.children ?? []).flatMap(child => actorPrimitives(child, world))];
+}
+const characterArt = identities.map(id => {
+  const name = id + ' / approved cartoon';
   const materialIndex = gltf.materials.findIndex(material => material.name === name);
-  assert.ok(materialIndex >= 0, `${name}: exported outerwear material exists`);
+  assert.ok(materialIndex >= 0, `${id}: approved cartoon surface exists`);
   const material = gltf.materials[materialIndex], pbr = material.pbrMetallicRoughness;
-  const images = {};
-  for (const [channel, slot] of Object.entries({ normal: material.normalTexture, baseColor: pbr?.baseColorTexture, metallicRoughness: pbr?.metallicRoughnessTexture })) {
-    assert.ok(slot, `${name}: ${channel} texture survives export`);
-    assert.equal(slot.extensions?.KHR_texture_transform?.texCoord ?? slot.texCoord ?? 0, 0, `${name}: ${channel} uses TEXCOORD_0`);
+  const images = {}, textureHashes = {};
+  for (const [channel, slot] of Object.entries({ baseColor: pbr?.baseColorTexture, normal: material.normalTexture, metallicRoughness: pbr?.metallicRoughnessTexture })) {
+    assert.ok(slot, `${id}: authored ${channel} map survives export`);
+    assert.equal(slot.extensions?.KHR_texture_transform?.texCoord ?? slot.texCoord ?? 0, 0, `${id}: ${channel} uses TEXCOORD_0`);
     const texture = gltf.textures[slot.index];
-    indexIn(texture.source, gltf.images ?? [], `${name}: ${channel} image`);
-    images[channel] = texture.source;
+    indexIn(texture.source, gltf.images ?? [], `${id}: ${channel} image`);
+    const atlas = characterTextureMemory(texture.source), dimensionLimit = characterBudgets.textureDimensions[channel];
+    assert.ok(atlas.width <= dimensionLimit && atlas.height <= dimensionLimit, `${id}: ${channel} atlas stays within its ${dimensionLimit}px texture-memory budget`);
+    images[channel] = texture.source; textureHashes[channel] = imageHash(texture.source);
   }
-  let primitives = 0;
-  const checkNode = index => {
-    const node = gltf.nodes[index];
-    let matches = 0;
-    if (node.mesh !== undefined) for (const primitive of gltf.meshes[node.mesh].primitives) {
-      if (primitive.material !== materialIndex) continue;
-      indexIn(primitive.attributes.TEXCOORD_0, gltf.accessors, `${name}: textured primitive UVs`);
-      const uv = gltf.accessors[primitive.attributes.TEXCOORD_0];
-      assert.equal(uv.type, 'VEC2', `${name}: UVs have two coordinates`);
-      assert.equal(uv.count, gltf.accessors[primitive.attributes.POSITION].count, `${name}: every vertex has UVs`);
-      indexIn(primitive.attributes.NORMAL, gltf.accessors, `${name}: normal-mapped primitive normals`);
-      const compressed = primitive.extensions?.KHR_draco_mesh_compression;
-      if (compressed) assert.ok(Number.isInteger(compressed.attributes?.TEXCOORD_0), `${name}: Draco includes UVs`);
-      matches++;
+  const poses = ['Standing_', 'Seated_'].map(pose => {
+    const name = pose + id, portrait = pose === 'Standing_';
+    const index = gltf.nodes.findIndex(node => node.name === name), stats = contract.find(node => node.name === name);
+    const identity = new THREE.Matrix4().toArray();
+    assert.ok(stats.localMatrix.every((value, axis) => Math.abs(value - identity[axis]) < 1e-6), `${name}: normalized actor root preserves the authored +Z facing direction`);
+    const triangleLimit = portrait ? characterBudgets.portraitTriangleOverrides[id] ?? characterBudgets.portraitTriangles : characterBudgets.seatedTriangleOverrides[id] ?? characterBudgets.seatedTriangles;
+    assert.ok(stats.triangles > 0 && stats.triangles <= triangleLimit, `${name}: stays within its ${portrait ? 'portrait' : 'multiplayer driver'} triangle budget`);
+    assert.ok(stats.draws <= (portrait ? characterBudgets.portraitDraws : characterBudgets.seatedDraws), `${name}: bounded character material draws`);
+    const [min, max] = stats.bounds, width = max[0] - min[0], depth = max[2] - min[2];
+    assert.ok(min[1] >= (portrait ? .98 : .35) && max[1] <= (portrait ? 2.02 : 1.52), `${name}: all geometry fits the selection/cockpit vertical envelope`);
+    assert.ok(width > .35 && width < 1.5 && depth > .15 && depth < 1.2, `${name}: plausible upright bust proportions`);
+    assert.ok(Math.abs(min[0] + max[0]) < .08, `${name}: centered across the seat`);
+    if (portrait) assert.ok(Math.abs(min[2] + max[2]) < .015, `${name}: portrait is centered in depth`);
+    const primitives = actorPrimitives(index);
+    let sculptures = 0;
+    for (const { primitive, world } of primitives) {
+      const textured = primitive.material === materialIndex;
+      if (textured) {
+        sculptures++;
+        const position = gltf.accessors[primitive.attributes.POSITION];
+        const bust = new THREE.Box3(new THREE.Vector3().fromArray(position.min), new THREE.Vector3().fromArray(position.max)).applyMatrix4(world);
+        assert.ok(Math.abs(bust.min.y - (portrait ? 1 : .5)) < .015 && Math.abs(bust.max.y - (portrait ? 2 : 1.5)) < .015, `${name}: authored bust base and crown fit the selection/cockpit framing`);
+      }
+      else assert.ok(!portrait && [id + ' / driving sleeves', id + ' / driving hands'].includes(gltf.materials[primitive.material].name), `${name}: no discarded procedural face or unexpected material`);
+      decodeSurface(primitive, name, textured);
     }
-    for (const child of node.children ?? []) matches += checkNode(child);
-    return matches;
-  };
-  for (const pose of ['Standing_', 'Seated_']) {
-    const count = checkNode(gltf.nodes.findIndex(node => node.name === pose + identities[actor]));
-    assert.ok(count > 0, `${pose + identities[actor]} uses its textured outerwear`);
-    primitives += count;
-  }
-  return { name, primitives, images };
+    assert.equal(sculptures, 1, `${name}: exactly one approved textured sculpture`);
+    return { name, triangles: stats.triangles, draws: stats.draws, bounds: stats.bounds };
+  });
+  return { id, material: name, images, textureHashes, poses };
 });
-const complexion = identities.flatMap(id => ['Standing_', 'Seated_'].map(pose => {
-  const name = pose + id, materialName = new RegExp('^' + id + ' / skin with subtle complexion(?:\\.\\d+)?$');
-  let primitives = 0;
-  const checkNode = index => {
-    const node = gltf.nodes[index];
-    if (node.mesh !== undefined) for (const primitive of gltf.meshes[node.mesh].primitives) {
-      if (!materialName.test(gltf.materials[primitive.material].name)) continue;
-      indexIn(primitive.attributes.COLOR_0, gltf.accessors, `${name}: facial complexion colors`);
-      const color = gltf.accessors[primitive.attributes.COLOR_0];
-      assert.ok(['VEC3', 'VEC4'].includes(color.type), `${name}: complexion uses RGB or RGBA colors`);
-      assert.equal(color.count, gltf.accessors[primitive.attributes.POSITION].count, `${name}: every face vertex has complexion color`);
-      const compressed = primitive.extensions?.KHR_draco_mesh_compression;
-      if (compressed) assert.ok(Number.isInteger(compressed.attributes?.COLOR_0) && compressed.attributes.COLOR_0 >= 0, `${name}: Draco includes complexion colors`);
-      primitives++;
+assert.equal(new Set(characterArt.map(actor => actor.textureHashes.baseColor)).size, identities.length, 'All seven characters retain their own distinct painted facial artwork');
+const characterImages = [...new Set(characterArt.flatMap(actor => Object.values(actor.images)))].map(characterTextureMemory);
+const characterTextureEstimate = {
+  imageCount: characterImages.length,
+  decodedRGBA8Bytes: characterImages.reduce((sum, image) => sum + image.decodedRGBA8Bytes, 0),
+  mipmappedRGBA8Bytes: characterImages.reduce((sum, image) => sum + image.mipmappedRGBA8Bytes, 0),
+  images: characterImages,
+  assumptions: 'One RGBA8 allocation per unique character atlas, plus a complete mip chain for the GPU estimate. Both poses share the same maps. Excludes geometry, browser copies, render targets, and the city; actual residency depends on which characters have rendered.'
+};
+assert.deepEqual(new Set(scene.nodes.map(index => gltf.nodes[index].name)), new Set(['Vehicle', ...identities.flatMap(id => ['Standing_' + id, 'Seated_' + id])]), 'Only the car and optimized roster belong in the racing payload');
+assert.equal(seen.size, gltf.nodes.length, 'No dormant high-poly source nodes are embedded in the runtime kit');
+assert.equal(new Set([...seen].map(index => gltf.nodes[index].mesh).filter(index => index !== undefined)).size, gltf.meshes.length, 'No unused source meshes are embedded in the runtime kit');
+const publicFiles = fs.readdirSync(path.join(root, 'public'), { recursive: true }).filter(file => fs.statSync(path.join(root, 'public', file)).isFile());
+assert.ok(!publicFiles.some(file => /\.(blend(?:\d+)?|fbx|obj)$/i.test(file)), 'Editable/high-poly source art is kept outside public');
+const sourceFiles = identities.map(id => path.join(root, id === 'mark' ? 'art/characters/meshy-mark/mark-meshy-v1.glb' : `art/characters/roster/${id}/${id}-meshy-v1.glb`));
+const sourceHashes = new Set(sourceFiles.filter(file => fs.existsSync(file)).map(file => digest(fs.readFileSync(file))));
+for (const file of publicFiles.filter(file => file.endsWith('.glb'))) assert.ok(!sourceHashes.has(digest(fs.readFileSync(path.join(root, 'public', file)))), `${file}: approved source sculpt must be optimized before publication`);
+
+// Resolve resource indices before hashing: the assembly changes their numbers,
+// but every vehicle pivot, paint/glass material and encoded surface must survive.
+function vehicleFingerprint(doc, data) {
+  const cache = new Map();
+  const resolve = (kind, index) => {
+    const key = `${kind}:${index}`;
+    if (cache.has(key)) return cache.get(key);
+    const value = structuredClone(doc[kind][index]);
+    cache.set(key, value);
+    if (kind === 'nodes') {
+      if (value.mesh !== undefined) value.mesh = resolve('meshes', value.mesh);
+      if (value.children) value.children = value.children.map(child => resolve('nodes', child));
+    } else if (kind === 'meshes') {
+      for (const primitive of value.primitives) {
+        for (const attribute in primitive.attributes) primitive.attributes[attribute] = resolve('accessors', primitive.attributes[attribute]);
+        if (primitive.indices !== undefined) primitive.indices = resolve('accessors', primitive.indices);
+        if (primitive.material !== undefined) primitive.material = resolve('materials', primitive.material);
+        const compressed = primitive.extensions?.KHR_draco_mesh_compression;
+        if (compressed) compressed.bufferView = resolve('bufferViews', compressed.bufferView);
+      }
+    } else if (kind === 'accessors' || kind === 'images') {
+      if (value.bufferView !== undefined) value.bufferView = resolve('bufferViews', value.bufferView);
+    } else if (kind === 'bufferViews') {
+      value.payloadSha256 = digest(data.subarray(value.byteOffset ?? 0, (value.byteOffset ?? 0) + value.byteLength));
+      delete value.buffer; delete value.byteOffset;
+    } else if (kind === 'materials') {
+      const textures = object => {
+        for (const [key, child] of Object.entries(object)) {
+          if (key.endsWith('Texture') && child && typeof child === 'object' && child.index !== undefined) child.index = resolve('textures', child.index);
+          else if (child && typeof child === 'object') textures(child);
+        }
+      };
+      textures(value);
+    } else if (kind === 'textures') {
+      if (value.source !== undefined) value.source = resolve('images', value.source);
+      if (value.sampler !== undefined) value.sampler = resolve('samplers', value.sampler);
     }
-    for (const child of node.children ?? []) checkNode(child);
+    return value;
   };
-  checkNode(gltf.nodes.findIndex(node => node.name === name));
-  assert.ok(primitives > 0, `${name}: exported facial complexion exists`);
-  return { name, primitives };
-}));
+  const stable = value => Array.isArray(value) ? value.map(stable) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+  return digest(JSON.stringify(stable(resolve('nodes', doc.nodes.findIndex(node => node.name === 'Vehicle')))));
+}
+function glbBaseline(file) {
+  const data = fs.readFileSync(file);
+  assert.equal(data.readUInt32LE(0), 0x46546c67, 'Baseline GLB magic');
+  assert.equal(data.readUInt32LE(4), 2, 'Baseline glTF 2');
+  assert.equal(data.readUInt32LE(8), data.length, 'Baseline declared length');
+  let doc, binary;
+  for (let offset = 12; offset < data.length;) {
+    const length = data.readUInt32LE(offset), type = data.readUInt32LE(offset + 4);
+    assert.ok(offset + length + 8 <= data.length, 'Baseline chunk is bounded');
+    if (type === 0x4e4f534a) doc = JSON.parse(data.subarray(offset + 8, offset + 8 + length).toString());
+    else if (type === 0x004e4942) binary = data.subarray(offset + 8, offset + 8 + length);
+    offset += length + 8;
+  }
+  assert.ok(doc?.nodes && binary, 'Baseline has nodes and encoded resources');
+  const localMatrix = node => node.matrix ?? new THREE.Matrix4().compose(new THREE.Vector3().fromArray(node.translation ?? [0, 0, 0]), new THREE.Quaternion().fromArray(node.rotation ?? [0, 0, 0, 1]), new THREE.Vector3().fromArray(node.scale ?? [1, 1, 1])).toArray();
+  const count = index => {
+    const node = doc.nodes[index], result = { triangles: 0, draws: 0 };
+    for (const primitive of node.mesh === undefined ? [] : doc.meshes[node.mesh].primitives) {
+      result.triangles += doc.accessors[primitive.indices ?? primitive.attributes.POSITION].count / 3; result.draws++;
+    }
+    for (const child of node.children ?? []) { const nested = count(child); result.triangles += nested.triangles; result.draws += nested.draws; }
+    return result;
+  };
+  const roots = doc.scenes[doc.scene ?? 0].nodes.map(index => ({ name: doc.nodes[index].name, ...count(index) }));
+  return { bytes: data.length, roots, triangles: roots.reduce((sum, root) => sum + root.triangles, 0), draws: roots.reduce((sum, root) => sum + root.draws, 0),
+    runtimeContract: doc.nodes.filter(node => required.includes(node.name)).map(node => ({ name: node.name, localMatrix: localMatrix(node) })),
+    vehicleSha256: vehicleFingerprint(doc, binary) };
+}
 const garageBytes = fs.readFileSync(path.join(root, 'public/assets/models/racer-garage.glb'));
 const garage = { bytes: garageBytes.length, sha256: createHash('sha256').update(garageBytes).digest('hex') };
 if (garageSha256) assert.equal(garage.sha256, garageSha256, 'Garage export is unchanged');
@@ -208,16 +383,20 @@ const report = { source, bytes: bytes.length, sha256: createHash('sha256').updat
   materialCount: gltf.materials.length, imageCount: (gltf.images ?? []).length, extensions: gltf.extensionsUsed ?? [],
   transparentMaterials: gltf.materials.filter(material => material.alphaMode === 'BLEND').map(material => material.name),
   materials: gltf.materials.map(material => ({ name: material.name, alphaMode: material.alphaMode ?? 'OPAQUE', roughness: material.pbrMetallicRoughness?.roughnessFactor ?? 1, metallic: material.pbrMetallicRoughness?.metallicFactor ?? 1, normalMap: !!material.normalTexture, extensions: Object.keys(material.extensions ?? {}) })),
-  roots: topLevel, runtimeContract: contract, outerwear, complexion, garage, warnings: [],
-  measurement: 'Triangles and draw estimates sum active mesh primitives from accessor metadata. Actual frame draws depend on selected actors, passes, shadows, culling and runtime copies. Compressed geometry requires the normal loader/render smoke as well.' };
+  roots: topLevel, runtimeContract: contract, characterBudgets, characterArt, characterTextureEstimate, vehicleSha256: vehicleFingerprint(gltf, binary), garage, warnings: [],
+  measurement: 'Triangles and draw estimates sum active mesh primitives from accessor metadata. Actual frame draws depend on selected actors, passes, shadows, culling and runtime copies. Character streams also decode successfully with the shipped Draco decoder. Facial likeness, +Z facing and cockpit placement still require a browser render review.' };
 if (baselinePath) {
-  const before = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
-  for (const node of contract) {
+  const before = baselinePath.endsWith('.glb') ? glbBaseline(baselinePath) : JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+  if (before.vehicleSha256) assert.equal(report.vehicleSha256, before.vehicleSha256, 'Vehicle hierarchy, wheel pivots, sponsor paint, transparent glazing and encoded geometry are unchanged');
+  // Portraits now use normalized bust roots; their bounds are checked above.
+  // Vehicle and wheel/steering roots keep the original animation contract.
+  for (const node of contract.filter(node => !/^(Standing_|Seated_)/.test(node.name))) {
     const prior = before.runtimeContract.find(value => value.name === node.name);
-    assert.ok(prior && prior.localMatrix.every((value, axis) => Math.abs(value - node.localMatrix[axis]) < 1e-6), `${node.name}: baseline runtime transform preserved`);
+    assert.ok(prior, `${node.name}: runtime car part exists in the baseline`);
+    assert.ok(prior.localMatrix.every((value, axis) => Math.abs(value - node.localMatrix[axis]) < 1e-6), `${node.name}: baseline runtime transform preserved`);
   }
   report.comparison = { baseline: baselinePath, bytesDelta: report.bytes - before.bytes, trianglesDelta: report.triangles - before.triangles, drawsDelta: report.draws - before.draws,
-    roots: topLevel.map(item => { const prior = before.roots.find(value => value.name === item.name); assert.ok(prior, 'Baseline root exists'); return { name: item.name, trianglesDelta: item.triangles - prior.triangles, drawsDelta: item.draws - prior.draws }; }) };
+    roots: topLevel.map(item => { const prior = before.roots.find(value => value.name === item.name); return { name: item.name, added: !prior, trianglesDelta: item.triangles - (prior?.triangles ?? 0), drawsDelta: item.draws - (prior?.draws ?? 0) }; }) };
   if (report.triangles > before.triangles * 1.2) report.warnings.push('Triangle count grew by more than 20%; review repeated multiplayer driver cost.');
   if (report.draws > before.draws) report.warnings.push('Material draw count increased; inspect whether new detail can share existing materials.');
 }

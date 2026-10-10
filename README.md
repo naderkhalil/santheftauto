@@ -155,6 +155,11 @@ recorded events, nickname/lineup data, and privacy handling.
 The project combines original Blender models and generated geometry with
 third-party materials, scenery, geographic references, and brand artwork.
 Playable cars and drivers use the same Blender kit in selection and racing.
+The seven cartoon drivers come from approved image concepts and textured 3D
+sculpts, optimized in Blender; dense source studies stay outside the deployed
+game. Playing or building the game does not require an image-generation or
+3D-generation API key. The current characters are portraits and seated racers. Full walking
+bodies and animation rigs are future work for the broader city game.
 Sources and attribution are recorded in [asset credits](public/assets/CREDITS.md),
 [sponsor artwork sources](public/assets/sponsors/SOURCES.md), and the
 [Blender pipeline](BLENDER_ASSETS.md).

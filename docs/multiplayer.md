@@ -32,14 +32,17 @@ lobby before starting. A room URL is still an invitation, so removal is not a ba
 The garage uses the same Victorian facade builders, timber PBR materials, HDR sky,
 Neutral tone mapping and ambient occlusion as the city. `racer-kit.glb` contains
 the playable open-cockpit car, four independent wheel pivots, and standing/seated
-models of all four drivers. Setup, solo races and remote multiplayer cars use
+models of all seven drivers: Dario Amodei, Sam Altman, Elon Musk, Jensen Huang,
+Mira Murati, Fei-Fei Li and Mark Zuckerberg. Setup, solo races and remote multiplayer cars use
 that same kit. Paint and sponsor choices persist into gameplay. All three car
 choices share the open-cockpit chassis and equal physics; the distinction is paint.
 
 Editable source: `art/source/racers-and-garage.blend`. Rebuild with
 `tools/blender/build_racer_assets.py`; this reuses the actual architecture helpers
 from `build_cerebral_heroes.py`, detailed fixtures from `racer_garage.py`, and
-continuous character sculpts from `racer_characters.py`. The old art study remains
+character bodies from `racer_characters.py` and anatomical head sculpts from
+`racer_faces.py`. The head mesh and facial morphs derive from the CC0 MakeHuman
+base; source files and provenance are included with the editable art. The old art study remains
 in Git for comparison.
 The garage is a separate download, so racing peers do not load its buildings.
 Both models use Draco compression with the existing local decoder; geometry

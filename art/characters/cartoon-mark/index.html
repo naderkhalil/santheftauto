@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Mark — Cartoon head &amp; shoulders prototype</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #28302b; background: #f6f5ef; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    [hidden] { display: none !important; }
+    main { width: min(1700px, 100%); margin: 0 auto; padding: clamp(20px, 3vw, 48px); }
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; margin-bottom: 32px; }
+    .eyebrow { margin: 0 0 12px; color: #72796e; font-size: 10px; font-weight: 650; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0; font: 400 clamp(30px, 3.5vw, 49px)/1.1 Georgia, "Times New Roman", serif; letter-spacing: -.03em; }
+    .intro { max-width: 390px; margin: 0; color: #647065; font-size: 13px; line-height: 1.7; }
+    .comparison { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(20px, 3vw, 42px); }
+    section { min-width: 0; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 57px; border-top: 1px solid #ced3c8; }
+    h2 { margin: 0; font-size: 18px; font-weight: 550; letter-spacing: -.02em; }
+    .tag { color: #7a8176; font-size: 10px; white-space: nowrap; }
+    figure { margin: 0; }
+    .reference { display: block; width: 100%; height: auto; border-radius: 3px; background: #e8e5dc; }
+    figcaption, .viewer-caption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 13px 0; color: #757d71; font-size: 11px; line-height: 1.6; }
+    a { color: #3e5945; text-underline-offset: 4px; }
+    a:hover { color: #163522; }
+    .reference-note { max-width: 470px; margin: 16px 0 0; padding: 16px 0; border-top: 1px solid #e1e3d9; color: #687365; font-size: 12px; line-height: 1.75; }
+    .viewer { position: relative; width: 100%; height: clamp(390px, 65vh, 760px); overflow: hidden; border-radius: 4px; background: #ece9e0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    .viewer[data-state="loading"] canvas, .viewer[data-state="error"] canvas { visibility: hidden; }
+    .state { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; padding: 28px; text-align: center; }
+    #model-status { max-width: 360px; margin: 0; color: #6c7668; font-size: 13px; line-height: 1.7; }
+    .toolbar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
+    .button-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    button { min-height: 42px; padding: 10px 13px; border: 1px solid #cbd2c3; border-radius: 5px; background: #fafbf7; color: #53634e; font: inherit; font-size: 11px; cursor: pointer; }
+    button:hover:not(:disabled) { background: #e7eddf; border-color: #93a087; }
+    button[aria-pressed="true"] { background: #344d3b; border-color: #344d3b; color: #f7f8ed; }
+    button:disabled { cursor: default; opacity: .45; }
+    :is(a, button, canvas):focus-visible { outline: 2px solid #547856; outline-offset: 4px; }
+    footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid #dde1d4; color: #7b8275; font-size: 11px; line-height: 1.7; }
+    @media (max-width: 850px) {
+      header { display: block; margin-bottom: 26px; }
+      .intro { margin-top: 18px; max-width: 550px; }
+      .comparison { grid-template-columns: 1fr; gap: 24px; }
+      .reference-note { margin-top: 6px; }
+      .viewer { height: clamp(390px, 64svh, 640px); }
+    }
+    @media (max-width: 380px) {
+      main { padding: 16px; }
+      button { padding-inline: 10px; }
+      .tag { font-size: 9px; }
+    }
+  </style>
+</head>
+<body data-ready="loading">
+  <main>
+    <header>
+      <div><p class="eyebrow">San Theft Auto / Character workshop</p><h1>Mark, from concept to character.</h1></div>
+      <p class="intro">Start with the face. Compare the approved cartoon direction with the actual exported head and shoulders.</p>
+    </header>
+
+    <div class="comparison">
+      <section aria-labelledby="reference-heading">
+        <div class="section-heading"><h2 id="reference-heading">Concept reference</h2><span class="tag">Approved direction</span></div>
+        <figure>
+          <img class="reference" src="../direction/mark-concept-cartoon-v1.png" width="1536" height="1024" alt="Approved cartoon Mark concept: a relaxed closed-mouth smile, curly brown hair, charcoal T-shirt, jeans, and off-white sneakers, shown in portrait and full-body studies.">
+          <figcaption><span>Illustrated character study</span><a href="../direction/mark-concept-cartoon-v1.png" target="_blank" rel="noopener" aria-label="Open approved cartoon reference at full resolution in a new tab">Full resolution ↗</a></figcaption>
+        </figure>
+        <p class="reference-note">Look for the same calm expression, recognizable face, grouped curls, and natural shoulders. The illustration sets the target; the model shows what is actually built.</p>
+      </section>
+
+      <section aria-labelledby="model-heading">
+        <div class="section-heading"><h2 id="model-heading">Head &amp; shoulders prototype</h2><span class="tag">3D · In review</span></div>
+        <div class="viewer" id="viewer" data-state="loading">
+          <canvas id="prototype" tabindex="0" aria-label="Interactive 3D Mark prototype. Drag to rotate, use arrow keys to turn, or choose a view below." aria-describedby="viewer-help"></canvas>
+          <div class="state" id="load-state"><p id="model-status" role="status">Loading the exported Mark prototype…</p><button id="retry" type="button" hidden>Try again</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="button-group" role="group" aria-label="Camera angle">
+            <button id="front" type="button" aria-pressed="false" disabled>Front</button>
+            <button id="three-quarter" type="button" aria-pressed="true" disabled>Three-quarter</button>
+          </div>
+          <div class="button-group" role="group" aria-label="Framing">
+            <button id="bust" type="button" aria-pressed="true" disabled>Whole bust</button>
+            <button id="face" type="button" aria-pressed="false" disabled>Face close-up</button>
+          </div>
+        </div>
+        <p class="viewer-caption"><span id="viewer-help">Drag to rotate · Scroll or pinch to zoom · Arrow keys to turn</span><a id="model-link" href="mark-prototype.glb" download hidden>Download model</a></p>
+      </section>
+    </div>
+
+    <footer>Development review only. This standalone prototype is separate from the live game and the rest of the roster.</footer>
+  </main>
+  <script type="module" src="./preview.ts"></script>
+</body>
+</html>

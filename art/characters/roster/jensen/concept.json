@@ -1,0 +1,44 @@
+{
+  "character_id": "jensen",
+  "name": "Jensen Huang",
+  "status": "concept_ready_for_mesh",
+  "style_reference": "art/characters/direction/mark-meshy-bust-input-v1.png",
+  "identity_reference": {
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Jen-Hsun_Huang_2025.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "local_source": "/private/tmp/sf-founder-photo-reference/jensen.jpg",
+    "reference_only": true,
+    "copied_to_repository": false
+  },
+  "prompt_file": "art/characters/roster/jensen/concept-prompt.txt",
+  "prompt_sha256": "9ed2b3705bf519911fcb4e9d68b649aa3a6d55c3fb822cb2a0af0c2b473d40fd",
+  "generation": {
+    "provider": "OpenAI",
+    "mode": "authorized_cli_api_fallback",
+    "model": "gpt-image-2",
+    "quality": "high",
+    "size": "1024x1024",
+    "command": "bundled image_gen.py edit",
+    "input_count": 2,
+    "session_id": 80085,
+    "elapsed_seconds": 100.5,
+    "completed_date": "2026-10-09"
+  },
+  "output": "art/characters/roster/jensen/jensen-cartoon-bust-v1.png",
+  "raw_output": "output/imagegen/roster/jensen-cartoon-bust-v1.png",
+  "approval": {
+    "user_approved_this_image": false,
+    "user_approved_style_reference": true,
+    "internal_visual_review": "passed",
+    "review_notes": "Pass: recognizable older facial planes, silver swept hair, semi-rim rectangular glasses and a black leather jacket with visible grain, specular fold highlights, tailored seams and zipper; distinguishes leather from shirt."
+  },
+  "production_status": "concept_only_not_deployed",
+  "image": {
+    "format": "PNG",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "bytes": 1397777,
+    "sha256": "df56dccad36399fcb925d91dab28520a4025c16a0f70321e507b3a8cd9500a28"
+  }
+}

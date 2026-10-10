@@ -6,64 +6,117 @@ The reference-based art stretch covers the four Union Square frontages, surround
 
 ### Playable drivers
 
-The four drivers are original stylized Blender sculpts. The standing selection
-models and seated racing models share the same facial construction and wardrobe:
+The seven-driver roster uses the approved cartoon concepts and textured Meshy
+source sculpts, optimized locally in Blender for selection and racing. Each face
+has its own geometry, painted surface and hair silhouette. These are stylized
+interpretations, not scans of the depicted people.
 
-| Driver | Facial construction | Wardrobe |
+| Driver | Distinguishing features | Wardrobe |
 | --- | --- | --- |
-| Dario | Long face, arched projecting nose, deeper eye sockets, dark curl clusters and subtle beard shading | Blue cotton jersey crewneck |
-| Sam | Narrow lower face, defined long nose, hooded eyes, asymmetric mouth and swept hair | Pale woven cotton shirt |
-| Elon | Broad jaw and cheeks, fuller chin, recessed eyes and swept receding hairline | Charcoal twill jacket |
-| Jensen | High broad cheekbones, compact eyes, wider nasal base, silver brushed hair and rectangular glasses | Black pebbled leather jacket with rib trim, shaped folds, seams and metal zipper teeth |
+| Dario Amodei | Dark curls, rectangular glasses and rounded cheeks | Navy blazer and pale blue shirt |
+| Sam Altman | Narrow lower face, textured dark hair and calm expression | Dark crewneck |
+| Elon Musk | Broad jaw and swept, receding hairline | Charcoal jacket |
+| Jensen Huang | Silver hair and rectangular glasses | Black leather jacket |
+| Mira Murati | Long dark hair, central part and tapered jaw | Dark blazer and ivory top |
+| Fei-Fei Li | Side-parted hair and defined cheekbones | Blue blazer and ivory top |
+| Mark Zuckerberg | Short grouped curls, longer nose and relaxed mouth | Charcoal crewneck |
 
-`tools/blender/racer_characters.py` authors the faces, hair, bodies and poses.
-`racer_materials.py` creates original seamless color, normal and roughness maps
-in `art/textures/racers/`. These are actual embedded glTF image textures;
-Blender-only procedural shaders are not relied on in the browser.
-`racer_surfaces.py` shapes garment tension folds, adds construction details,
-assigns metric UVs after remeshing, and batches meshes by material.
+The workflow starts with photo-informed cartoon concepts, then Meshy 7.1 textured
+sculpts. Dense source GLBs and packed Blender workspaces are preserved locally under
+`art/characters/meshy-mark/` and `art/characters/roster/<id>/`. Their prompts,
+reference provenance, generation settings and review findings live alongside
+them. Source sculpts contain 1.7–6.1 million triangles each; several exceed
+GitHub's 100 MiB file limit. The `*-meshy-v1.glb` and `*-meshy-v1.blend`
+originals and private provider/account logs stay in the ignored local archive,
+outside Git and `public/`. Git includes the concepts, prompts, public model/import
+reports, and optimized editable `art/runtime-cartoon/*-runtime.blend` workspaces
+with packed textures and their matching GLBs.
 
-The editable master is `art/source/racers-and-garage.blend`, and the shared runtime
-asset is `public/assets/models/racer-kit.glb`. To rebuild only the people while
-retaining the approved car and garage geometry:
+`tools/blender/build_cartoon_runtime.py` reduces the approved sources into
+portrait and driving variants, shares reduced color/normal/roughness textures
+between the two poses, adds cockpit forearms/hands, and exports Draco GLBs.
+`Standing_<id>` remains the portrait node name for compatibility; it now contains
+a head-and-shoulders portrait. `Seated_<id>` contains the cockpit upper body.
+These assets support the current racing game; they have no walking bodies,
+facial animation or skeletons yet.
+
+The production loader uses `public/assets/models/racer-kit.glb`. Selection,
+local racing and remote opponents share its geometry and textures. Each car
+clones only its selected driver and owns its mutable materials, so changing one
+player's choice or car paint does not change another's. Distant remote drivers
+retain the existing visibility budget.
+
+The original vehicle's encoded geometry, materials, wheel pivots, steering,
+transparent windscreen and transforms are copied directly into the new kit.
+The separate `racer-garage.glb` remains unchanged. The conversion stages assets
+under `art/runtime-cartoon/` for visual review before publication:
 
 ```sh
-/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/blender/rebuild_racer_characters.py
-node tools/validate-racers.mjs
+/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/blender/build_cartoon_runtime.py -- --all --assemble-only
+node tools/validate-racers.mjs art/runtime-cartoon/racer-kit.glb --baseline art/runtime-cartoon/baseline-racer-kit.glb --report art/runtime-cartoon/validation.json
 ```
 
-`tools/blender/build_racer_assets.py` remains the complete car, garage and driver
-rebuild. Bump `RACER_ASSET_VERSION` in `src/racer-assets.ts` when replacing the kit.
-Review both front and three-quarter views, then check the selection screen and
-the seated driver in the actual game:
+The command above works from a clean checkout: the seven optimized GLBs,
+`baseline-racer-kit.glb` and assembled kit are included in Git. Keep the baseline;
+it provides the preserved vehicle for reproducible assembly. Rebuilding meshes
+and baked textures with `--all` without `--assemble-only` additionally requires
+restoring the dense originals from the local/external sculpt archive at their
+documented paths. That archive is not bundled with the checkout. When replacing the runtime kit, bump
+`RACER_ASSET_VERSION` in `src/racer-assets.ts`. Review each exported portrait and
+cockpit pose, then check desktop/mobile selection and a two-player race in the
+actual game. The validator checks decoded geometry, UVs, texture/material
+sharing, per-pose budgets, bounds and vehicle preservation; it cannot judge
+likeness or presentation.
 
-```sh
-/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/blender/review_racer_characters.py -- --input art/source/racers-and-garage.blend --output art/reviews/racers-portraits.png
-```
+The final 9 October 2026 export is **13,110,716 bytes (12.50 MiB)**. Its
+**623,760 stored triangles** are 72.8% fewer than the preserved 2,296,496-triangle
+kit. It contains **52 material primitives**, down from 240. These totals include
+the car and all fourteen portrait/seated variants; they are not a visible
+frame's triangle or draw-call count. Selection shows one portrait, and each
+racing car clones only its selected seated driver. Shadows, contact shading,
+sponsor decals, culling and the number of cars determine actual frame cost.
 
-With Vite running, `/art/characters/portraits.html` provides a close review of the
-exported GLB using browser lighting and materials. This authoring page is not a
-production entry point. Rendered studies are review artifacts, not replacement
-portraits or billboards in the game.
+| Runtime part | Stored triangles per instance | Material primitives |
+| --- | ---: | ---: |
+| Preserved vehicle, including wheels and steering | 57,814 | 24 |
+| Dario portrait | 89,999 | 1 |
+| Other six portraits | 59,999–60,000 | 1 |
+| Dario seated, including cockpit arms/hands | 37,135 | 3 |
+| Other six seated drivers, including arms/hands | 13,135–13,136 | 3 |
 
-Facial patches follow the sculpted surface with adaptive subdivision. Preserve
-that curvature when editing the eyes: a long, flat sclera triangle can cover
-the iris even when its boundary sits behind it. Review visible pupils, lid
-clearance, nose profiles and mouth shapes from both angles. Clothing grain is
-small-scale texture; collars, folds, seams and zipper hardware use geometry.
+The validator allows a 16 MiB shared download, 62k portrait/18k seated triangles
+per driver, and Dario-specific 92k/40k limits. Dario's extra detail preserves his
+glasses, curls and torso silhouette; it does not relax the bounds or decoding
+checks. The 21 embedded atlases use 2K color, 1K normals and 512-pixel material
+response maps, shared by both poses. They represent **147 MiB of decoded RGBA8
+pixels**, or approximately **196 MiB with complete GPU mipmaps** if the whole
+roster is resident. Those are theoretical texture allocations, not measured
+whole-game memory; they exclude geometry, browser copies, render targets and
+city assets. See `art/runtime-cartoon/validation.json` for exact measurements.
 
-The 9 October 2026 character export is 7,412,076 bytes (7.41 MB), with
-1,727,714 triangles across the car and all eight standing/seated models: 6.9%
-fewer triangles than the preceding kit. The 23 embedded images and UVs increase
-the download by 1.35 MB. There are 156 material primitives across the entire
-kit, an increase of 2–4 per driver; these are asset counts, not whole-frame
-performance measurements. The garage export remains byte-for-byte unchanged.
+Validation of this export passed the shipped Draco decoder, PBR/UV and framing
+checks, per-character budgets, unique facial artwork, exact vehicle resource
+comparison and the unchanged garage checksum. All five final asset tests pass,
+including instance material isolation and shared-resource cleanup. The separate
+client regression run recorded 187 passes. The Cloudflare production build and
+Workers deployment dry run pass; Vite retains its existing large-chunk advisory.
+Earlier same-day, unchanged-backend checks recorded 82 server passes and 14
+Cloudflare passes with one opt-in test skipped.
 
-The runtime validator, four asset/profile tests and Cloudflare production build
-pass. The actual GLB was reviewed in the browser from front and three-quarter
-angles, and in the game's driver lineup and seated car preview. The Blender
-contact sheet and runtime report are saved in `art/reviews/racers-portraits.png`
-and `art/reviews/racers-runtime.json`. Browser close-ups are saved beside them.
+The browser smoke test verified a solo start as Fei-Fei/Terracotta and a
+two-player start with host Jensen/Juniper and guest Mira/Buttercream. Selections
+appeared live in both tabs, both players reached ready status, and the host's
+start moved both canvases into racing with the same timer and standings. Both
+distinct drivers and cars appeared together, with no console errors in either
+tab. `art/runtime-cartoon/game-race-jensen.png` records Jensen in the race after
+the guest test tab closed. A complete race finish was not exercised in this check, and these desktop
+observations are not a physical-phone performance benchmark.
+
+The former procedural MakeHuman-based models, generators and textures remain
+archived in `art/source/racers-and-garage.blend`, `tools/blender/racer_*.py` and
+`art/textures/racers/`. Their anatomy experiments are not the approved cartoon
+source. Running `rebuild_racer_characters.py` regenerates that older direction;
+use the cartoon conversion above for the current roster.
 
 ### City assets
 
@@ -116,7 +169,7 @@ Close and distant sections match for each paired asset, so a wing or pier can sw
 - `art/references/waterfront.md` records architectural reference sources, the corrected pier order and bridge direction, local coordinate agreement and game-adapted spacing.
 - `art/references/union-square-layout.md` records the verified street relationships, approximate placement bounds, public references and geographic source attribution. `src/plaza-layout.ts` is the shared source for terrace elevations and seven palm/four jacaranda placements.
 
-The Blender architecture, sculpture, palms, cable car, street furniture and generated texture pixels are original project assets. Public museum elevations and photographs were used as visual references, not embedded as copied textures or meshes. Newspaper covers are original fictional artwork. The jacaranda is a separately licensed CC0 source model. OpenStreetMap supplied geographic reference data, credited to its contributors under the ODbL; the game includes no OSM map tiles. The depicted landmarks/transit system are not sponsors. See `public/assets/CREDITS.md` for source attribution and decoder licensing.
+The Blender architecture, monument, palms, cable car, street furniture and generated texture pixels are original project assets. Public museum elevations and photographs were used as visual references, not embedded as copied textures or meshes. Newspaper covers are original fictional artwork. The jacaranda model and the archived MakeHuman anatomical experiments are separately credited CC0 sources. Current cartoon drivers derive from the approved image concepts and Meshy sculpts; their generation provenance is preserved with the source studies. OpenStreetMap supplied geographic reference data, credited to its contributors under the ODbL; the game includes no OSM map tiles. The depicted landmarks/transit system are not sponsors. See `public/assets/CREDITS.md` for source attribution and decoder licensing.
 
 ## Rebuild
 
@@ -202,7 +255,7 @@ The contact-shading pass reuses the main render's shadow map and excludes transp
 
 ## Scope and next assets
 
-This is a reference-informed, compressed interpretation. No claim of photogrammetry or survey-level dimensional accuracy is made. The square now has distinct architecture on every side, and the four playable drivers use the Blender sculpts described above. The wider city, background pedestrians and ordinary street vehicles still show the earlier procedural style. The next useful art work is Dragon Gate and Grant storefronts, then close street life and the other neighborhoods, judged in the actual racing camera.
+This is a reference-informed, compressed interpretation. No claim of photogrammetry or survey-level dimensional accuracy is made. The square now has distinct architecture on every side, and the seven playable drivers use the approved cartoon portrait and seated models described above. The wider city, background pedestrians and ordinary street vehicles still show the earlier procedural style. The next useful art work is Dragon Gate and Grant storefronts, then close street life and the other neighborhoods, judged in the actual racing camera.
 
 The entire pre-art game is preserved at `pre-art-direction-v2` (`3f03057`), the first Westin-focused Blender pass at `union-square-blender-v1` (`ffae8dc`), and the preceding wider square at `union-square-fidelity-v2`. The last of these predates the map handedness correction, complete block expansion and Blender street furniture. Keep those tags when iterating or comparing versions.
 
