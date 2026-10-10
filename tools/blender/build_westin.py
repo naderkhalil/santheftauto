@@ -300,7 +300,9 @@ for idx,x in enumerate([-33,33]):
         points=[];uv=[]
         for du,dv in [(0,0),(1,0),(1,1),(0,1)]:
           a=(u+du)/14;b=(v+dv)/7
-          points.append((x+a*3.8,1+math.sin(a*9+b*.4)*a*.36,51.9-b*2.1-a*.34));uv.append((idx*.5+a*.5,b))
+          # b runs down the cloth; Blender image V runs up. Keep the US canton
+          # at the upper hoist and the California red stripe at the bottom.
+          points.append((x+a*3.8,1+math.sin(a*9+b*.4)*a*.36,51.9-b*2.1-a*.34));uv.append((idx*.5+a*.5,1-b))
         face(points,flagmat,uv)
 
 # William Pereira tower silhouette: fluted concrete bays and dark glass slots.

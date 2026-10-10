@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+const WESTIN_ASSET_VERSION = '20261009-upright-flags';
+
 /** The modeled Powell frontage uses metres, +Y up and +Z facing the square. */
 export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
   const group = new THREE.Group();
@@ -51,13 +53,13 @@ export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
   };
   const decoder = new DRACOLoader().setDecoderPath('/assets/draco/');
   const loader = new GLTFLoader().setDRACOLoader(decoder);
-  const ready = loader.loadAsync('/assets/hero/westin.glb').then(async asset => {
+  const ready = loader.loadAsync(`/assets/hero/westin.glb?v=${WESTIN_ASSET_VERSION}`).then(async asset => {
     lod.addLevel(prepare(asset.scene), 0);
     fallback.visible = false;
     loaded = true;
     group.userData.loaded = true;
     try {
-      const distant = await loader.loadAsync('/assets/hero/westin-lod.glb');
+      const distant = await loader.loadAsync(`/assets/hero/westin-lod.glb?v=${WESTIN_ASSET_VERSION}`);
       lod.addLevel(prepare(distant.scene), 290, .14);
     } catch (error) {
       console.warn('Westin distant model unavailable; retaining the complete model.', error);
