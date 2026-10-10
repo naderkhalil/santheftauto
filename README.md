@@ -114,6 +114,11 @@ performance. Start with a focused change that can be reviewed and played on its
 own. For a new neighborhood or major system, describe the intended scope in an
 issue before building it.
 
+Unless explicitly stated otherwise, code contributions intentionally submitted
+for inclusion are under Apache 2.0, as described in section 5 of [LICENSE](LICENSE).
+Only submit material you have the right to contribute, and retain third-party
+notices. Asset contributions must identify their source and applicable permissions.
+
 - **City and art:** use the [Blender pipeline](BLENDER_ASSETS.md), retain editable
   sources and regeneration steps, and record geographic references and asset
   provenance. Include before/after views and note changes to asset size or detail.
@@ -143,12 +148,15 @@ see the [Cloudflare runbook](docs/cloudflare.md) or the
 
 ## Usage analytics
 
-Development tracking is off by default. Production builds use the supplied
-public PostHog project configuration. **For a fork, disable tracking with
-`VITE_POSTHOG_ENABLED=false` or set your own `VITE_POSTHOG_KEY` and
-`VITE_POSTHOG_HOST` before building.** Settings are build-time values. See
-[.env.example](.env.example) and the [analytics guide](docs/analytics.md) for the
-recorded events, nickname/lineup data, and privacy handling.
+**Tracking is off without your own `VITE_POSTHOG_KEY`; no project key is bundled
+in the source.** Production builds with a key enable tracking unless
+`VITE_POSTHOG_ENABLED=false`; development also requires
+`VITE_POSTHOG_ENABLED=true`. For Cloudflare, copy [.env.example](.env.example) to
+ignored `.env.cloudflare.local` and set your key there, or supply build-time CI
+variables. Only `build:cloudflare` and `deploy:cloudflare` load that deployment
+file. The [analytics guide](docs/analytics.md) covers configuration, recorded
+events, nickname/lineup data, and privacy handling. Public ingestion keys remain
+visible in configured browser bundles.
 
 ## Assets and licensing
 
@@ -164,10 +172,39 @@ Sources and attribution are recorded in [asset credits](public/assets/CREDITS.md
 [sponsor artwork sources](public/assets/sponsors/SOURCES.md), and the
 [Blender pipeline](BLENDER_ASSETS.md).
 
-**There is currently no project-wide license file.** Individual dependency and
-asset licenses apply to their respective material; they do not establish a
-blanket license for the repository or its brand artwork. License clarification
-is needed before treating the whole project as freely reusable open-source work.
+**Original software source code, scripts, configuration, and accompanying text
+documentation are licensed under the [Apache License 2.0](LICENSE)**, except for
+separately identified third-party material and the exclusions below.
+Copyright 2026 Nader Khalil. See [NOTICE](NOTICE).
+
+Apache 2.0 permits use, modification, and redistribution, including commercial
+and closed-source reuse, subject to its conditions. It includes warranty and
+liability disclaimers, an express contributor patent license with a patent
+litigation termination provision, and no general grant of trademark rights.
+
+The code license does **not** relicense these materials, wherever they appear:
+
+- **Game assets:** models, textures, images, audio files, character artwork, and
+  other separately stored creative assets, including those in `art/`,
+  `public/assets/`, and `public/social/`. To the extent the project owner holds
+  rights in original assets, those rights are reserved unless separate terms
+  expressly grant permission. Third-party and public-domain assets retain their
+  existing terms; this reservation does not restrict rights granted by those terms.
+- **Geographic data:** OpenStreetMap-derived data remains subject to the
+  [Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/),
+  including data embedded in [src/cerebral-geography.ts](src/cerebral-geography.ts).
+  Other geographic sources retain their applicable terms. See the
+  [Cerebral Valley source notes](public/assets/cerebral-valley/SOURCE.md).
+- **Third-party software and materials:** dependencies, the bundled Draco decoder,
+  and other third-party content retain their own licenses and notices.
+- **Names, logos, and likenesses:** no permission to use third-party branding or
+  protected personality rights is granted by the code license. See the
+  [sponsor artwork sources](public/assets/sponsors/SOURCES.md) and
+  [character credits](public/assets/CREDITS.md#playable-characters-and-surfaces).
+
+These exclusions identify separate material; they do not add restrictions to
+the code licensed under Apache 2.0. A code license does not clear third-party
+rights or guarantee protection from legal claims.
 
 ## More documentation
 

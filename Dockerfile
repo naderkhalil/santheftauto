@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --include=dev
 COPY . .
 # Public browser configuration is baked into the build, not read at runtime.
-# Empty values preserve analytics.ts defaults: production enabled, supplied token/US host.
+# An empty key disables tracking; with a key, production defaults to enabled/US host.
 ARG VITE_POSTHOG_ENABLED=""
 ARG VITE_POSTHOG_KEY=""
 ARG VITE_POSTHOG_HOST=""

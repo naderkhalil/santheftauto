@@ -2,9 +2,21 @@ import type { CaptureResult, PostHog } from 'posthog-js';
 import { GameAnalytics } from './game-analytics.ts';
 import type { GameEvent } from './game-analytics.ts';
 
-// PostHog project tokens are public browser keys, not personal API credentials.
-const PROJECT_TOKEN = 'phc_ye84QB22CKPBQG4Ai39eYwMcRBZD65sXjvSA4sShUnzn';
 const API_HOST = 'https://us.i.posthog.com';
+type AnalyticsEnvironment = {
+  PROD: boolean;
+  VITE_POSTHOG_ENABLED?: string;
+  VITE_POSTHOG_KEY?: string;
+  VITE_POSTHOG_HOST?: string;
+};
+type AnalyticsConfig = { key: string; host: string };
+
+/** A build must explicitly provide its own public project key to send analytics. */
+export function resolveAnalyticsConfig(env: AnalyticsEnvironment): AnalyticsConfig | null {
+  const key = env.VITE_POSTHOG_KEY?.trim();
+  if (!key || env.VITE_POSTHOG_ENABLED === 'false' || (!env.PROD && env.VITE_POSTHOG_ENABLED !== 'true')) return null;
+  return { key, host: env.VITE_POSTHOG_HOST?.trim() || API_HOST };
+}
 
 function sanitizeProperties(properties: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(properties)) {
@@ -35,18 +47,18 @@ let client: PostHog | undefined;
 
 export function initAnalytics(): Promise<void> {
   if (initialization) return initialization;
-  const enabled = import.meta.env.VITE_POSTHOG_ENABLED;
-  if (enabled === 'false' || (!import.meta.env.PROD && enabled !== 'true')) return Promise.resolve();
-  initialization = loadAnalytics();
+  const config = resolveAnalyticsConfig(import.meta.env);
+  if (!config) return Promise.resolve();
+  initialization = loadAnalytics(config);
   return initialization;
 }
 
-async function loadAnalytics(): Promise<void> {
+async function loadAnalytics(config: AnalyticsConfig): Promise<void> {
   try {
     // Load independently so analytics never holds up the city or its assets.
     const { default: posthog } = await import('posthog-js');
-    posthog.init(import.meta.env.VITE_POSTHOG_KEY || PROJECT_TOKEN, {
-      api_host: import.meta.env.VITE_POSTHOG_HOST || API_HOST,
+    posthog.init(config.key, {
+      api_host: config.host,
       defaults: '2026-08-30',
       persistence: 'localStorage',
       person_profiles: 'never',

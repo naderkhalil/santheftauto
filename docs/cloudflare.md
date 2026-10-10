@@ -101,8 +101,9 @@ the Vite/Node development path and does not validate Durable Object behavior.
 Use independent browser sessions for host and guest. A loopback invite works
 only on that computer.
 
-`build:cloudflare` builds the frontend, prepares `dist-cloudflare`, type-checks
-the Worker, and performs a Wrangler dry-run bundle. It does not publish.
+`build:cloudflare` builds the frontend in Vite's `cloudflare` mode, prepares
+`dist-cloudflare`, type-checks the Worker, and performs a Wrangler dry-run bundle.
+It does not publish.
 `dev:cloudflare` runs the local Worker with Wrangler. `test:cloudflare` exercises
 the native adapter with local workerd through Miniflare. The pinned Miniflare
 line is **`5.20261006.1-alpha`**; its results are local development evidence, not
@@ -142,10 +143,26 @@ Cloudflare serves the prepared static files. HTML revalidates; built asset
 scripts/styles use immutable caching. API, operations, and health paths run
 through the Worker and bypass static caching.
 
-Analytics configuration is baked into the frontend. The example above disables
-tracking for local checks. Production builds default to the supplied public
-project token and US host unless `VITE_POSTHOG_*` build settings override them.
+Analytics configuration is baked into the frontend. There is no built-in project
+key: without `VITE_POSTHOG_KEY`, the SDK does not initialize or send events. The
+example above disables tracking for local checks even if a key is configured.
 Changing Worker runtime variables cannot change an existing browser bundle.
+
+To enable analytics for a new deployment, copy the blank template and set your
+own public project key in the ignored `.env.cloudflare.local` file:
+
+```sh
+cp .env.example .env.cloudflare.local
+```
+
+Set `VITE_POSTHOG_KEY` and, for an EU project,
+`VITE_POSTHOG_HOST=https://eu.i.posthog.com` (the default host is US).
+`build:cloudflare` and `deploy:cloudflare` load this file; they are production
+builds, so a configured key enables tracking unless `VITE_POSTHOG_ENABLED=false`.
+Ordinary `npm run build` and `npm run dev` do not load it. CI may provide the same
+settings in the build environment instead. The public ingestion key is visible
+in the resulting browser bundle by design; never use a personal API credential.
+See [analytics](analytics.md) for development testing and collected events.
 
 ## Account, secrets, and first deployment
 

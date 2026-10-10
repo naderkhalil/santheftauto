@@ -1,6 +1,38 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { sanitizeAnalyticsEvent } from './analytics.ts';
+import { resolveAnalyticsConfig, sanitizeAnalyticsEvent } from './analytics.ts';
+
+test('analytics stays disabled without an explicit nonempty project key', () => {
+  for (const PROD of [false, true]) {
+    for (const VITE_POSTHOG_ENABLED of [undefined, 'true']) {
+      for (const VITE_POSTHOG_KEY of [undefined, '', '  ']) {
+        assert.equal(resolveAnalyticsConfig({ PROD, VITE_POSTHOG_ENABLED, VITE_POSTHOG_KEY }), null);
+      }
+    }
+  }
+});
+
+test('production analytics uses the configured project key and the default US host', () => {
+  assert.deepEqual(resolveAnalyticsConfig({ PROD: true, VITE_POSTHOG_KEY: ' phc_test_project ' }), {
+    key: 'phc_test_project', host: 'https://us.i.posthog.com',
+  });
+  assert.deepEqual(resolveAnalyticsConfig({ PROD: true, VITE_POSTHOG_KEY: 'phc_test_project', VITE_POSTHOG_HOST: ' https://eu.i.posthog.com ' }), {
+    key: 'phc_test_project', host: 'https://eu.i.posthog.com',
+  });
+});
+
+test('development analytics requires both a project key and explicit enablement', () => {
+  assert.equal(resolveAnalyticsConfig({ PROD: false, VITE_POSTHOG_KEY: 'phc_test_project' }), null);
+  assert.deepEqual(resolveAnalyticsConfig({ PROD: false, VITE_POSTHOG_ENABLED: 'true', VITE_POSTHOG_KEY: 'phc_test_project' }), {
+    key: 'phc_test_project', host: 'https://us.i.posthog.com',
+  });
+});
+
+test('explicitly disabling analytics overrides a configured key in every build', () => {
+  for (const PROD of [false, true]) {
+    assert.equal(resolveAnalyticsConfig({ PROD, VITE_POSTHOG_ENABLED: 'false', VITE_POSTHOG_KEY: 'phc_test_project' }), null);
+  }
+});
 
 test('room invitations are removed from all SDK URL and referrer locations', () => {
   const invitation = 'https://racing.example/?room=PRIVATE#secret';

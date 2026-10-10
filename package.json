@@ -1,6 +1,7 @@
 {
   "name": "san-theft-auto",
   "version": "0.1.0",
+  "license": "Apache-2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +13,7 @@
     "test:multiplayer": "node --experimental-strip-types --test server/*.test.ts",
     "load:multiplayer": "node --experimental-strip-types tools/load-multiplayer.ts",
     "start:cluster:local": "node tools/launch-local.mjs",
-    "build:cloudflare": "npm run build && node tools/prepare-cloudflare-assets.mjs && tsc -p tsconfig.cloudflare.json && wrangler deploy --dry-run --outdir .cloudflare-build",
+    "build:cloudflare": "tsc && vite build --mode cloudflare && node tools/compress-assets.mjs && node tools/prepare-cloudflare-assets.mjs && tsc -p tsconfig.cloudflare.json && wrangler deploy --dry-run --outdir .cloudflare-build",
     "dev:cloudflare": "wrangler dev --ip 127.0.0.1 --port 8787",
     "test:cloudflare": "node --experimental-strip-types --test cloudflare/*.test.ts",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"

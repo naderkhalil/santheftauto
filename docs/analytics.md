@@ -6,13 +6,31 @@ race event definitions and deduplication in
 
 ## Configure a fork or local build
 
-Development tracking is disabled by default. Production builds use the supplied
-public PostHog project token unless overridden. Before publishing a fork, set
-`VITE_POSTHOG_ENABLED=false` or configure your own public project token with
-`VITE_POSTHOG_KEY` and ingestion host with `VITE_POSTHOG_HOST`.
+There is no built-in PostHog project key. Without a nonempty
+`VITE_POSTHOG_KEY`, the SDK does not initialize and no analytics events are sent.
+A fresh checkout therefore builds and runs without tracking. With a key,
+production builds enable tracking unless `VITE_POSTHOG_ENABLED=false`;
+development requires both a key and `VITE_POSTHOG_ENABLED=true`.
+
+For a new Cloudflare deployment, copy the blank configuration template:
 
 ```sh
-VITE_POSTHOG_ENABLED=false npm run build
+cp .env.example .env.cloudflare.local
+```
+
+Set your own public project key in `VITE_POSTHOG_KEY` in that ignored file.
+`npm run build:cloudflare` and `npm run deploy:cloudflare` use Vite's `cloudflare`
+mode and load it; these remain production builds. Ordinary `npm run build` and
+`npm run dev` do not load this deployment file. CI can supply the same variables
+in the build environment instead. For other production builds, supply the key
+at build time or through an ignored `.env.production.local` file.
+
+`VITE_POSTHOG_HOST` defaults to `https://us.i.posthog.com`; EU projects should use
+`https://eu.i.posthog.com`. Set `VITE_POSTHOG_ENABLED=false` to disable tracking
+even when a key is configured, including during local Worker checks:
+
+```sh
+VITE_POSTHOG_ENABLED=false npm run build:cloudflare
 ```
 
 These settings are baked into the frontend at build time. Changing environment
@@ -22,26 +40,19 @@ bundle; personal API credentials must not be placed there.
 
 ## What is collected
 
-Production builds send page views, page leaves, and session IDs to the configured
-PostHog project. Open that project’s **Web analytics** for unique visitors, visits
-(sessions), page views, and visit duration. In
+When tracking is enabled, the browser sends page views, page leaves, and session
+IDs to the configured PostHog project. Open that project’s **Web analytics** for
+unique visitors, visits (sessions), page views, and visit duration. In
 **Product analytics**, `$pageview` with **Unique users** counts visitors; unique
 `$session_id` values count sessions. Returning browsers retain an anonymous ID in
 local storage. These are browser-based estimates, not identified people; another
 device, cleared storage, or an ad blocker affects the counts.
 
-The supplied public project token is configured by default with the US ingestion
-host. If the project is in the EU, set `VITE_POSTHOG_HOST=https://eu.i.posthog.com`
-and open the corresponding project in the EU PostHog console. Optional build-time
-overrides are listed in [.env.example](../.env.example); copy them into `.env.local`
-and rebuild.
-`VITE_POSTHOG_KEY` overrides the public project token. No personal API key or
-project ID is needed in the browser.
-
-Tracking is off in `npm run dev` and on in production builds, including
-`npm run preview`. Set `VITE_POSTHOG_ENABLED=false` to disable it, or `true` to
-explicitly enable development testing. After deploying, visit the site and check
-PostHog's **Activity** for `$pageview` events with a `$session_id`.
+`npm run preview` serves the tracking settings of the existing build; it does not
+change them. For development testing, provide your own key and
+`VITE_POSTHOG_ENABLED=true` in the environment for `npm run dev`. After deploying
+with tracking enabled, visit the site and check the configured project's
+**Activity** for `$pageview` events with a `$session_id`.
 
 Analytics loads independently of the game. It records race nicknames and the
 lineup explicitly through the gameplay events below; it does not record replays,
