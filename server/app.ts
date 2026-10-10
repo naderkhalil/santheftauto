@@ -8,6 +8,7 @@ import { attachInputChannel } from './input-channel.ts';
 import { createRoomGateway } from './gateway.ts';
 import { runtimeConfig, clientAddress, secretMatches } from './runtime-config.ts';
 import { serveStatic } from './static-files.ts';
+import { createLeaderboardApi } from './leaderboard-http.ts';
 
 export function createGameServer(config = runtimeConfig()) {
   const started = performance.now(), sockets = new Set<Socket>();
@@ -22,6 +23,7 @@ export function createGameServer(config = runtimeConfig()) {
     return clientAddress(req, config.role === 'worker' ? 0 : config.trustProxyHops);
   };
   const api = service ? createRoomApi(service, { clientAddress: address }) : null;
+  const leaderboard = config.role === 'single' ? createLeaderboardApi({ rooms: service!, clientAddress: address }) : null;
   const gateway = config.role === 'gateway' ? createRoomGateway({ workers: config.workers, workerSecret: config.workerSecret, publicOrigin: config.publicOrigin, clientAddress: address }) : null;
   function json(res: ServerResponse, status: number, body: unknown) {
     if (res.headersSent || res.destroyed) return;
@@ -63,7 +65,10 @@ export function createGameServer(config = runtimeConfig()) {
       if (gateway) {
         if (draining && path === '/api/rooms/placement') { json(res, 503, { error: 'This gateway is restarting. Please try again shortly.', code: 'SERVER_DRAINING', admitted: false }); return; }
         if (await gateway.handler(req, res)) return;
-      } else if (api && await api.handler(req, res)) return;
+      } else {
+        if (leaderboard && await leaderboard.handler(req, res)) return;
+        if (api && await api.handler(req, res)) return;
+      }
       if (config.role === 'worker') { json(res, 404, { error: 'Not found.' }); return; }
       await serveStatic(req, res);
     } catch (error) {

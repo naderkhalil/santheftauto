@@ -10,6 +10,8 @@ import { parseRoomStreamEvent, RoomWireDecoder } from './room-wire';
 import { RoomInputChannel } from './room-input';
 import { RacerSnapshotBuffer } from './room-interpolation';
 import { RoomStreamChannel, RoomStreamError, RoomStreamRetryPolicy, roomTransportFor, type RoomTransport } from './room-stream';
+import { FinishLeaderboard, getGlobalLeaderboard } from './leaderboard';
+import type { LeaderboardBoard } from './leaderboard-protocol';
 import './multiplayer.css';
 
 const read = (key: string) => { try { return sessionStorage.getItem(key); } catch { return null; } };
@@ -66,6 +68,8 @@ export class Multiplayer {
   private focused = true;
   private padButtons: boolean[] = [];
   private padNextMove = 0;
+  private leaderboard: FinishLeaderboard;
+  private leaderboardRound = '';
 
   constructor(private root: THREE.Group, private hooks: Hooks) {
     try { this.profile = normalizeProfile(JSON.parse(localStorage.getItem('sf-racer-profile') ?? JSON.stringify(DEFAULT_PROFILE))); } catch {}
@@ -73,6 +77,7 @@ export class Multiplayer {
     this.dialog.className = 'mp-dialog';
     this.dialog.setAttribute('aria-labelledby', 'mp-title');
     this.dialog.innerHTML = setupMarkup();
+    this.leaderboard = new FinishLeaderboard(this.dialog.querySelector<HTMLElement>('#mp-leaderboard')!, (mode, entryId) => getGlobalLeaderboard().open(mode, entryId));
     document.body.append(this.dialog);
     this.standings.className = 'mp-standings';
     this.standings.setAttribute('aria-label', 'Live race standings');
@@ -535,7 +540,7 @@ export class Multiplayer {
     this.text('mp-live-party', room ? this.connected ? `${room.players.length}/${ROOM_CAPACITY} IN YOUR ROOM` : 'RECONNECTING…' : this.step === 'driver' || this.step === 'car' ? 'SINGLE PLAYER' : '');
     this.text('mp-room-code', room ? 'ROOM ' + room.code : 'SINGLE PLAYER / MULTIPLAYER');
     this.showroom?.setMode(this.step); this.renderLineup();
-    if (!room) { this.standings.hidden = true; return; }
+    if (!room) { this.standings.hidden = true; this.leaderboard.clear(); this.leaderboardRound = ''; return; }
     const url = new URL(location.href); url.searchParams.delete('race'); url.searchParams.set('room', room.code);
     if (this.input('mp-link').value !== url.href) { this.input('mp-link').value = url.href; this.button('mp-copy').textContent = 'Copy invite'; }
     this.text('mp-strip-title', 'ROOM ' + room.code + (host ? ' · YOU HOST' : ''));
@@ -547,6 +552,20 @@ export class Multiplayer {
       return `<div class="mp-party-player ${p.id === this.id ? 'is-you' : ''}"><div><strong>${escape(profile.name)}${p.id === this.id ? ' · You' : ''}${p.id === room.host ? ' · Host' : ''}</strong><small>${driverName(profile.driver)} · ${carName(profile.car)} · ${sponsorName(profile.sponsor)}</small></div><span>${escape(locked ? p.dnf ? 'DNF' : p.finishTime !== null ? 'Finished' : 'Racing' : playerStatus(p, this.serverNow))}</span>${host && !locked && p.id !== this.id ? `<button class="mp-remove" data-action="remove" data-player-id="${p.id}" aria-label="Remove ${escape(profile.name)} from room" ${this.pendingAction ? 'disabled' : ''}>Remove</button>` : ''}</div>`;
     }).join(''));
     const result = this.viewingLastResults ? room.lastResults : room.phase === 'results' ? room.results : null;
+    const ownResult = result?.entries.find(entry => entry.id === this.id);
+    const finishTime = result ? ownResult?.finishTime : room.phase !== 'lobby' ? me?.finishTime : null;
+    const roundId = result?.roundId ?? room.roundId;
+    if (finishTime != null && roundId) {
+      const key = `${room.code}:${roundId}:${this.id}`;
+      if (key !== this.leaderboardRound) {
+        this.leaderboardRound = key;
+        const code = room.code, playerId = this.id;
+        this.leaderboard.show('multiplayer', Math.round(finishTime * 1000), async name => {
+          if (this.room?.code !== code || this.id !== playerId) throw new Error('Return to your race room to post this time.');
+          return this.request('/' + code + '/leaderboard', { name, roundId }) as Promise<LeaderboardBoard>;
+        }, ownResult?.profile.name ?? me?.profile.name);
+      }
+    } else if (this.leaderboardRound) { this.leaderboard.clear(); this.leaderboardRound = ''; }
     this.dialog.querySelector<HTMLElement>('#mp-results')!.hidden = !result;
     this.dialog.querySelector<HTMLElement>('#mp-room-controls')!.hidden = !!result;
     this.dialog.querySelector<HTMLElement>('#mp-room-roster')!.hidden = !!result;
@@ -592,7 +611,7 @@ export class Multiplayer {
 
   update(dt: number, now: number) {
     if (this.dialog.open) {
-      this.updateGamepad();
+      if (!getGlobalLeaderboard().blocking) this.updateGamepad();
       if (this.step === 'driver' || this.step === 'car') this.showroom?.render(performance.now());
     }
     const players = this.motion.sample(performance.now());

@@ -1,4 +1,5 @@
 node_modules/
+/.leaderboard-data.json*
 dist/
 dist-cloudflare/
 .cloudflare-build/

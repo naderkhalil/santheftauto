@@ -7,6 +7,11 @@ connections, and saved state. The existing [Node/Render runbook](launch.md)
 remains a fallback; its process limits and load measurements do not describe
 Cloudflare capacity or billing.
 
+The global solo and multiplayer leaderboards use a separate SQLite-backed
+`Leaderboard` Durable Object. Its `v2-leaderboard` migration is additive and keeps
+the existing room namespace intact. See [leaderboard verification and
+persistence](leaderboard.md) for submission rules, public fields and limits.
+
 The approved spending budget is **$500**. The implementation does **not** configure
 an enforced $500 billing cap. Use an account with the appropriate paid Workers /
 Durable Objects access, verify its current pricing and usage limits, and set up

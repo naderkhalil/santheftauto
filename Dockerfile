@@ -15,13 +15,15 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 FROM node:22.23.3-bookworm-slim
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 LEADERBOARD_DATA_FILE=/data/leaderboard.json
 WORKDIR /app
 COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/server ./server
 COPY --from=build --chown=node:node /app/src ./src
 COPY --from=build --chown=node:node /app/dist ./dist
+RUN mkdir -p /data && chown node:node /data
+VOLUME ["/data"]
 USER node
 EXPOSE 3000
 CMD ["node", "--experimental-strip-types", "server/start.ts"]

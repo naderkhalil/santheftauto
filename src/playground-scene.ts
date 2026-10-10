@@ -1,15 +1,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { playgroundHeight } from './playground.ts';
-
-/** Small discoveries sit on the actual paving, away from planted beds and furniture. */
-export const PLAYGROUND_POSTCARDS = [
-  { x: 0, z: -24 },
-  { x: 24, z: 7 },
-  { x: -18, z: 16 },
-  { x: 0, z: 31 },
-  { x: 53, z: -36 },
-] as const;
+import { PLAYGROUND_POSTCARDS } from './race-replay.ts';
+export { PLAYGROUND_POSTCARDS } from './race-replay.ts';
 
 /** Semantic city coordinates: east is +X and north is +Z. */
 export function playgroundMapPoint(x: number, z: number): { x: number; y: number } {

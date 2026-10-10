@@ -34,6 +34,9 @@ import { mountRacePicker } from './race-picker';
 import { Multiplayer } from './multiplayer';
 import { gameAnalytics, initAnalytics } from './analytics';
 import { DEFAULT_PROFILE } from './racer-profile';
+import { SoloLeaderboardRecorder } from './leaderboard-client';
+import { FinishLeaderboard, getGlobalLeaderboard } from './leaderboard';
+import { RaceCollectibles } from './race-replay';
 
 void initAnalytics();
 
@@ -56,6 +59,7 @@ app.innerHTML = `
   <h1 aria-label="San Theft Auto">SAN<br><span>THEFT</span><br>AUTO</h1>
   <p class="intro-copy">Race San Francisco. Bring your friends.<br>Pick your driver, take on the hills, and race to the bay.</p>
   <div class="intro-actions"><button class="primary" id="start">START RACE <span class="arrow">↗</span></button><button class="text-button" id="how">HOW TO PLAY</button></div>
+  <button class="text-button" id="leaderboard-open" aria-haspopup="dialog">GLOBAL LEADERBOARD ↗</button>
   <div class="keyboard-note intro-mode-actions"><button class="text-button" id="explore-start">EXPLORE UNION SQUARE ↗</button><span></span><button class="text-button" id="tour-start">WATCH A RUN ↗</button></div>
 </main>
 <footer class="intro-bottom" id="intro-bottom">
@@ -241,6 +245,11 @@ async function boot() {
   const tourSceneNames:Record<TourScene,string>={square:'UNION SQUARE',westin:'THE WESTIN ST. FRANCIS',post:'POST STREET'};
   let multiplayer:Multiplayer|null=null;
   let raceProfile={...DEFAULT_PROFILE};
+  const globalLeaderboard=getGlobalLeaderboard();
+  const leaderboardMount=document.createElement('section');leaderboardMount.id='solo-leaderboard';el('again').before(leaderboardMount);
+  const finishLeaderboard=new FinishLeaderboard(leaderboardMount,(mode,entryId)=>globalLeaderboard.open(mode,entryId));
+  const soloRecorder=new SoloLeaderboardRecorder();
+  const raceCollectibles=new RaceCollectibles();
   let phase:Phase='menu', previousPhase:Phase='racing', countdownLeft=3, countdownNumber=0, freeDrive=false;
   let multiplayerDnf=false, roomUiActive=false, inputBlocked=false;
   let topSpeed=0, best=Number(safeRead('whimsical-sf-shortcuts-race-best-v4'))||0, muted=safeRead('sf-night-run-muted')==='true';
@@ -303,7 +312,7 @@ async function boot() {
     if(multiplayer?.active){multiplayer.recover();recoveryCooldown=totalTime+1;clearInputs();return;}
     if(phase==='paused'){if(previousPhase!=='racing')return;resume();}
     recoveryCooldown=totalTime+1;cameraReversing=false;
-    clearInputs();sim.recover();cameraInitialized=false;shake=0;updateHud();canvas.focus();
+    clearInputs();if(!freeDrive)soloRecorder.recover();sim.recover();cameraInitialized=false;shake=0;updateHud();canvas.focus();
     announce('BACK ON THE STREET',freeDrive?'READY WHEN YOU ARE':'PROGRESS KEPT · CLOCK CONTINUES',2);
   }
   function updateCountdown(){
@@ -322,6 +331,7 @@ async function boot() {
   function restartRun(){if(multiplayer?.active){multiplayer.open();return;}startRun(freeDrive);}
   function startRun(explore:boolean,seconds=3){
     if(!explore&&!multiplayer?.active)gameAnalytics.startSolo(raceProfile);else gameAnalytics.clearSolo();
+    finishLeaderboard.clear();raceCollectibles.reset();if(!explore&&!multiplayer?.active)soloRecorder.start();else soloRecorder.cancel();
     clearInputs();freeDrive=explore;multiplayerDnf=false;tourArt=null;sim.reset();if(explore)sim.explore(true);playground.reset();skyCourse.reset();collectedRings=0;landingPulse=0;presentedLaunches=0;topSpeed=0;phase=explore||seconds<=0?'racing':'countdown';countdownLeft=seconds;countdownNumber=0;finishReveal=0;goUntil=0;cameraInitialized=false;shake=0;lastDistrict='';recoveryCooldown=0;cameraReversing=false;
     landmarks.resetProps();knockedProps=0;
     ['help','pause-panel','results','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));
@@ -331,7 +341,7 @@ async function boot() {
   function pause(){if(multiplayer?.active){clearInputs();multiplayer.open();return;}if(phase!=='racing'&&phase!=='countdown')return;previousPhase=phase;phase='paused';clearInputs();audio.suspend();syncPhase();el('resume').focus();}
   function resume(){if(phase!=='paused')return;phase=previousPhase;clearInputs();void audio.unlock();syncPhase();canvas.focus();}
   function menu(){if(multiplayer?.active){openRoom();return;}resetToMenu();}
-  function resetToMenu(){gameAnalytics.clearSolo();phase='menu';multiplayerDnf=false;tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
+  function resetToMenu(){soloRecorder.cancel();finishLeaderboard.clear();gameAnalytics.clearSolo();phase='menu';multiplayerDnf=false;tourArt=null;skyCourse.reset();landmarks.resetProps();knockedProps=0;finishReveal=0;goUntil=0;messageUntil=0;clearInputs();audio.suspend();['help','pause-panel','results','countdown','city-map-dialog'].forEach(id=>el(id).classList.add('hidden'));el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');el('drift-hint').classList.remove('active');cameraInitialized=false;syncPhase();el('start').focus();}
   function finish(){
     if(multiplayer?.active){
       const racerId=multiplayer.id,racer=multiplayer.room?.players.find(player=>player.id===racerId);
@@ -350,6 +360,7 @@ async function boot() {
     el('result-medal').textContent=freeDrive?'EXPLORER':s.elapsed<63?'GOLD':s.elapsed<76?'SILVER':s.elapsed<95?'BRONZE':'FINISHER';
     el('results').querySelector('.result-main .label')!.textContent=freeDrive?'YOUR CITY ADVENTURE':'YOUR FINISH TIME';
     el('result-copy').textContent=freeDrive?`${playground.collected} of ${playground.total} postcards found. ${s.launches} flights. A little San Francisco magic.`:`${s.launches} flights. ${collectedRings} sun rings. ${s.collisions===0?'A little San Francisco magic.':'The sky is calling. Go again.'}`;
+    if(!freeDrive)finishLeaderboard.show('solo',Math.round(s.elapsed*1000),soloRecorder.finish(raceProfile.driver),raceProfile.name);
     el('message').classList.add('faded');el('message').setAttribute('aria-hidden','true');syncPhase();
   }
   function readInput():DriveInput{
@@ -476,7 +487,7 @@ async function boot() {
   }
   const controls=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','ShiftLeft','ShiftRight']);
   window.addEventListener('keydown',event=>{
-    if(multiplayer?.blocking||['INPUT','TEXTAREA','SELECT'].includes((event.target as HTMLElement)?.tagName))return;
+    if(multiplayer?.blocking||globalLeaderboard.blocking||['INPUT','TEXTAREA','SELECT'].includes((event.target as HTMLElement)?.tagName))return;
     if(controls.has(event.code)&&(phase==='racing'||phase==='countdown')){event.preventDefault();keys.add(event.code);}
     if(event.repeat)return;
     if(event.code==='Enter'&&el('help').classList.contains('hidden')&&el('city-map-dialog').classList.contains('hidden')){if(phase==='menu'&&document.activeElement?.tagName!=='BUTTON')start();else if(phase==='finished'&&document.activeElement?.tagName!=='BUTTON')restartRun();}
@@ -492,7 +503,7 @@ async function boot() {
     // Keep keyboard focus inside an open dialog.
     if(event.code==='Tab'){
       const open=Array.from(document.querySelectorAll<HTMLElement>('.modal-layer')).find(p=>!p.classList.contains('hidden'));
-      if(open){const buttons=Array.from(open.querySelectorAll<HTMLElement>('button'));const first=buttons[0],last=buttons.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}
+      if(open){const buttons=Array.from(open.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),[tabindex="0"]')).filter(element=>element.getClientRects().length);const first=buttons[0],last=buttons.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}
     }
   });
   window.addEventListener('keyup',event=>keys.delete(event.code));
@@ -515,6 +526,7 @@ async function boot() {
   let dragX:number|null=null;canvas.addEventListener('pointerdown',event=>{if(phase==='tour'){dragX=event.clientX;canvas.setPointerCapture(event.pointerId);}});canvas.addEventListener('pointermove',event=>{if(phase==='tour'&&dragX!==null){tour.orbit=THREE.MathUtils.clamp(tour.orbit+(event.clientX-dragX)*.004,-1.35,1.35);dragX=event.clientX;}});canvas.addEventListener('pointerup',()=>dragX=null);canvas.addEventListener('pointercancel',()=>dragX=null);
   el('start').onclick=start;el('again').onclick=restartRun;el('restart').onclick=restartRun;el('resume').onclick=resume;el('pause').onclick=()=>phase==='paused'?resume():pause();
   el('return-room').onclick=openRoom;
+  el('leaderboard-open').onclick=()=>{clearInputs();globalLeaderboard.open();};
   el('explore-start').onclick=startExploration;el('return-road').onclick=returnToStreet;el('pause-unstick').onclick=returnToStreet;
   el('home').onclick=menu;el('pause-home').onclick=menu;el('result-home').onclick=menu;el('sound').onclick=toggleSound;
   el('how').onclick=()=>{helpWasPaused=phase==='racing'||phase==='countdown';if(helpWasPaused)pause();modal('help',true);};el('close-help').onclick=closeHelp;el('help-play').onclick=start;
@@ -554,7 +566,7 @@ async function boot() {
     const dt=Math.min((now-lastTime)/1000,.25);lastTime=now;totalTime+=dt;uiClock+=dt;
     performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
     syncRoomEntry();
-    const blocked=!!multiplayer?.blocking||!!(multiplayer?.active&&!multiplayer.connected);
+    const blocked=globalLeaderboard.blocking||!!multiplayer?.blocking||!!(multiplayer?.active&&!multiplayer.connected);
     if(blocked!==inputBlocked){
       clearInputs();inputBlocked=blocked;
       // A controller button used in setup must be released before it can
@@ -580,7 +592,8 @@ async function boot() {
       if(countdownLeft<=0){raceDt=Math.max(0,-countdownLeft);phase='racing';audio.cue('go');el('countdown').innerHTML='<strong>GO.</strong><span>MAKE IT A GOOD ONE</span>';goUntil=totalTime+.8;syncPhase();}
     }
     if(phase==='racing'){
-      const events=multiplayer?.active?[]:sim.update(raceDt,input);topSpeed=Math.max(topSpeed,Math.abs(sim.state.speed));
+      if(!multiplayer?.active&&!freeDrive)soloRecorder.record(raceDt,input);
+      const events=multiplayer?.active?[]:sim.update(raceDt,input);if(!multiplayer?.active)raceCollectibles.update(sim);topSpeed=Math.max(topSpeed,Math.abs(sim.state.speed));
       const propImpacts=sim.drainPropImpacts();
       if(propImpacts.length){
         landmarks.knockProps(propImpacts);knockedProps+=propImpacts.length;
@@ -621,8 +634,8 @@ async function boot() {
     if(phase==='tour'){canvas.dataset.progress=tour.progress.toFixed(1);canvas.dataset.airborne=String(tour.airborne);canvas.dataset.altitude=tour.altitude.toFixed(1);canvas.dataset.glide=tour.glide.toFixed(2);}
     const hits=skyCourse.update(totalTime,cityProgress,car.group.position,phase==='racing');
     const postcards=playground.update(totalTime,sim.position,phase==='racing'&&sim.exploring);
-    if(postcards){audio.cue('checkpoint');sim.state.boost=Math.min(1,sim.state.boost+.2);announce(playground.collected===playground.total?'SQUARE EXPLORER':'POSTCARD FOUND',playground.collected===playground.total?'ALL FIVE FOUND · THE CITY IS YOURS':`${playground.collected} OF ${playground.total} · KEEP EXPLORING`,2);}
-    if(hits){collectedRings+=hits;sim.state.boost=Math.min(1,sim.state.boost+.14*hits);audio.cue('checkpoint');announce('SUN RING',`${collectedRings} COLLECTED · +BOOST`,1);}
+    if(postcards){audio.cue('checkpoint');announce(playground.collected===playground.total?'SQUARE EXPLORER':'POSTCARD FOUND',playground.collected===playground.total?'ALL FIVE FOUND · THE CITY IS YOURS':`${playground.collected} OF ${playground.total} · KEEP EXPLORING`,2);}
+    if(hits){collectedRings+=hits;audio.cue('checkpoint');announce('SUN RING',`${collectedRings} COLLECTED · +BOOST`,1);}
     world.update(totalTime,cityProgress,camera);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress,camera);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}
     heroFill.position.set(car.group.position.x-4,car.group.position.y+6,car.group.position.z-7);

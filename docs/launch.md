@@ -118,14 +118,19 @@ builds it and checks its runtime. Before deployment, run:
 
 ```sh
 docker build -t city-loop:launch .
-docker run --rm --name city-loop-launch -p 127.0.0.1:4200:3000 city-loop:launch
+docker run --rm --name city-loop-launch -p 127.0.0.1:4200:3000 -v city-loop-leaderboard:/data city-loop:launch
 ```
 
 In a separate terminal, check `/healthz`, `/readyz`, the root page, and a fresh
 two-player room on `http://127.0.0.1:4200`. The default image role is `single`,
 so this validates the image independently of Render. Also exercise gateway and
 private-worker roles with the deployment's environment shape in CI or staging.
-Stop and remove only this named disposable container when finished.
+Stop and remove only this named disposable container when finished. Its named
+volume retains the single-process leaderboard at `/data/leaderboard.json`
+across container replacement. Back up the volume; do not share its JSON store
+between concurrent servers. `LEADERBOARD_DATA_FILE` can select another writable
+mounted path. The gateway/worker cluster does not provide a shared leaderboard;
+use the native Cloudflare deployment for the production global board.
 
 ## Edge and cache configuration
 

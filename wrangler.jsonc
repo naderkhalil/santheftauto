@@ -17,12 +17,18 @@
     "not_found_handling": "none"
   },
   "durable_objects": {
-    "bindings": [{ "name": "ROOMS", "class_name": "RaceRoom" }]
+    "bindings": [{ "name": "ROOMS", "class_name": "RaceRoom" }, { "name": "LEADERBOARD", "class_name": "Leaderboard" }]
   },
-  "migrations": [{ "tag": "v1-race-rooms", "new_sqlite_classes": ["RaceRoom"] }],
+  "migrations": [
+    { "tag": "v1-race-rooms", "new_sqlite_classes": ["RaceRoom"] },
+    { "tag": "v2-leaderboard", "new_sqlite_classes": ["Leaderboard"] }
+  ],
   "ratelimits": [
     { "name": "ADMISSION_LIMITER", "namespace_id": "2026100801", "simple": { "limit": 600, "period": 60 } },
-    { "name": "API_LIMITER", "namespace_id": "2026100802", "simple": { "limit": 60000, "period": 60 } }
+    { "name": "API_LIMITER", "namespace_id": "2026100802", "simple": { "limit": 60000, "period": 60 } },
+    { "name": "LEADERBOARD_READ_LIMITER", "namespace_id": "2026101001", "simple": { "limit": 120, "period": 60 } },
+    { "name": "LEADERBOARD_START_LIMITER", "namespace_id": "2026101002", "simple": { "limit": 10, "period": 60 } },
+    { "name": "LEADERBOARD_SUBMIT_LIMITER", "namespace_id": "2026101003", "simple": { "limit": 10, "period": 60 } }
   ],
   "vars": { "NEW_ROOMS_ENABLED": "true" },
   "limits": { "cpu_ms": 30000 },

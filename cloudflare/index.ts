@@ -1,12 +1,18 @@
 import { RaceRoom } from './race-room';
+import { Leaderboard } from './leaderboard';
+import { COURSE_VERSION } from '../src/multiplayer-protocol.ts';
 
-export { RaceRoom };
+export { RaceRoom, Leaderboard };
 
 export interface Env {
   ROOMS: DurableObjectNamespace;
   ASSETS: Fetcher;
   ADMISSION_LIMITER: RateLimit;
   API_LIMITER: RateLimit;
+  LEADERBOARD?: DurableObjectNamespace;
+  LEADERBOARD_READ_LIMITER?: RateLimit;
+  LEADERBOARD_START_LIMITER?: RateLimit;
+  LEADERBOARD_SUBMIT_LIMITER?: RateLimit;
   PUBLIC_ORIGIN?: string;
   OPS_TOKEN?: string;
   NEW_ROOMS_ENABLED?: string;
@@ -76,6 +82,20 @@ export default {
         ? json(200, { status: 'ok', platform: 'cloudflare', acceptingNewRooms: env.NEW_ROOMS_ENABLED !== 'false' })
         : json(405, { error: 'Method not allowed.', code: 'INVALID_ACTION' });
 
+      if (path.startsWith('/api/leaderboard')) {
+        const read = path === '/api/leaderboard', start = path === '/api/leaderboard/solo/start', finish = path === '/api/leaderboard/solo/finish';
+        if (!read && !start && !finish) return json(404, { error: 'Leaderboard endpoint not found.', code: 'INVALID_ACTION' });
+        if (request.method !== (read ? 'GET' : 'POST')) return json(405, { error: 'Method not allowed.', code: 'INVALID_ACTION' });
+        if (!env.LEADERBOARD) return json(503, { error: 'The leaderboard is unavailable.', code: 'LEADERBOARD_UNAVAILABLE' });
+        const address = request.headers.get('CF-Connecting-IP') ?? 'local';
+        const limiter = (read ? env.LEADERBOARD_READ_LIMITER : start ? env.LEADERBOARD_START_LIMITER : env.LEADERBOARD_SUBMIT_LIMITER) ?? env.ADMISSION_LIMITER;
+        if (!(await limiter.limit({ key: `leaderboard:${read ? 'read' : start ? 'start' : 'finish'}:${address}` })).success) return json(429, { error: 'Too many leaderboard requests. Please wait a moment.', code: 'RATE_LIMITED' });
+        if (!read && Number(request.headers.get('Content-Length')) > 2 * 1024 * 1024) return json(413, { error: 'Request too large.', code: 'INVALID_ACTION' });
+        const headers = new Headers({ 'X-Leaderboard-Client-IP': address });
+        const contentType = request.headers.get('Content-Type'); if (contentType) headers.set('Content-Type', contentType);
+        return env.LEADERBOARD.get(env.LEADERBOARD.idFromName(COURSE_VERSION)).fetch(new Request(url, { method: request.method, headers, body: request.body, redirect: 'manual' }));
+      }
+
       let code: string | undefined, forwardedPath = path;
       const operation = path.match(/^\/ops\/rooms\/([A-F0-9]{8})\/(metrics|drain)$/);
       if (path.startsWith('/ops/') || path === '/api/rooms/health') {
@@ -84,13 +104,14 @@ export default {
         if (!operation || request.method !== (operation[2] === 'metrics' ? 'GET' : 'POST')) return json(404, { error: 'Operations endpoint not found.', code: 'INVALID_ACTION' });
         code = operation[1]; forwardedPath = '/ops/' + operation[2];
       } else {
-        const match = path.match(/^\/api\/rooms\/([A-F0-9]{8})\/(join|claim|command|events|input|socket)$/);
+        const match = path.match(/^\/api\/rooms\/([A-F0-9]{8})\/(join|claim|command|events|input|socket|leaderboard)$/);
         const isPlacement = path === '/api/rooms/placement', isCreate = path === '/api/rooms';
         if (!isPlacement && !isCreate && !match) return json(404, { error: 'Room endpoint not found.', code: 'INVALID_ACTION' });
         const expectedMethod = match && ['events', 'input', 'socket'].includes(match[2]) ? 'GET' : 'POST';
         if (request.method !== expectedMethod) return json(405, { error: 'Method not allowed.', code: 'INVALID_ACTION' });
         // Cloudflare supplies this header at the public edge; forwarded client headers never select identity.
         const address = request.headers.get('CF-Connecting-IP') ?? 'local';
+        if (match?.[2] === 'leaderboard' && !((await (env.LEADERBOARD_SUBMIT_LIMITER ?? env.ADMISSION_LIMITER).limit({ key: `leaderboard:multiplayer:${address}` })).success)) return json(429, { error: 'Too many leaderboard requests. Please wait a moment.', code: 'RATE_LIMITED' });
         const admission = isPlacement || isCreate || match?.[2] === 'join';
         const connection = match && ['events', 'input', 'socket', 'claim'].includes(match[2]);
         const limiter = admission || connection ? env.ADMISSION_LIMITER : env.API_LIMITER;

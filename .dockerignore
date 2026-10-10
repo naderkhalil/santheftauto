@@ -3,6 +3,7 @@ dist
 .git
 .env*
 *.local
+.leaderboard-data.json*
 art
 docs/checkpoints
 .codex

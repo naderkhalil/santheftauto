@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { LAUNCH_ZONES, sampleRoute, routePoint, routeFrame, sampleGlidePath, routeSlope, routeYaw } from './route';
+import { LAUNCH_ZONES, sampleRoute, routePoint, routeFrame, routeSlope, routeYaw } from './route';
+import { SKY_RINGS } from './race-replay';
 
 /** The airborne racing line: three handcrafted flights with collectible sun hoops. */
 export function createSkyCourse(scene:THREE.Object3D){
@@ -37,9 +38,9 @@ export function createSkyCourse(scene:THREE.Object3D){
         const line=new THREE.Mesh(box,i%2?cream:coral);line.scale.set(5.2,.028,.85);line.position.set(q.x,q.y+.064,q.z);line.rotation.set(-Math.atan(routeSlope(progress)),routeYaw(progress)+side*.22,0,'YXZ');group.add(line);
       }
     }
-    for(const [ri,t] of [.24,.48,.73].entries()){
-      const progress=THREE.MathUtils.lerp(zone.progress,zone.end,t),r=routePoint(progress,ri===1?(zi%2?2:-2):0);
-      const position=new THREE.Vector3(r.x,sampleGlidePath(progress,zone)+1.25,r.z);
+    for(const [ri,ring] of SKY_RINGS.filter(ring=>ring.zone===zi).entries()){
+      const {progress}=ring;
+      const position=new THREE.Vector3(ring.x,ring.y,ring.z);
       const hoop=new THREE.Group();hoop.position.copy(position);hoop.name=`Sun ring ${zi+1}.${ri+1}`;
       hoop.rotation.order='YXZ';hoop.rotation.y=routeYaw(progress);
       hoop.add(new THREE.Mesh(ringGeo,gold),new THREE.Mesh(innerGeo,mint));

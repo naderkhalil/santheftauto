@@ -1,6 +1,8 @@
 import { RoomError, RoomService } from '../server/rooms.ts';
 import { RoomWireEncoder, roomSemanticKey, snapshotFrame, sseData } from '../server/room-wire.ts';
 import type { RoomCommand } from '../src/multiplayer-protocol.ts';
+import { verifiedMultiplayerResult } from '../server/leaderboard-result.ts';
+import { COURSE_VERSION } from '../src/multiplayer-protocol.ts';
 
 const STORAGE_KEY = 'room:v1';
 const MAX_MESSAGE_BYTES = 4096, MAX_PENDING = 8, MAX_SOCKETS = 24, MAX_BUFFER_BYTES = 256_000;
@@ -77,6 +79,7 @@ async function readJson(request: Request): Promise<Record<string, unknown>> {
 /** One native Durable Object owns one invite, including its simulation and claims. */
 export class RaceRoom {
   private ctx: DurableObjectState;
+  private env: { LEADERBOARD?: DurableObjectNamespace };
   private ready: Promise<void>;
   private queue: Promise<unknown> = Promise.resolve();
   private code = '';
@@ -94,8 +97,9 @@ export class RaceRoom {
   private alarmAt: number | null = null;
   private counts = { ticks: 0, acceptedInputs: 0, rejected: 0, frames: 0, bytes: 0 };
 
-  constructor(ctx: DurableObjectState, _env: unknown) {
+  constructor(ctx: DurableObjectState, env: { LEADERBOARD?: DurableObjectNamespace }) {
     this.ctx = ctx;
+    this.env = env;
     this.ready = ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<SavedRoom>(STORAGE_KEY);
       if (saved) {
@@ -207,20 +211,21 @@ export class RaceRoom {
     // Reading a slow upload must never hold the room's simulation/action queue.
     const requestedPath = new URL(request.url).pathname;
     let data: Record<string, unknown> = {};
-    if (request.method === 'POST' && (requestedPath === '/api/rooms' || /^\/api\/rooms\/[A-F0-9]{8}\/(join|claim|command)$/.test(requestedPath))) {
+    if (request.method === 'POST' && (requestedPath === '/api/rooms' || /^\/api\/rooms\/[A-F0-9]{8}\/(join|claim|command|leaderboard)$/.test(requestedPath))) {
       try { data = await readJson(request); }
       catch (error) {
         if (!(error instanceof RoomError)) logUnexpectedFailure('fetch', error);
         const result = failure(error); return json(result.status, result.body);
       }
     }
+    if (/^\/api\/rooms\/[A-F0-9]{8}\/leaderboard$/.test(requestedPath)) return await this.postLeaderboard(request, data);
     return await this.exclusive(async () => {
       try {
         const code = request.headers.get('X-Room-Code') ?? '';
         if (!/^[A-F0-9]{8}$/.test(code)) throw new RoomError('Internal room routing is required.', 403, 'FORBIDDEN');
         this.initialize(code);
         const path = new URL(request.url).pathname;
-        const match = path.match(/^\/api\/rooms\/([A-F0-9]{8})\/(join|claim|command|events|input|socket)$/);
+        const match = path.match(/^\/api\/rooms\/([A-F0-9]{8})\/(join|claim|command|events|input|socket|leaderboard)$/);
         if (match && match[1] !== code) throw new RoomError('Room routing mismatch.', 400, 'ROOM_CODE_MISMATCH');
         const address = (request.headers.get('X-Room-Client-IP') ?? 'unknown').slice(0, 64);
         if (path === '/ops/metrics' && request.method === 'GET') return json(200, this.metrics());
@@ -265,6 +270,30 @@ export class RaceRoom {
         const result = failure(error); return json(result.status, result.body);
       }
     });
+  }
+  private async postLeaderboard(request: Request, data: Record<string, unknown>): Promise<Response> {
+    try {
+      if (request.method !== 'POST') throw new RoomError('Use POST to save your time.', 405, 'INVALID_ACTION');
+      // Capture the trusted result in the room queue, then release it before
+      // waiting on global storage. Other racers must keep moving during a post.
+      const record = await this.exclusive(() => {
+        const code = request.headers.get('X-Room-Code') ?? '';
+        if (!/^[A-F0-9]{8}$/.test(code) || new URL(request.url).pathname !== `/api/rooms/${code}/leaderboard`) throw new RoomError('Internal room routing is required.', 403, 'FORBIDDEN');
+        this.initialize(code);
+        const address = (request.headers.get('X-Room-Client-IP') ?? 'unknown').slice(0, 64);
+        const token = (request.headers.get('Authorization') ?? '').replace(/^Bearer /, '');
+        const generation = this.authorize(request, token, address);
+        this.limit('leaderboard:' + token, 12);
+        return verifiedMultiplayerResult(this.service!, code, token, generation, data.name, data.roundId);
+      });
+      if (!this.env.LEADERBOARD) throw new RoomError('The leaderboard is temporarily unavailable. Try again.', 503, 'LEADERBOARD_UNAVAILABLE');
+      const board = this.env.LEADERBOARD.get(this.env.LEADERBOARD.idFromName(COURSE_VERSION));
+      return await board.fetch(new Request('https://leaderboard.internal/internal/multiplayer', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(record), signal: AbortSignal.timeout(10000),
+      }));
+    } catch (error) {
+      const result = failure(error); return json(result.status, result.body);
+    }
   }
   private authorize(request: Request, token: string, address: string) {
     try {
@@ -341,8 +370,9 @@ export class RaceRoom {
           socket.serializeAttachment(claim); return;
         }
         if (message.type !== 'input' && message.type !== 'heartbeat') throw new RoomError('Use HTTP for room actions.', 400, 'INVALID_MESSAGE');
+        if (message.type === 'heartbeat') this.limit('ws-heartbeat:' + claim.token!, 60);
         this.applyCommand(claim.token!, claim.generation!, message as RoomCommand);
-        if (message.type !== 'input' || !this.active() || Date.now() - this.lastPersistAt >= 1000) await this.persist();
+        if (Date.now() - this.lastPersistAt >= 1000 || message.type === 'input' && !this.active()) await this.persist();
         if (message.type === 'heartbeat') this.broadcast(Date.now());
         await this.schedule();
       } catch (error) {
