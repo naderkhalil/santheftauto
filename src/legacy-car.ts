@@ -13,8 +13,29 @@ export type CarState = {
   airborne?: boolean;
   altitude?: number;
   landing?: number;
+  /** Authoritative total, used only to animate new contacts once. */
+  collisions?: number;
 };
 type Section = [z: number, width: number, center: number, height: number];
+
+/** A brief suspension reaction; never changes the vehicle's world pose. */
+export function createCollisionBounce() {
+  let previous: number | null = null, age = 1, side = 1;
+  return (dt: number, collisions?: number) => {
+    if (typeof collisions !== 'number' || !Number.isSafeInteger(collisions) || collisions < 0) {
+      previous = null; age = 1;
+    } else {
+      // Joining a race seeds the counter. Resetting the race clears a pending
+      // bounce, while repeated packets cannot restart the animation.
+      if (previous !== null && collisions < previous) age = 1;
+      else if (previous !== null && collisions > previous) { age = 0; side = collisions % 2 ? 1 : -1; }
+      previous = collisions;
+    }
+    age += Math.max(0, Math.min(dt, .1));
+    const spring = age < .55 ? Math.sin(age * 24) * Math.exp(-age * 8) : 0;
+    return { pitch: spring * .065, roll: spring * side * .028, height: -spring * .055 };
+  };
+}
 
 /** A small, original coachbuilt coupe. All geometry is local; +Z is forward. */
 export function createLegacyCar(): { group: THREE.Group; update: (dt: number, state: CarState) => void; customize: (profile: RacerProfile) => void; dispose: () => void } {
@@ -321,6 +342,8 @@ export function createLegacyCar(): { group: THREE.Group; update: (dt: number, st
   sourceGeometries.forEach(geometry => geometry.dispose());
 
   let hover = 0;
+  let bodyRoll = 0;
+  const collisionBounce = createCollisionBounce();
   let wasAirborne = false;
   let landingBounce = 0;
   const sport = new THREE.Group(), roadster = new THREE.Group();body.add(sport, roadster);
@@ -374,6 +397,7 @@ export function createLegacyCar(): { group: THREE.Group; update: (dt: number, st
     group,
     update(dt, state) {
       const step = Math.max(0, Math.min(dt, .1));
+      const bump = collisionBounce(step, state.collisions);
       const targetHover = THREE.MathUtils.clamp(state.glide ?? (state.airborne ? 1 : 0), 0, 1);
       hover = THREE.MathUtils.damp(hover, targetHover, targetHover > hover ? 9 : 13, step);
       if (Math.abs(hover - targetHover) < .001) hover = targetHover;
@@ -400,8 +424,9 @@ export function createLegacyCar(): { group: THREE.Group; update: (dt: number, st
       landingBounce = Math.max(state.landing ?? 0, landingBounce * Math.exp(-step * 8));
       wasAirborne = state.airborne ?? false;
       body.position.y = Math.sin(state.time * 26) * Math.min(Math.abs(state.speed) / 100, .016) * (1 - hover)
-        + Math.sin(state.time * 3.6) * .022 * hover - Math.sin(landingBounce * Math.PI) * .075;
-      body.rotation.z = THREE.MathUtils.damp(body.rotation.z, -state.steer * .035 * (1 - hover), 8, step);
+        + Math.sin(state.time * 3.6) * .022 * hover - Math.sin(landingBounce * Math.PI) * .075 + bump.height;
+      bodyRoll = THREE.MathUtils.damp(bodyRoll, -state.steer * .035 * (1 - hover), 8, step);
+      body.rotation.set(bump.pitch, 0, bodyRoll + bump.roll);
       redLight.emissiveIntensity = state.braking ? 2.5 : .55;
       paint.emissive.setHex(state.boosting ? 0x26050a : 0x000000);
       group.userData.hover = hover;

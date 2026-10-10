@@ -173,7 +173,7 @@ export async function bootCourseRace(app:HTMLElement, course:CourseDefinition) {
       const roll=Math.atan((h(p.x+dz*.95,p.z-dx*.95)-h(p.x-dz*.95,p.z+dx*.95))/1.9);
       car.group.rotation.set(pitch,yaw+s.driftAngle,roll,'YXZ');
     }else car.group.rotation.set(-Math.atan(route.routeSlope(s.progress)),yaw+s.driftAngle,0,'YXZ');
-    if(phase!=='paused')car.update(dt,{speed:s.speed,steer:drive.steer,braking:drive.brake>.1,boosting:sim.boosting,time:elapsed,glide:s.glide,airborne:s.airborne,altitude:s.altitude});
+    if(phase!=='paused')car.update(dt,{speed:s.speed,steer:drive.steer,braking:drive.brake>.1,boosting:sim.boosting,time:elapsed,glide:s.glide,airborne:s.airborne,altitude:s.altitude,collisions:phase==='preview'?undefined:s.collisions});
     const scenicGlide=scenic&&!!scenicViews[selectedView]?.glide;
     const preview=phase==='preview'&&!scenicGlide;const flight=s.airborne&&cerebral;
     // A little more height and width lets the Hayes opening read as a place:

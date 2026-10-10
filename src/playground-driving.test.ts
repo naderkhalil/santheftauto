@@ -47,19 +47,29 @@ test('a car crosses the plaza curb and climbs the south stairs onto the raised t
   assert.equal(sim.state.airborne, false, 'ordinary steps do not deploy the hover hardware');
 });
 
-test('the solid monument stops a fast car, reverse backs out, and recovery preserves race statistics', () => {
+test('the solid monument gives one gentle rebound and explicit recovery preserves race statistics', () => {
   const sim = new DrivingSimulation([], { exploration: true });
   sim.explore();
-  advance(sim, 6, gas);
-  assert.ok(sim.position.z < -6.49, 'the whole car must remain outside the monument plinth');
-  assert.equal(sim.state.speed, 0);
-  assert.equal(sim.state.collisions, 1, 'holding gas at a wall must not spam collisions');
+  until(sim, () => sim.state.collisions > 0, gas);
+  assert.ok(sim.position.z < -6.49, 'the approaching bumper stops before the monument plinth');
   const contact = sim.position.z;
-  advance(sim, 1.5, reverse);
-  assert.ok(sim.position.z < contact - 8);
-  assert.ok(sim.state.speed < -8);
+  let minimumZ = contact;
+  for (let frame = 0; frame < 120; frame++) {
+    const previous = sim.position;
+    sim.update(1 / 120, gas);
+    const halfX = Math.abs(Math.sin(sim.state.heading)) * 2.1 + Math.abs(Math.cos(sim.state.heading)) * .95;
+    const halfZ = Math.abs(Math.cos(sim.state.heading)) * 2.1 + Math.abs(Math.sin(sim.state.heading)) * .95;
+    assert.ok(Math.abs(sim.position.x) >= 4.4 + halfX || Math.abs(sim.position.z) >= 4.4 + halfZ - 1e-8,
+      'the turning car remains outside the solid plinth throughout recoil');
+    assert.ok(Math.hypot(sim.position.x - previous.x, sim.position.z - previous.z) < .2, 'recovery moves continuously');
+    assert.ok(sim.state.speed >= 0, 'recoil does not switch the chase camera into reverse');
+    minimumZ = Math.min(minimumZ, sim.position.z);
+  }
+  assert.ok(minimumZ < contact - .05, 'the car moves slightly away from contact');
+  assert.equal(sim.state.collisions, 1, 'the same impact must not spam collisions');
+  assert.ok(sim.state.speed > 5, 'gas resumes promptly');
   advance(sim, 5, neutral);
-  assert.equal(sim.state.speed, 0, 'a reversing car also coasts to rest');
+  assert.equal(sim.state.speed, 0, 'released pedals also coast to rest after the bounce');
   const { elapsed, collisions, checkpoint, progress } = sim.state;
   sim.recover();
   assert.equal(sim.state.elapsed, elapsed);
@@ -69,16 +79,20 @@ test('the solid monument stops a fast car, reverse backs out, and recovery prese
   assert.equal(sim.state.speed, 0);
 });
 
-test('parked cars stay solid on repeated contact and cannot be tunneled through at low frame rates', () => {
+test('plaza parked cars stay solid throughout rebound at low frame rates', () => {
   for (const hz of [30, 60, 120]) {
     const sim = new DrivingSimulation([{ progress: 35, lateral: 0, width: 2, length: 4, kind: 'car' }], { exploration: true });
-    advance(sim, 6, gas, hz);
-    assert.ok(sim.position.x <= -44.09, 'contact should stop at the parked car bumper');
-    assert.equal(sim.state.speed, 0);
+    let feedback = 0;
+    for (let frame = 0; frame < 2.5 * hz; frame++) {
+      feedback += sim.update(1 / hz, gas).filter(event => event === 'crash').length;
+      const halfX = Math.abs(Math.sin(sim.state.heading)) * 2.1 + Math.abs(Math.cos(sim.state.heading)) * .95;
+      const halfZ = Math.abs(Math.cos(sim.state.heading)) * 2.1 + Math.abs(Math.sin(sim.state.heading)) * .95;
+      assert.ok(Math.abs(sim.position.x + 40) >= 2 + halfX - 1e-8 || Math.abs(sim.position.z - 65) >= 1 + halfZ - 1e-8,
+        'the rotated car must never occupy the parked car, including during outward recoil');
+    }
+    assert.equal(feedback, 1);
     assert.equal(sim.state.collisions, 1);
-    const impactX = sim.position.x;
-    advance(sim, 1, reverse, hz);
-    assert.ok(sim.position.x < impactX - 3, 'the driver can reverse out without a reset');
+    assert.ok(sim.state.speed > 5, 'holding gas resumes driving without a reset');
   }
 });
 
@@ -244,7 +258,7 @@ test('props behind a solid terrace wall cannot be knocked by attempted blocked m
   sim.state.heading = Math.PI;
   advance(sim, 5, gas);
   assert.ok(sim.position.z > 43, 'the raised north garden and its retaining face remain solid');
-  assert.equal(sim.state.speed, 0);
+  assert.ok(sim.state.collisions >= 1);
   assert.equal(sim.drainPropImpacts().some(hit => hit.id.startsWith('cafe-table-') || hit.id.startsWith('cafe-chair-')), false);
 });
 

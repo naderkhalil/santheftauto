@@ -199,3 +199,58 @@ test('driving checkpoint includes private airborne and steering state for determ
   const before = second.exportState(), malformed = clone(before); malformed.activeLaunch = 999;
   assert.throws(() => second.restoreState(malformed), /checkpoint/); assert.deepEqual(second.exportState(), before);
 });
+
+test('a checkpoint captured mid-bounce resumes the exact road and plaza collision recovery', () => {
+  const obstacles = [{ progress: 35, lateral: 0, width: 2, length: 4, kind: 'car' as const }];
+  const gas = { ...neutral, throttle: 1 };
+  for (const exploration of [false, true]) {
+    const first = new DrivingSimulation(obstacles, { exploration }), second = new DrivingSimulation(obstacles, { exploration });
+    for (let frame = 0; frame < 3 * 120 && first.state.collisions === 0; frame++) first.update(1 / 120, gas);
+    assert.equal(first.state.collisions, 1);
+    first.update(.2, gas);
+    const checkpoint = clone(first.exportState());
+    assert.ok(checkpoint.collisionRecovery && checkpoint.collisionRecovery.age > 0, 'fixture must capture an active recoil');
+    second.restoreState(checkpoint);
+    assert.deepEqual(second.position, first.position);
+    for (let frame = 0; frame < 240; frame++) {
+      const controls = frame < 60 ? gas : { ...neutral, brake: 1, steer: -.35 };
+      assert.deepEqual(second.update(1 / 120, controls), first.update(1 / 120, controls));
+      // JSON checkpoints canonicalize signed zero; compare the persisted form.
+      assert.deepEqual(clone(second.exportState()), clone(first.exportState()));
+      assert.deepEqual(second.position, first.position);
+    }
+    assert.equal(second.exportState().collisionRecovery, null);
+  }
+});
+
+test('legacy version-one checkpoints default to no rebound, and malformed recovery fails atomically', () => {
+  const original = new DrivingSimulation(); original.update(.4, input);
+  const legacy = clone(original.exportState()); delete legacy.collisionRecovery;
+  const restored = new DrivingSimulation(); restored.restoreState(legacy);
+  assert.equal(restored.exportState().collisionRecovery, null);
+  restored.update(.25, neutral); original.update(.25, neutral);
+  assert.deepEqual(restored.exportState(), original.exportState());
+  const before = restored.exportState();
+  for (const recovery of [
+    { age: -.1, nx: 1, nz: 0, recoil: 4, heading: 0, exitHeading: 0 },
+    { age: 10, nx: 1, nz: 0, recoil: 4, heading: 0, exitHeading: 0 },
+    { age: .2, nx: 0, nz: 0, recoil: 4, heading: 0, exitHeading: 0 },
+    { age: .2, nx: 1, nz: 0, recoil: 100, heading: 0, exitHeading: 0 },
+    { age: .2, nx: 1, nz: 0, recoil: 4, heading: NaN, exitHeading: 0 },
+    { age: .2, nx: 1, nz: 0, recoil: 4, heading: 0, exitHeading: NaN },
+  ]) {
+    assert.throws(() => restored.restoreState({ ...before, collisionRecovery: recovery }), /checkpoint/);
+    assert.deepEqual(restored.exportState(), before, 'invalid recovery cannot partly replace a running simulation');
+  }
+});
+
+test('reset, seek and explicit recovery discard a pending collision rebound', () => {
+  for (const operation of ['reset', 'seek', 'recover'] as const) {
+    const sim = new DrivingSimulation([{ progress: 35, lateral: 0, width: 2, length: 4, kind: 'car' }]);
+    sim.state.speed = 58; sim.update(.5, neutral);
+    assert.ok(sim.exportState().collisionRecovery);
+    if (operation === 'seek') sim.seek(100);
+    else sim[operation]();
+    assert.equal(sim.exportState().collisionRecovery, null, operation);
+  }
+});

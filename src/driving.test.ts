@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DrivingSimulation } from './driving.ts';
 import type { DriveInput, RaceEvent } from './driving.ts';
 import { DemoAutopilot } from './autopilot.ts';
-import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, ROUTE_STOPS, glideSlope, routeSlope, routeYaw, sampleGlidePath, sampleRoute } from './route.ts';
+import { CHECKPOINTS, LAUNCH_ZONES, ROAD_HALF_WIDTH, START_PROGRESS, TRACK_LENGTH, ROUTE_STOPS, glideSlope, routeProgressAt, routeSlope, routeYaw, sampleGlidePath, sampleRoute } from './route.ts';
 
 const throttle: DriveInput = { throttle: 1, brake: 0, steer: 0, drift: false, boost: false };
 const neutral: DriveInput = { ...throttle, throttle: 0 };
@@ -110,20 +110,88 @@ test('boost effects reflect actual power after depletion, release, braking, rese
   assert.equal(sim.boosting, false);
 });
 
-test('head-on obstacle contact stops the car without tunneling and permits reverse', () => {
-  const sim = new DrivingSimulation([{ progress: 35, lateral: 0, width: 2, length: .1, kind: 'barrier' }]);
-  sim.state.speed = 58;
-  const events = sim.update(.5, neutral);
-  assert.ok(events.includes('crash'));
-  assert.equal(sim.state.collisions, 1);
-  assert.equal(sim.state.speed, 0);
-  const impact = sim.state.progress;
-  assert.ok(impact < 32.86);
-  drive(sim, 2, throttle);
-  assert.ok(Math.abs(sim.state.progress-impact)<.01, 'holding gas cannot drive through the barrier');
-  assert.equal(sim.state.collisions, 1, 'continuous contact counts once');
-  drive(sim, 1.5, {...neutral,brake:1});
-  assert.ok(sim.state.progress < impact-8, 'holding brake backs away');
+test('a fast head-on impact recoils smoothly without tunneling, reverse gear or repeated feedback at 30/60/120 Hz', () => {
+  const states = [30, 60, 120].map(hz => {
+    const sim = new DrivingSimulation([{ progress: 35, lateral: 0, width: 2, length: .1, kind: 'barrier' }]);
+    sim.state.speed = 58;
+    let contact: number | undefined, minimum = Infinity, feedback = 0;
+    for (let frame = 0; frame < 3 * hz; frame++) {
+      const previous = { ...sim.position }, heading = sim.state.heading;
+      const events = sim.update(1 / hz, neutral);
+      feedback += events.filter(event => event === 'crash').length;
+      if (contact === undefined && events.includes('crash')) contact = sim.state.progress;
+      if (contact !== undefined) {
+        minimum = Math.min(minimum, sim.state.progress);
+        assert.ok(sim.state.speed >= 0 && sim.state.speed < 10, 'the bounce slows forward gear rather than selecting reverse');
+      }
+      const relative = sim.state.heading - routeYaw(sim.state.progress);
+      const halfWidth = Math.abs(Math.cos(relative)) * .95 + Math.abs(Math.sin(relative)) * 2.1;
+      const halfLength = Math.abs(Math.sin(relative)) * .95 + Math.abs(Math.cos(relative)) * 2.1;
+      assert.ok(Math.abs(sim.state.lateral) >= 1 + halfWidth || Math.abs(sim.state.progress - 35) >= .05 + halfLength - 1e-8,
+        'the rotated footprint cannot pass through even a thin barrier');
+      assert.ok(Math.hypot(sim.position.x - previous.x, sim.position.z - previous.z) < 66 / hz + .1, 'recoil cannot teleport the car');
+      assert.ok(Math.abs(sim.state.heading - heading) <= 3.3 / hz, 'the assist turns smoothly');
+    }
+    assert.ok(contact !== undefined && contact < 32.86);
+    assert.ok(minimum < contact - .05 && minimum > contact - 2, 'the bumper gets a small, bounded outward recoil');
+    assert.equal(feedback, 1); assert.equal(sim.state.collisions, 1);
+    assert.equal(sim.state.speed, 0, 'released pedals still coast to rest after recovery');
+    return sim.exportState();
+  });
+  assert.deepEqual(states[1], states[0]); assert.deepEqual(states[2], states[0]);
+});
+
+test('the collision assist releases throttle, steering and reverse controls after the brief bounce', () => {
+  const obstacles = [{ progress: 35, lateral: 0, width: 2, length: .1, kind: 'barrier' as const }];
+  const stopped = new DrivingSimulation(obstacles); stopped.state.speed = 58;
+  drive(stopped, 3, neutral);
+  assert.equal(stopped.exportState().collisionRecovery, null);
+  const checkpoint = stopped.exportState();
+  const straight = new DrivingSimulation(obstacles), left = new DrivingSimulation(obstacles), backing = new DrivingSimulation(obstacles);
+  for (const sim of [straight, left, backing]) sim.restoreState(checkpoint);
+  drive(straight, .35, throttle); drive(left, .35, { ...throttle, steer: -1 });
+  assert.ok(straight.state.speed > 5 && left.state.speed > 5, 'holding gas accelerates normally again');
+  assert.ok(left.state.heading < straight.state.heading - .05, 'the driver can steer independently again');
+  drive(backing, .5, { ...neutral, brake: 1 });
+  assert.ok(backing.state.speed < -4, 'brake still engages deliberate reverse');
+  assert.ok(Math.hypot(backing.position.x - stopped.position.x, backing.position.z - stopped.position.z) > 1);
+  for (const sim of [straight, left, backing]) assert.equal(sim.state.collisions, 1);
+});
+
+test('deliberate brake and full steering immediately override an active collision assist', () => {
+  const obstacles = [{ progress: 35, lateral: 0, width: 2, length: .1, kind: 'barrier' as const }];
+  const first = new DrivingSimulation(obstacles); first.state.speed = 58;
+  driveUntil(first, () => first.state.collisions > 0, neutral, 1);
+  const checkpoint = first.exportState(), heading = first.state.heading;
+  assert.ok(checkpoint.collisionRecovery);
+  const braking = new DrivingSimulation(obstacles), left = new DrivingSimulation(obstacles), right = new DrivingSimulation(obstacles);
+  for (const sim of [braking, left, right]) sim.restoreState(checkpoint);
+  drive(braking, .4, { ...neutral, brake: 1 });
+  assert.equal(braking.state.heading, heading, 'deliberate reverse disables the automatic turn immediately');
+  assert.ok(braking.state.speed < 0);
+  drive(left, .2, { ...throttle, steer: -1 }); drive(right, .2, { ...throttle, steer: 1 });
+  assert.ok(left.state.heading < heading - .005, 'full left input wins even if recovery chose right');
+  assert.ok(right.state.heading > heading + .005, 'full right input wins even if recovery chose left');
+  for (const sim of [braking, left, right]) assert.equal(sim.state.collisions, 1);
+});
+
+test('recovery does not unlock an exhausted boost while the physical button stays held', () => {
+  const progress = routeProgressAt(175, 385);
+  const sim = new DrivingSimulation([{ progress, lateral: 4.6, width: 1.85, length: 4.2, kind: 'car' }]);
+  sim.seek(progress - 10, 4.6); sim.state.speed = 30; sim.state.boost = .01;
+  const heldBoost = { ...throttle, boost: true };
+  driveUntil(sim, () => sim.state.collisions > 0, heldBoost, 1);
+  assert.equal(sim.exportState().boostLocked, true, 'boost must have exhausted before the impact');
+  assert.ok(sim.exportState().collisionRecovery);
+  for (let frame = 0; frame < 240; frame++) {
+    sim.update(1 / 120, heldBoost);
+    assert.equal(sim.boosting, false, 'temporarily suppressed recovery power is not a physical boost-button release');
+    assert.equal(sim.exportState().boostLocked, true);
+  }
+  assert.equal(sim.state.collisions, 1); assert.equal(sim.exportState().collisionRecovery, null);
+  assert.ok(sim.state.boost > .1, 'the gauge still recharges during the lock');
+  sim.update(1 / 120, throttle); sim.update(1 / 120, heldBoost);
+  assert.equal(sim.boosting, true, 'a real release and repress activates boost after recovery');
 });
 
 test('passing an obstacle in an adjacent lane does not collide', () => {
@@ -138,8 +206,7 @@ test('grounded curb impacts stay inside the road and the driver can steer away',
   const events = driveUntil(sim,()=>sim.state.collisions>0,{...throttle,steer:1},2);
   assert.ok(events.includes('crash'));
   assert.ok(Math.abs(sim.state.lateral) <= ROAD_HALF_WIDTH - .95);
-  // A held wheel can leave the nose facing into the curb; recovery requires
-  // steering back far enough to point into the street before gas moves it.
+  // The driver can override the short assist and steer back into the street.
   driveUntil(sim,()=>sim.state.lateral<ROAD_HALF_WIDTH-1.5&&sim.state.speed>0,{...throttle,steer:-1},2.5);
   assert.ok(sim.state.lateral < ROAD_HALF_WIDTH-1.5);
   assert.ok(sim.state.speed > 0);

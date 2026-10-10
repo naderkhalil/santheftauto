@@ -54,6 +54,10 @@ Cars have equal handling and no player-to-player collisions. The starting grid
 uses join order. Union Square shortcuts remain valid; the ordered Powell,
 Chinatown, waterfront and finish checkpoints still apply. Timing and simulation
 run on the server. A client submits controls, never its own location or result.
+Head-on City Loop impacts use the same short recoil and steering assist as solo
+play. Recoil is swept against solid geometry, preserves forward gear, and never
+teleports the car. The server persists an active rebound across room restoration;
+clients interpolate its motion and animate each new collision once.
 Races end after five minutes, or at most one minute after the first finisher.
 A personal finish shows the recorded place and time while other players finish.
 The final table shows the winner, finishers in the server's order, gaps and

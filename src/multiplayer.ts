@@ -617,7 +617,7 @@ export class Multiplayer {
       group.rotation.order = 'YXZ'; group.rotation.set(-p.state.surfacePitch, p.state.heading, p.state.surfaceRoll);
       peer.label.position.set(group.position.x, group.position.y + 2.9, group.position.z); group.visible = peer.label.visible = p.connected;
       if (me) peer.car.setRemoteDetail(Math.hypot(p.position.x - me.position.x, p.position.z - me.position.z));
-      peer.car.update(dt, { speed: p.state.speed, steer: 0, braking: false, boosting: false, time: now, glide: p.state.glide, airborne: p.state.airborne, altitude: p.state.altitude });
+      peer.car.update(dt, { speed: p.state.speed, steer: 0, braking: false, boosting: false, time: now, glide: p.state.glide, airborne: p.state.airborne, altitude: p.state.altitude, collisions: p.state.collisions });
     }
   }
   private updateGamepad() {

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createLegacyCar, type CarState } from './legacy-car';
+import { createCollisionBounce, createLegacyCar, type CarState } from './legacy-car';
 import { cloneRacerPart, loadRacerKit, releaseRacerPart } from './racer-assets';
 import { CARS, DRIVERS, SPONSORS, DEFAULT_PROFILE, normalizeProfile, type RacerProfile } from './racer-profile';
 export type { CarState } from './legacy-car';
@@ -8,7 +8,8 @@ export type { CarState } from './legacy-car';
 export function createCar(){
   const group=new THREE.Group();group.name='Playable Blender roadster';
   let fallback:ReturnType<typeof createLegacyCar>|null=createLegacyCar();group.add(fallback.group);
-  let model:THREE.Object3D|null=null,disposed=false,profile:RacerProfile={...DEFAULT_PROFILE},hover=0;
+  let model:THREE.Object3D|null=null,disposed=false,profile:RacerProfile={...DEFAULT_PROFILE},hover=0,bodyRoll=0;
+  const collisionBounce=createCollisionBounce();
   let kitSource:THREE.Group|null=null,driver:THREE.Object3D|null=null,driverId='';
   const remoteMeshes:Array<{mesh:THREE.Mesh;castShadow:boolean}>=[];
   const originalShadows=new WeakMap<THREE.Mesh,boolean>();
@@ -102,10 +103,12 @@ export function createCar(){
   }).catch(error=>{group.userData.asset='fallback';console.warn('Blender racer unavailable; keeping the playable fallback.',error);});
   function update(dt:number,state:CarState){
     if(disposed)return;
+    const bump=collisionBounce(dt,state.collisions);
     if(fallback){fallback.update(dt,state);Object.assign(group.userData,{hover:fallback.group.userData.hover,wheelFoldDegrees:fallback.group.userData.wheelFoldDegrees});return;}
     const step=Math.max(0,Math.min(dt,.1));hover=THREE.MathUtils.damp(hover,THREE.MathUtils.clamp(state.glide??(state.airborne?1:0),0,1),10,step);
     for(const wheel of wheels){wheel.spin.rotation.x+=(state.speed/.384*(1-hover)+hover*22)*step;wheel.steer.rotation.y=wheel.front?state.steer*.43*(1-hover):0;wheel.fold.rotation.z=-wheel.side*hover*Math.PI/2;wheel.mount.position.x=wheel.side*(.9+hover*.30);wheel.mount.position.y=.4+hover*.055;}
-    body.rotation.z=THREE.MathUtils.damp(body.rotation.z,-state.steer*.03*(1-hover),8,step);body.position.y=Math.sin(state.time*3.6)*.022*hover-(state.landing??0)*.05;
+    bodyRoll=THREE.MathUtils.damp(bodyRoll,-state.steer*.03*(1-hover),8,step);
+    body.rotation.set(bump.pitch,0,bodyRoll+bump.roll);body.position.y=Math.sin(state.time*3.6)*.022*hover-(state.landing??0)*.05+bump.height;
     if(driver?.visible)driver.rotation.z=-state.steer*.035;
     const wheel=model?.getObjectByName('Steering');if(wheel)wheel.rotation.z=state.steer*.22;
     model?.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m instanceof THREE.MeshStandardMaterial&&m.name==='Tail lamp'){m.emissive.set('#b14435');m.emissiveIntensity=state.braking?2:.18;}});

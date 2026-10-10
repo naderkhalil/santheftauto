@@ -4,7 +4,7 @@ import { DrivingSimulation, type DriveInput } from './driving.ts';
 import { RoomService } from '../server/rooms.ts';
 import { COURSE_VERSION, type RoomSnapshot } from './multiplayer-protocol.ts';
 import { RacerSnapshotBuffer } from './room-interpolation.ts';
-import { CHECKPOINTS, routeProgressAt } from './route.ts';
+import { CHECKPOINTS, routeProgressAt, routeYaw } from './route.ts';
 
 const neutral = { throttle: 0, brake: 0, steer: 0, boost: false, drift: false };
 
@@ -36,7 +36,7 @@ test('network render positions never leak into a subsequent local simulation or 
   }
 });
 
-test('real parked-car impacts, reverse and recovery stay coherent through multiplayer playback', () => {
+test('real parked-car impacts, reverse and recovery stay coherent through multiplayer playback', context => {
   const service = new RoomService(), host = service.create({}, 1000), guest = service.join(host.room.code, {}, 1000);
   const code = host.room.code;
   for (const player of [host, guest]) {
@@ -53,6 +53,12 @@ test('real parked-car impacts, reverse and recovery stay coherent through multip
   const packets: { room: RoomSnapshot; arrival: number }[] = [];
   let now = 6000, sequence = 0;
   const capture = (clock = now) => {
+    const relative = authoritative.state.heading - routeYaw(authoritative.state.progress);
+    const halfWidth = Math.abs(Math.cos(relative)) * .95 + Math.abs(Math.sin(relative)) * 2.1;
+    const halfLength = Math.abs(Math.sin(relative)) * .95 + Math.abs(Math.cos(relative)) * 2.1;
+    assert.ok(Math.abs(authoritative.state.lateral - lane) >= .925 + halfWidth - 1e-8
+      || Math.abs(authoritative.state.progress - obstacleProgress) >= 2.1 + halfLength - 1e-8,
+    'the authoritative car must remain strictly outside the parked car');
     packets.push({ room: service.snapshot(service.room(code), clock), arrival: clock + [40, 80, 55, 70][packets.length % 4] });
   };
   const advance = (milliseconds: number, input: DriveInput) => {
@@ -66,13 +72,19 @@ test('real parked-car impacts, reverse and recovery stay coherent through multip
     }
   };
   const gas = { ...neutral, throttle: 1 }, reverse = { ...neutral, brake: 1 };
-  capture(); advance(2000, gas);
-  assert.equal(authoritative.state.collisions, 1); assert.ok(Math.abs(authoritative.state.speed) < .2);
+  capture();
+  for (let frame = 0; frame < 20 && authoritative.state.collisions === 0; frame++) advance(50, gas);
+  assert.equal(authoritative.state.collisions, 1); assert.ok(authoritative.state.speed < 6);
   const contact = authoritative.state.progress;
   assert.ok(contact <= obstacleProgress - 4.2, 'the production parked car stops the approaching bumper');
   advance(1500, reverse); assert.ok(authoritative.state.progress < contact - 8);
-  advance(3000, gas);
-  assert.equal(authoritative.state.collisions, 2); assert.ok(Math.abs(authoritative.state.progress - contact) < .01);
+  assert.equal(authoritative.state.collisions, 1);
+  for (let frame = 0; frame < 60 && authoritative.state.collisions < 2; frame++) advance(50, gas);
+  assert.equal(authoritative.state.collisions, 2);
+  const reboundAt = now;
+  advance(2000, gas);
+  assert.equal(authoritative.state.collisions, 2, 'held gas exits the second impact without repeating the feedback');
+  assert.ok(authoritative.state.speed > 10 && authoritative.state.progress > obstacleProgress, 'the automatic bounce returns the player to the race');
   const beforeRecovery = { ...authoritative.state };
   now += 25; service.command(code, host.token, { type: 'recover' }, now); capture();
   assert.equal(authoritative.state.collisions, 2); assert.equal(authoritative.state.checkpoint, beforeRecovery.checkpoint);
@@ -84,6 +96,8 @@ test('real parked-car impacts, reverse and recovery stay coherent through multip
   packets.sort((a, b) => a.arrival - b.arrival);
   const buffer = new RacerSnapshotBuffer(), rendered = new DrivingSimulation([], { exploration: true });
   let cursor = 0, latest = packets[0].room, feedback = 0, previousCollisions = 0, previousElapsed = 0;
+  let previousPose: { x: number; y: number; z: number } | undefined;
+  let maximumRenderOverlap = 0;
   for (let frame = packets[0].arrival; frame <= packets.at(-1)!.arrival + 200; frame += 1000 / 60) {
     while (cursor < packets.length && packets[cursor].arrival <= frame) {
       const packet = packets[cursor++]; buffer.push(packet.room, packet.arrival);
@@ -98,12 +112,28 @@ test('real parked-car impacts, reverse and recovery stay coherent through multip
     if (rendered.state.collisions > previousCollisions) feedback += rendered.state.collisions - previousCollisions;
     previousCollisions = rendered.state.collisions;
     assert.equal(rendered.state.collisions, latest.players.find(player => player.id === host.id)!.state.collisions);
-    // Interpolation must never put an overlapping car footprint through the solid car.
-    if (Math.abs(rendered.state.lateral - lane) < 1.875) {
-      assert.ok(rendered.state.progress <= obstacleProgress - 4.2 || rendered.state.progress >= obstacleProgress + 4.2);
+    // The car rotates while it recoils, so use its actual footprint rather than
+    // the old fixed dimensions of a stopped, route-aligned car.
+    const relative = rendered.state.heading - routeYaw(rendered.state.progress);
+    const halfWidth = Math.abs(Math.cos(relative)) * .95 + Math.abs(Math.sin(relative)) * 2.1;
+    const halfLength = Math.abs(Math.sin(relative)) * .95 + Math.abs(Math.cos(relative)) * 2.1;
+    const overlap = Math.min(.925 + halfWidth - Math.abs(rendered.state.lateral - lane),
+      2.1 + halfLength - Math.abs(rendered.state.progress - obstacleProgress));
+    maximumRenderOverlap = Math.max(maximumRenderOverlap, overlap);
+    // A 50ms linear pose blend approximates a curved corner sweep. Allow only
+    // 2cm of visual overlap; authoritative physics above is checked exactly.
+    assert.ok(overlap <= .02, `rendered footprint overlaps the parked car by ${overlap}m`);
+    // Inspect the fully automatic second rebound, after the deliberate reverse
+    // and before the explicit recover command which intentionally relocates it.
+    if (frame >= reboundAt + 150 && frame <= reboundAt + 1950) {
+      assert.ok(rendered.state.speed >= 0, 'the automatic bounce cannot flip the chase camera into reverse');
+      if (previousPose) assert.ok(Math.hypot(rendered.position.x - previousPose.x, rendered.position.z - previousPose.z) < 1,
+        'delayed or out-of-order snapshots cannot cause a backward camera snap');
     }
+    previousPose = rendered.position;
   }
   assert.equal(feedback, 2, 'each real impact produces collision feedback once');
+  context.diagnostic(`Maximum interpolated footprint overlap: ${(maximumRenderOverlap * 1000).toFixed(3)}mm`);
   assert.equal(rendered.state.collisions, 2); assert.equal(rendered.state.checkpoint, beforeRecovery.checkpoint);
   assert.deepEqual(rendered.position, authoritative.position);
   // Delayed pre-impact delivery also cannot replay a hit after recovery.

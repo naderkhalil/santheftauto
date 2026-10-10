@@ -15,21 +15,34 @@ function advance(sim: DrivingSimulation, seconds: number, input = gas, hz = 120)
   return events;
 }
 
-test('a head-on road wall hit can be reversed out of at all supported frame rates', () => {
+test('a head-on road wall hit gently turns back into the street at all supported frame rates', () => {
   const progress = routeProgressAt(175, 385);
+  const states = [];
   for (const hz of [30, 60, 120]) {
     const sim = new DrivingSimulation([], { exploration: true });
     sim.seek(progress); sim.state.heading += Math.PI / 2; sim.state.speed = 35;
-    advance(sim, 1, gas, hz);
-    assert.equal(sim.state.speed, 0);
+    let feedback = 0, contact: number | undefined;
+    for (let frame = 0; frame < 2 * hz; frame++) {
+      const before = sim.position, heading = sim.state.heading;
+      const events = sim.update(1 / hz, gas); feedback += events.filter(event => event === 'crash').length;
+      if (contact === undefined && events.includes('crash')) contact = sim.state.lateral;
+      const relative = sim.state.heading - routeYaw(sim.state.progress);
+      const halfWidth = Math.abs(Math.cos(relative)) * .95 + Math.abs(Math.sin(relative)) * 2.1;
+      assert.ok(Math.abs(sim.state.lateral) + halfWidth <= ROAD_HALF_WIDTH + 1e-8, 'the entire rotating footprint stays inside the visible wall');
+      assert.ok(Math.hypot(sim.position.x - before.x, sim.position.z - before.z) < 43 / hz + .05, 'the rebound never teleports');
+      assert.ok(Math.abs(sim.state.heading - heading) <= 3.3 / hz, 'the heading assist is continuous');
+      assert.ok(sim.state.speed >= 0, 'automatic recoil never selects reverse gear');
+    }
+    assert.equal(feedback, 1);
     assert.equal(sim.state.collisions, 1);
-    assert.ok(sim.state.lateral <= ROAD_HALF_WIDTH - 2.1 + 1e-8, 'the nose stays inside the visible boundary');
-    const wall = sim.state.lateral;
-    advance(sim, .8, reverse, hz);
-    assert.ok(sim.state.lateral < wall - 2, 'brake reverses away from the wall');
-    assert.ok(sim.state.speed < 0);
-    assert.equal(sim.state.collisions, 1);
+    assert.ok(contact !== undefined && sim.state.lateral < contact - .05, 'held gas moves away from contact');
+    const relative = sim.state.heading - routeYaw(sim.state.progress);
+    const halfWidth = Math.abs(Math.cos(relative)) * .95 + Math.abs(Math.sin(relative)) * 2.1;
+    assert.ok(ROAD_HALF_WIDTH - Math.abs(sim.state.lateral) - halfWidth > .5, 'the aligned car has room between its body and the wall');
+    assert.ok(sim.state.progress > progress + 8 && sim.state.speed > 10, 'the car promptly travels down the street again');
+    states.push(sim.exportState());
   }
+  assert.deepEqual(states[1], states[0]); assert.deepEqual(states[2], states[0]);
 });
 
 test('a parked car is solid on a second approach and continuous contact counts only once', () => {
@@ -37,15 +50,18 @@ test('a parked car is solid on a second approach and continuous contact counts o
   for (const hz of [30, 60, 120]) {
     const sim = new DrivingSimulation([{ progress: progress + 10, lateral: 0, width: 2, length: 4, kind: 'car' }]);
     sim.seek(progress); sim.state.speed = 30;
-    advance(sim, 2, gas, hz);
-    assert.equal(sim.state.collisions, 1); assert.ok(Math.abs(sim.state.speed) < .2);
+    for (let frame = 0; frame < hz && sim.state.collisions === 0; frame++) sim.update(1 / hz, gas);
+    assert.equal(sim.state.collisions, 1); assert.ok(sim.state.speed < 6);
     const contact = sim.state.progress;
     advance(sim, 1.5, reverse, hz);
     assert.ok(sim.state.progress < contact - 8);
-    advance(sim, 3, gas, hz);
+    assert.equal(sim.state.collisions, 1, 'the outward bounce and deliberate reverse are still one impact');
+    for (let frame = 0; frame < 3 * hz && sim.state.collisions < 2; frame++) sim.update(1 / hz, gas);
     assert.equal(sim.state.collisions, 2);
-    assert.ok(Math.abs(sim.state.speed) < .2);
-    assert.ok(Math.abs(sim.state.progress-contact)<.01);
+    assert.ok(sim.state.speed < 6);
+    const relative = sim.state.heading - routeYaw(sim.state.progress);
+    const halfLength = Math.abs(Math.sin(relative)) * .95 + Math.abs(Math.cos(relative)) * 2.1;
+    assert.ok(sim.state.progress + halfLength <= progress + 8, 'the second approach also stays behind the parked bumper');
   }
 });
 

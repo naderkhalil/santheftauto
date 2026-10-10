@@ -122,6 +122,29 @@ test('playable cartoon cars preserve choices and private material lifetimes thro
       assert.notEqual(car.group.getObjectByName('Wheel_FL')!.rotation.x, 0);
     });
 
+    await t.test('new contacts bounce the body once without moving authoritative pose or tires', async () => {
+      const car = create(); await car.ready;
+      car.group.position.set(7, 2, 12);
+      const body = car.group.getObjectByName('Vehicle')!.parent!;
+      const wheel = car.group.getObjectByName('Wheel_FL')!;
+      const wheelPosition = wheel.getWorldPosition(new THREE.Vector3());
+      const state = { speed: 0, steer: 0, braking: false, boosting: false, time: 0, collisions: 6 };
+      car.update(1 / 60, state);
+      assert.equal(body.rotation.x, 0, 'Joining a car with old contacts must not replay a collision');
+      assert.equal(body.position.y, 0);
+      car.update(1 / 60, { ...state, collisions: 7 });
+      assert.ok(Math.abs(body.rotation.x) > .001, 'A new contact should visibly compress the suspension');
+      assert.ok(Math.abs(body.position.y) > .001 && Math.abs(body.position.y) < .08);
+      assert.deepEqual(car.group.position.toArray(), [7, 2, 12], 'Feedback cannot alter the physics pose');
+      assert.deepEqual(wheel.getWorldPosition(new THREE.Vector3()), wheelPosition, 'The tires stay grounded beneath the body motion');
+      for (let frame = 0; frame < 60; frame++) car.update(1 / 60, { ...state, collisions: 7 });
+      assert.equal(body.rotation.x, 0); assert.equal(body.position.y, 0, 'Repeated snapshots let the one bounce settle');
+      car.update(1 / 60, { ...state, collisions: 8 });
+      assert.ok(Math.abs(body.rotation.x) > .001, 'A subsequent distinct contact can bounce again');
+      car.update(1 / 60, { ...state, collisions: 0 });
+      assert.equal(body.rotation.x, 0); assert.equal(body.position.y, 0, 'Starting a new race clears an active impact');
+    });
+
     await t.test('detached wheels release shared private materials once without affecting other cars', async () => {
       const car = create(), peer = create(); await Promise.all([car.ready, peer.ready]);
       const privateMaterials = materials(car.group), peerMaterials = materials(peer.group);

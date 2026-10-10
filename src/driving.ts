@@ -48,6 +48,7 @@ export type DriveState = {
 };
 export type RaceEvent = 'checkpoint' | 'finish' | 'missed-gate' | 'crash' | 'launch' | 'land' | 'boost-pad';
 export type PropImpact = { id: string; x: number; y: number; z: number; vx: number; vz: number; speed: number };
+type CollisionRecovery = { age: number; nx: number; nz: number; recoil: number; heading: number; exitHeading: number };
 /** Dynamic physics only; restore with the same route and obstacle configuration. */
 export type DrivingCheckpoint = {
   version: 1; state: DriveState; lateralVelocity: number; steering: number;
@@ -57,12 +58,15 @@ export type DrivingCheckpoint = {
   explorationEnabled: boolean; untimed: boolean; explorationActive: boolean;
   worldX: number; worldZ: number; safeProgress: number; plazaHop: boolean;
   knockedProps: string[]; propImpacts: PropImpact[]; scrapeNormals: string[];
+  /** Optional when reading checkpoints written before collision recovery. */
+  collisionRecovery?: CollisionRecovery | null;
 };
 
 const STEP = 1 / 120;
 const CAR_HALF_WIDTH = .95;
 const CAR_HALF_LENGTH = 2.1;
 const MIN_LAUNCH_SPEED = 24;
+const COLLISION_RECOVERY_SECONDS = 1.25;
 /** Speed-sensitive steering: tight at low speed, wider when approaching too fast. */
 export function steeringCurvature(speed: number, drift = false): number {
   return Math.min(.105, 2.15 / Math.max(speed, 1)) * (drift ? 1.25 : 1);
@@ -107,7 +111,7 @@ function sweepBox(x: number, z: number, dx: number, dz: number, box: SolidBox, e
   if (far < 0 || near > 1) return;
   if (near < 0) {
     // Rotating a long car beside a wall may put its conservative footprint a
-    // few centimetres inside. Allow motion away, otherwise push out gently.
+    // few centimetres inside. Resolve that overlap even while moving away.
     const exits = [
       { distance: x - (box.minX - extentX), nx: -1, nz: 0 },
       { distance: box.maxX + extentX - x, nx: 1, nz: 0 },
@@ -115,7 +119,6 @@ function sweepBox(x: number, z: number, dx: number, dz: number, box: SolidBox, e
       { distance: box.maxZ + extentZ - z, nx: 0, nz: 1 },
     ].sort((a, b) => a.distance - b.distance);
     const exit = exits[0];
-    if (dx * exit.nx + dz * exit.nz > 0) return;
     return { time: 0, nx: exit.nx, nz: exit.nz, penetration: Math.max(0, exit.distance) };
   }
   return { time: Math.max(0, near), nx, nz, penetration: 0 };
@@ -185,6 +188,7 @@ export class DrivingSimulation {
   private knockedProps = new Set<string>();
   private propImpacts: PropImpact[] = [];
   private scrapeNormals = new Set<string>();
+  private collisionRecovery: CollisionRecovery | null = null;
 
   /** Whether boost was actually applied during the latest physics step. */
   get boosting(): boolean { return this.lastBoosting; }
@@ -244,6 +248,7 @@ export class DrivingSimulation {
     this.safeProgress = this.route.START_PROGRESS;
     this.plazaHop = false;
     this.knockedProps.clear(); this.propImpacts.length = 0; this.scrapeNormals.clear();
+    this.collisionRecovery = null;
   }
 
   exportState(): DrivingCheckpoint {
@@ -258,6 +263,7 @@ export class DrivingSimulation {
       worldX: this.worldX, worldZ: this.worldZ, safeProgress: this.safeProgress, plazaHop: this.plazaHop,
       knockedProps: [...this.knockedProps], propImpacts: this.propImpacts.map(impact => ({ ...impact })),
       scrapeNormals: [...this.scrapeNormals],
+      collisionRecovery: this.collisionRecovery ? { ...this.collisionRecovery } : null,
     };
   }
 
@@ -288,6 +294,13 @@ export class DrivingSimulation {
       if (typeof impact.id !== 'string' || impact.id.length > 128) fail();
       return { id: impact.id as string, x: number(impact.x), y: number(impact.y), z: number(impact.z), vx: number(impact.vx), vz: number(impact.vz), speed: number(impact.speed) };
     });
+    let collisionRecovery: CollisionRecovery | null = null;
+    if (source.collisionRecovery != null) {
+      const recovery = record(source.collisionRecovery);
+      collisionRecovery = { age: number(recovery.age), nx: number(recovery.nx), nz: number(recovery.nz), recoil: number(recovery.recoil), heading: number(recovery.heading), exitHeading: number(recovery.exitHeading) };
+      if (collisionRecovery.age < 0 || collisionRecovery.age > COLLISION_RECOVERY_SECONDS || collisionRecovery.recoil < 0 || collisionRecovery.recoil > 8
+        || Math.abs(Math.hypot(collisionRecovery.nx, collisionRecovery.nz) - 1) > 1e-6) fail();
+    }
     const parsed: DrivingCheckpoint = {
       version: 1, state, lateralVelocity: number(source.lateralVelocity), steering: number(source.steering),
       wallBlocked: boolean(source.wallBlocked), edgeCooldown: number(source.edgeCooldown), activeLaunch,
@@ -298,6 +311,7 @@ export class DrivingSimulation {
       untimed: boolean(source.untimed), explorationActive: boolean(source.explorationActive),
       worldX: number(source.worldX), worldZ: number(source.worldZ), safeProgress: number(source.safeProgress), plazaHop: boolean(source.plazaHop),
       knockedProps: strings(source.knockedProps), propImpacts, scrapeNormals: strings(source.scrapeNormals),
+      collisionRecovery,
     };
     if (parsed.safeProgress < 0 || parsed.safeProgress > this.route.TRACK_LENGTH || (this.customRoute && parsed.explorationEnabled)) fail();
     this.networkPosition = null;
@@ -310,6 +324,7 @@ export class DrivingSimulation {
     this.untimed = parsed.untimed; this.explorationActive = parsed.explorationActive;
     this.worldX = parsed.worldX; this.worldZ = parsed.worldZ; this.safeProgress = parsed.safeProgress; this.plazaHop = parsed.plazaHop;
     this.knockedProps = new Set(parsed.knockedProps); this.propImpacts = parsed.propImpacts; this.scrapeNormals = new Set(parsed.scrapeNormals);
+    this.collisionRecovery = parsed.collisionRecovery ?? null;
   }
 
   /** Start the public-square playground without a race countdown. */
@@ -381,6 +396,7 @@ export class DrivingSimulation {
     this.plazaHop = false;
     this.scrapeNormals.clear();
     this.hitObstacles.clear();
+    this.collisionRecovery = null;
     for (const index of this.launchedZones) if (this.route.LAUNCH_ZONES[index].progress >= s.progress) this.launchedZones.delete(index);
     for (const index of this.collectedBoosts) if (this.route.BOOST_ZONES![index].end >= s.progress) this.collectedBoosts.delete(index);
   }
@@ -460,10 +476,55 @@ export class DrivingSimulation {
     }
   }
 
+  /** A short swept recoil, never a teleport or a reverse-gear camera change. */
+  private beginCollisionRecovery(nx: number, nz: number, input: DriveInput, passObstacle = false): boolean {
+    const s = this.state;
+    if (this.collisionRecovery || s.airborne || s.speed <= 2) return false;
+    const tangentX = -nz, tangentZ = nx, yaw = this.route.routeYaw(s.progress);
+    // Respect a deliberate turn; otherwise follow the open wall toward the
+    // route. A square-on parked-car hit chooses the side nearer lane centre.
+    let preference = Math.abs(input.steer) > .15
+      ? input.steer * (Math.cos(s.heading) * tangentX - Math.sin(s.heading) * tangentZ)
+      : Math.sin(yaw) * tangentX + Math.cos(yaw) * tangentZ;
+    if (Math.abs(preference) < .15) {
+      const center = this.route.routePoint(s.progress, 0), position = this.position;
+      preference = (center.x - position.x) * tangentX + (center.z - position.z) * tangentZ;
+    }
+    const side = preference < 0 ? -1 : 1;
+    const heading = Math.atan2(tangentX * side + nx * .15, tangentZ * side + nz * .15);
+    const routeHeading = yaw + (Math.cos(s.heading - yaw) < 0 ? Math.PI : 0);
+    this.collisionRecovery = { age: 0, nx, nz, recoil: clamp(s.speed * .25, 3.5, 8),
+      heading, exitHeading: passObstacle ? routeHeading : Math.atan2(tangentX * side, tangentZ * side) };
+    s.speed = Math.min(6, s.speed * .14);
+    s.surge = 0; this.lastBoosting = false;
+    this.edgeCooldown = Math.max(this.edgeCooldown, COLLISION_RECOVERY_SECONDS + .2);
+    return true;
+  }
+
+  private advanceCollisionRecovery(dt: number, input: DriveInput) {
+    const recovery = this.collisionRecovery;
+    if (!recovery || this.state.airborne) {
+      if (this.state.airborne) this.collisionRecovery = null;
+      return { input, vx: 0, vz: 0 };
+    }
+    recovery.age = Math.min(COLLISION_RECOVERY_SECONDS, recovery.age + dt);
+    const settle = clamp((recovery.age - .65) / .5, 0, 1);
+    const exitTurn = Math.atan2(Math.sin(recovery.exitHeading - recovery.heading), Math.cos(recovery.exitHeading - recovery.heading));
+    const target = recovery.heading + exitTurn * settle;
+    const turn = Math.atan2(Math.sin(target - this.state.heading), Math.cos(target - this.state.heading));
+    // Braking or steering deliberately takes priority over the courtesy turn.
+    this.state.heading += clamp(turn, -3.2 * dt, 3.2 * dt) * (input.brake > .2 ? 0 : 1 - Math.abs(input.steer));
+    const recoil = recovery.recoil * Math.exp(-8 * recovery.age);
+    const pedal = clamp((recovery.age - .22) / .35, 0, 1);
+    if (recovery.age >= COLLISION_RECOVERY_SECONDS) this.collisionRecovery = null;
+    return { input: { ...input, throttle: input.throttle * pedal, boost: false }, vx: recovery.nx * recoil, vz: recovery.nz * recoil };
+  }
+
   private stepExploration(dt: number, input: DriveInput, events: RaceEvent[]) {
     const s = this.state, oldX = this.worldX, oldZ = this.worldZ, oldY = s.y;
-    this.edgeCooldown = Math.max(0, this.edgeCooldown - dt);
     if (!input.boost) this.boostLocked = false;
+    const recovery = this.advanceCollisionRecovery(dt, input); input = recovery.input;
+    this.edgeCooldown = Math.max(0, this.edgeCooldown - dt);
     const boosting = input.boost && !this.boostLocked && s.boost > 0 && input.throttle > 0 && input.brake < .2 && s.speed >= 0;
     this.lastBoosting = boosting;
     if (boosting) {
@@ -485,20 +546,21 @@ export class DrivingSimulation {
     const crawl = this.wallBlocked ? (input.throttle - input.brake) * 7 : 0;
     const yawSpeed = Math.abs(s.speed) > Math.abs(crawl) ? s.speed : crawl;
     s.heading += yawSpeed * this.steering * steeringCurvature(Math.abs(yawSpeed), input.drift) * dt;
-    const dx = Math.sin(s.heading) * s.speed * dt, dz = Math.cos(s.heading) * s.speed * dt;
+    const dx = (Math.sin(s.heading) * s.speed + recovery.vx) * dt, dz = (Math.cos(s.heading) * s.speed + recovery.vz) * dt;
     const ex = Math.abs(Math.sin(s.heading)) * CAR_HALF_LENGTH + Math.abs(Math.cos(s.heading)) * CAR_HALF_WIDTH;
     const ez = Math.abs(Math.cos(s.heading)) * CAR_HALF_LENGTH + Math.abs(Math.sin(s.heading)) * CAR_HALF_WIDTH;
     let moveX = dx, moveZ = dz, moveSeconds = dt, collided = false, initialRetention = 1, maxNormalRatio = 0;
+    let impactNormal: { nx: number; nz: number; passObstacle: boolean } | undefined;
     const contacts = new Set<string>();
     const paths: { x: number; z: number; dx: number; dz: number; seconds: number }[] = [];
     const boxes: readonly SolidBox[] = [...PLAYGROUND_COLLIDERS, ...this.playgroundObstacles, ...DISTRICT_WALLS];
     for (let pass = 0; pass < 3 && Math.hypot(moveX, moveZ) > 1e-8; pass++) {
-      let contact: ReturnType<typeof sweepBox>;
+      let contact: ReturnType<typeof sweepBox>, passObstacle = false;
       for (const box of boxes) {
         if (box.propId) continue;
         if (s.y + 1.65 < box.minY || s.y >= box.maxY - .08) continue;
         const candidate = sweepBox(this.worldX, this.worldZ, moveX, moveZ, box, ex, ez);
-        if (candidate && (!contact || candidate.time < contact.time)) contact = candidate;
+        if (candidate && (!contact || candidate.time < contact.time)) { contact = candidate; passObstacle = box.id.startsWith('parked-'); }
       }
       if (!contact) {
         paths.push({ x: this.worldX, z: this.worldZ, dx: moveX, dz: moveZ, seconds: moveSeconds });
@@ -509,7 +571,7 @@ export class DrivingSimulation {
       contacts.add(normalKey);
       const normalRatio = Math.max(0, -(dx * contact.nx + dz * contact.nz) / Math.max(Math.hypot(dx, dz), 1e-8));
       const tangentRatio = Math.sqrt(Math.max(0, 1 - normalRatio * normalRatio));
-      maxNormalRatio = Math.max(maxNormalRatio, normalRatio);
+      if (normalRatio > maxNormalRatio) { maxNormalRatio = normalRatio; impactNormal = { ...contact, passObstacle }; }
       // Shed the normal component once at first contact, rather than reducing
       // speed once per rendered frame. Sustained scrapes retain momentum.
       if (!this.scrapeNormals.has(normalKey)) initialRetention = Math.min(initialRetention, tangentRatio);
@@ -538,7 +600,9 @@ export class DrivingSimulation {
       if (this.edgeCooldown === 0 && Math.abs(s.speed) * maxNormalRatio > 5 && initialRetention < 1) {
         s.collisions++; events.push('crash'); this.edgeCooldown = .7;
       }
-      const retainedSpeed = Math.abs(s.speed) * initialRetention;
+      const recovered = impactNormal && maxNormalRatio > .72 && !this.scrapeNormals.has(`${impactNormal.nx},${impactNormal.nz}`)
+        && this.beginCollisionRecovery(impactNormal.nx, impactNormal.nz, input, impactNormal.passObstacle);
+      const retainedSpeed = Math.abs(s.speed) * (recovered || this.collisionRecovery ? 1 : initialRetention);
       const scrapeDrag = (.35 + retainedSpeed * .10 * maxNormalRatio) * dt;
       s.speed = Math.sign(s.speed) * Math.max(0, retainedSpeed - scrapeDrag);
     }
@@ -591,12 +655,13 @@ export class DrivingSimulation {
   private step(dt: number, input: DriveInput, events: RaceEvent[]) {
     if (this.explorationActive) { this.stepExploration(dt, input, events); return; }
     const s = this.state;
+    if (!input.boost) this.boostLocked = false;
+    const recovery = this.advanceCollisionRecovery(dt, input); input = recovery.input;
     const oldProgress = s.progress;
     const oldLateral = s.lateral;
     const oldPosition = this.route.routePoint(oldProgress, oldLateral);
     const wasScraping = this.wallBlocked;
     this.edgeCooldown = Math.max(0, this.edgeCooldown - dt);
-    if (!input.boost) this.boostLocked = false;
     const boosting = input.boost && !this.boostLocked && s.boost > 0 && input.throttle > 0 && input.brake < .2;
     this.lastBoosting = boosting;
     if (boosting) {
@@ -653,8 +718,8 @@ export class DrivingSimulation {
       s.heading = this.route.routeYaw(s.progress) + Math.atan2(this.lateralVelocity, forwardSpeed);
       this.wallBlocked = false;
     } else {
-      // At a blocked curb, gas plus steering can turn the nose away at a crawl.
-      // The curb never supplies a new heading or pushes progress around a bend.
+      // At a blocked curb, gas plus steering can still turn the nose at a crawl;
+      // the brief impact assist above yields to the driver's steering.
       const yawSpeed = this.wallBlocked ? (Math.abs(s.speed) > 8 ? s.speed : (input.throttle - input.brake) * 8) : s.speed;
       s.heading += yawSpeed * this.steering * steeringCurvature(Math.abs(yawSpeed), input.drift) * dt;
       const relative = s.heading - this.route.routeYaw(s.progress);
@@ -665,12 +730,15 @@ export class DrivingSimulation {
       // straight in world space as the road curves underneath it.
       forwardSpeed = s.speed * Math.cos(relative) / (1 - this.route.routeCurvature(s.progress) * s.lateral);
     }
+    const roadYaw = this.route.routeYaw(oldProgress);
+    this.lateralVelocity += recovery.vx * Math.cos(roadYaw) - recovery.vz * Math.sin(roadYaw);
+    forwardSpeed += (recovery.vx * Math.sin(roadYaw) + recovery.vz * Math.cos(roadYaw)) / (1 - this.route.routeCurvature(oldProgress) * oldLateral);
     s.lateral += this.lateralVelocity * dt;
     s.progress = Math.max(0, s.progress + forwardSpeed * dt);
 
     // Pads are physical strips: the swept wheel corridor must cross the color.
     // Crossing elsewhere in the street cannot collect a boost, nor can flight.
-    if (!s.airborne && s.progress > oldProgress && input.brake < .2) {
+    if (!s.airborne && !this.collisionRecovery && s.progress > oldProgress && input.brake < .2) {
       this.route.BOOST_ZONES?.forEach((zone, index) => {
         if (this.collectedBoosts.has(index)) return;
         if (!intersectsObstacle(oldProgress, oldLateral, s.progress, s.lateral, {
@@ -694,10 +762,15 @@ export class DrivingSimulation {
       if (!s.airborne && this.lateralVelocity * side > 0) {
         const normalRatio = clamp(Math.abs(this.lateralVelocity) / Math.max(Math.abs(s.speed), 1e-8), 0, 1);
         const tangentRatio = Math.sqrt(Math.max(0, 1 - normalRatio * normalRatio));
-        if (tangentRatio < .12) s.speed = 0;
-        else {
-          if (!wasScraping) s.speed *= tangentRatio;
-          s.speed = Math.sign(s.speed) * Math.max(0, Math.abs(s.speed) - (.35 + Math.abs(s.speed) * .10 * normalRatio) * dt);
+        const recovered = normalRatio > .72 && !wasScraping && this.beginCollisionRecovery(-side * Math.cos(roadYaw), side * Math.sin(roadYaw), input);
+        // Inward movement stays blocked, without applying the impact penalty
+        // again on every physics step during the rebound.
+        if (!recovered && !this.collisionRecovery) {
+          if (tangentRatio < .12) s.speed = 0;
+          else {
+            if (!wasScraping) s.speed *= tangentRatio;
+            s.speed = Math.sign(s.speed) * Math.max(0, Math.abs(s.speed) - (.35 + Math.abs(s.speed) * .10 * normalRatio) * dt);
+          }
         }
         this.wallBlocked = true;
       }
@@ -733,10 +806,15 @@ export class DrivingSimulation {
         const into = dx*contact.nx+dz*contact.nz;
         s.lateral += (dx-Math.min(0,into)*contact.nx)*(1-t);
         s.progress = Math.max(0,s.progress+(dz-Math.min(0,into)*contact.nz)*(1-t));
-        if (!this.hitObstacles.has(i) && Math.abs(s.speed)*normalRatio>5) { s.collisions++; events.push('crash'); }
+        if (!this.hitObstacles.has(i) && this.edgeCooldown === 0 && Math.abs(s.speed)*normalRatio>5) { s.collisions++; events.push('crash'); this.edgeCooldown = .7; }
         const retention = Math.sqrt(Math.max(0,1-normalRatio*normalRatio));
-        if (retention<.12) s.speed=0;
-        else if (!this.hitObstacles.has(i)) s.speed*=retention;
+        const recovered = normalRatio > .72 && !this.hitObstacles.has(i) && this.beginCollisionRecovery(
+          contact.nx * Math.cos(roadYaw) + contact.nz * Math.sin(roadYaw),
+          -contact.nx * Math.sin(roadYaw) + contact.nz * Math.cos(roadYaw), input, true);
+        if (!recovered && !this.collisionRecovery) {
+          if (retention<.12) s.speed=0;
+          else if (!this.hitObstacles.has(i)) s.speed*=retention;
+        }
         this.hitObstacles.add(i);this.wallBlocked=true;
         continue;
       }
