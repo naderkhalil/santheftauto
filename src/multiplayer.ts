@@ -12,6 +12,7 @@ import { RacerSnapshotBuffer } from './room-interpolation';
 import { RoomStreamChannel, RoomStreamError, RoomStreamRetryPolicy, roomTransportFor, type RoomTransport } from './room-stream';
 import { FinishLeaderboard, getGlobalLeaderboard } from './leaderboard';
 import type { LeaderboardBoard } from './leaderboard-protocol';
+import { getRenderProfile } from './render-profile';
 import './multiplayer.css';
 
 const read = (key: string) => { try { return sessionStorage.getItem(key); } catch { return null; } };
@@ -70,6 +71,7 @@ export class Multiplayer {
   private padNextMove = 0;
   private leaderboard: FinishLeaderboard;
   private leaderboardRound = '';
+  private mobilePreview = getRenderProfile().mobile;
 
   constructor(private root: THREE.Group, private hooks: Hooks) {
     try { this.profile = normalizeProfile(JSON.parse(localStorage.getItem('sf-racer-profile') ?? JSON.stringify(DEFAULT_PROFILE))); } catch {}
@@ -77,6 +79,10 @@ export class Multiplayer {
     this.dialog.className = 'mp-dialog';
     this.dialog.setAttribute('aria-labelledby', 'mp-title');
     this.dialog.innerHTML = setupMarkup();
+    if (this.mobilePreview) {
+      this.dialog.querySelector<HTMLElement>('.mp-portrait-hint')!.textContent = 'YOUR DRIVER';
+      this.dialog.querySelector<HTMLElement>('.mp-car-caption>span')!.textContent = 'CHOOSE YOUR COLOUR';
+    }
     this.leaderboard = new FinishLeaderboard(this.dialog.querySelector<HTMLElement>('#mp-leaderboard')!, (mode, entryId) => getGlobalLeaderboard().open(mode, entryId));
     document.body.append(this.dialog);
     this.standings.className = 'mp-standings';
@@ -237,7 +243,7 @@ export class Multiplayer {
     const driver = DRIVERS.find(d => d.id === this.profile.driver) ?? DRIVERS[0];
     this.text('mp-driver-number', `${String(DRIVERS.indexOf(driver) + 1).padStart(2, '0')} / ${String(DRIVERS.length).padStart(2, '0')}`);
     this.text('mp-driver-move', driver.name); this.text('mp-driver-bio', driver.bio); this.text('mp-driver-stat', '');
-    this.dialog.querySelector<HTMLCanvasElement>('#mp-showroom')!.setAttribute('aria-label', this.step === 'driver' ? `3D portrait of ${driver.name}. Drag to look around.` : 'Live 3D car preview. Drag to look around.');
+    this.dialog.querySelector<HTMLCanvasElement>('#mp-showroom')!.setAttribute('aria-label', this.mobilePreview ? `Selected driver: ${driver.name}` : this.step === 'driver' ? `3D portrait of ${driver.name}. Drag to look around.` : 'Live 3D car preview. Drag to look around.');
     this.text('mp-car-title', carName(this.profile.car)); this.text('mp-car-description', 'Open cockpit · Equal performance');
   }
   private renderLineup() {
@@ -526,7 +532,7 @@ export class Multiplayer {
     const visualParent = this.dialog.querySelector(this.step === 'driver' ? '#mp-portrait-mount' : '.mp-flow')!;
     if (visual.parentElement !== visualParent) visualParent.append(visual);
     const selectedDriver = DRIVERS.find(driver => driver.id === this.profile.driver) ?? DRIVERS[0];
-    this.dialog.querySelector<HTMLCanvasElement>('#mp-showroom')!.setAttribute('aria-label', this.step === 'driver' ? `3D portrait of ${selectedDriver.name}. Drag to look around.` : 'Live 3D car preview. Drag to look around.');
+    this.dialog.querySelector<HTMLCanvasElement>('#mp-showroom')!.setAttribute('aria-label', this.mobilePreview ? `Selected driver: ${selectedDriver.name}` : this.step === 'driver' ? `3D portrait of ${selectedDriver.name}. Drag to look around.` : 'Live 3D car preview. Drag to look around.');
     this.text('mp-roster-note', room ? 'Your friends’ picks appear here live.' : 'Find your kind of fast.');
     this.dialog.querySelectorAll<HTMLButtonElement>('[data-step]').forEach(button => {
       button.setAttribute('aria-current', button.dataset.step === this.step ? 'step' : 'false');

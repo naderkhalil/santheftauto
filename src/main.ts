@@ -37,6 +37,7 @@ import { DEFAULT_PROFILE } from './racer-profile';
 import { SoloLeaderboardRecorder } from './leaderboard-client';
 import { FinishLeaderboard, getGlobalLeaderboard } from './leaderboard';
 import { RaceCollectibles } from './race-replay';
+import { getRenderProfile, renderPixelRatio } from './render-profile';
 
 void initAnalytics();
 
@@ -139,38 +140,53 @@ async function boot() {
   await yieldForPaint();
   const canvas = el<HTMLCanvasElement>('world');
   document.querySelectorAll<HTMLElement>('.progress-tick').forEach((tick,i)=>tick.style.left=`${CHECKPOINTS[i]/TRACK_LENGTH*100}%`);
+  const renderProfile = getRenderProfile();
+  canvas.dataset.graphics = renderProfile.mobile ? 'mobile' : 'desktop';
+  document.documentElement.dataset.graphics = canvas.dataset.graphics;
   let renderer: THREE.WebGLRenderer;
-  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:!renderProfile.mobile, powerPreference:renderProfile.mobile?'default':'high-performance'}); }
   catch { el('loading').innerHTML = `<div class="no-webgl"><h2>This run needs WebGL.</h2><p>Try a recent Chrome, Edge, Firefox, or Safari browser with hardware acceleration enabled, then reload this page.</p><button class="primary" onclick="location.reload()">TRY AGAIN ↗</button></div>`; return; }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
+  renderer.setPixelRatio(renderPixelRatio(devicePixelRatio, innerWidth, innerHeight, renderProfile.maxPixelRatio, renderProfile.mobile));
   renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !renderProfile.mobile;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.info.autoReset=false;
+  let graphicsContextLost=false;
+  let suspendGraphics=()=>{};
+  canvas.addEventListener('webglcontextlost',event=>{
+    event.preventDefault();graphicsContextLost=true;suspendGraphics();
+    const loading=el('loading');loading.classList.remove('hidden','faded');
+    loading.innerHTML='<div class="no-webgl"><h2>Let’s restart the city.</h2><p>Your browser paused the graphics. Reload to get back on the road.</p><button class="primary" onclick="location.reload()">RELOAD GAME ↗</button></div>';
+  });
   loadingStage('Building the city');
   const scene = new THREE.Scene();
   // The authored map/physics use north +Z; the visible city uses north -Z.
   // Reflect geometry once, while every camera remains outside this root.
   const cityRoot = createCityRoot(); scene.add(cityRoot);
   const camera = new THREE.PerspectiveCamera(57, innerWidth / innerHeight, .15, 4200);
-  const atmosphere=createAtmosphere(renderer,scene,camera);
+  const atmosphere=createAtmosphere(renderer,scene,camera,{lightweight:renderProfile.mobile});
   const world = createCityLoop(cityRoot);
+  // On phones, finish one group before starting another to bound decode/merge peaks.
+  if(renderProfile.mobile){await waitForStartupAssets([['city streets',world.ready]]);await yieldForPaint();}
   const landmarks=createUnionSquare(cityRoot),chinatown=createChinatown(cityRoot);
+  if(renderProfile.mobile){await waitForStartupAssets([['Union Square',landmarks.ready]]);await yieldForPaint();}
   // This new kit already uses the physical world axes and readable lettering.
   const squareStreetDetails=createSquareStreetDetails(scene);
   const waterfront=createWaterfront(scene);
+  if(renderProfile.mobile){await waitForStartupAssets([['the waterfront',waterfront.ready]]);await yieldForPaint();}
   const car=createCar();cityRoot.add(car.group);
   // Wait for the existing loaders and their approved fallbacks together. A
   // timeout keeps setup blocked instead of admitting a racer to a partial map.
   await waitForStartupAssets([
-    ['road textures',upgradeRoadSurface(scene,renderer)],['Pacific sky',atmosphere.loadPhotographicSky()],
+    ['road textures',renderProfile.highDetailAssets?upgradeRoadSurface(scene,renderer):Promise.resolve()],['Pacific sky',atmosphere.loadPhotographicSky()],
     ['Union Square',landmarks.ready],['city traffic',world.ready],['street details',squareStreetDetails.ready],
     ['the waterfront',waterfront.ready],['drivers and cars',car.ready],
   ]);
-  canvas.dataset.waterfrontAssets='blender';
+  if(graphicsContextLost)return;
+  canvas.dataset.waterfrontAssets=renderProfile.mobile?'blender-lod':'blender';
   loadingStage('Preparing the race');
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
   const sim = new DrivingSimulation(world.obstacles,{exploration:true});
@@ -190,46 +206,51 @@ async function boot() {
       if(distance<32){audio.cableBell(distance,(cable.lateral-lateral)/9);soundedCableCars.add(cable.progress);}
     }
   }
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene,camera));
-  const ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.blendIntensity=.45;ao.updateGtaoMaterial({radius:1.05,thickness:.75,distanceExponent:1.6,samples:8});ao.updatePdMaterial({radius:4,rings:2,samples:8});
-  // GTAO's normal override cannot reproduce glass transparency or leaf alpha
-  // masks. Omit those surfaces from AO instead of treating panes and leaf cards
-  // as solid occluders. All mesh-producing assets have resolved above; only dust
-  // Points are added below, and GTAO already excludes those itself.
-  const aoExcludedMeshes:THREE.Mesh[]=[];
-  scene.traverse(object=>{
-    if(!(object instanceof THREE.Mesh))return;
-    const materials=Array.isArray(object.material)?object.material:[object.material];
-    if(materials.length&&materials.every(material=>material.transparent||material.alphaTest>0))aoExcludedMeshes.push(object);
-  });
-  const aoHiddenMeshes:THREE.Mesh[]=[];
-  const renderAO=ao.render.bind(ao);
-  ao.render=(activeRenderer,writeBuffer,readBuffer,deltaTime,maskActive)=>{
-    const shadowAutoUpdate=activeRenderer.shadowMap.autoUpdate;
-    const shadowNeedsUpdate=activeRenderer.shadowMap.needsUpdate;
-    // The preceding RenderPass already refreshed this frame's shadows. GTAO
-    // otherwise redraws the entire city's shadow map for its unlit normal pass.
-    activeRenderer.shadowMap.autoUpdate=false;
-    activeRenderer.shadowMap.needsUpdate=false;
-    try{
-      for(const mesh of aoExcludedMeshes){
-        if(!mesh.visible)continue;
-        mesh.visible=false;aoHiddenMeshes.push(mesh);
+  // Disabled passes still allocate their targets. Phones never create this pipeline.
+  let composer:EffectComposer|null=null, ao:GTAOPass|null=null, bloom:UnrealBloomPass|null=null, grade:ShaderPass|null=null, smaa:SMAAPass|null=null;
+  if(renderProfile.postprocessing){
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene,camera));
+    ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.blendIntensity=.45;ao.updateGtaoMaterial({radius:1.05,thickness:.75,distanceExponent:1.6,samples:8});ao.updatePdMaterial({radius:4,rings:2,samples:8});
+    // GTAO's normal override cannot reproduce glass transparency or leaf alpha
+    // masks. Omit those surfaces from AO instead of treating panes and leaf cards
+    // as solid occluders. All mesh-producing assets have resolved above; only dust
+    // Points are added below, and GTAO already excludes those itself.
+    const aoExcludedMeshes:THREE.Mesh[]=[];
+    scene.traverse(object=>{
+      if(!(object instanceof THREE.Mesh))return;
+      const materials=Array.isArray(object.material)?object.material:[object.material];
+      if(materials.length&&materials.every(material=>material.transparent||material.alphaTest>0))aoExcludedMeshes.push(object);
+    });
+    const aoHiddenMeshes:THREE.Mesh[]=[];
+    const renderAO=ao.render.bind(ao);
+    ao.render=(activeRenderer,writeBuffer,readBuffer,deltaTime,maskActive)=>{
+      const shadowAutoUpdate=activeRenderer.shadowMap.autoUpdate;
+      const shadowNeedsUpdate=activeRenderer.shadowMap.needsUpdate;
+      // The preceding RenderPass already refreshed this frame's shadows. GTAO
+      // otherwise redraws the entire city's shadow map for its unlit normal pass.
+      activeRenderer.shadowMap.autoUpdate=false;
+      activeRenderer.shadowMap.needsUpdate=false;
+      try{
+        for(const mesh of aoExcludedMeshes){
+          if(!mesh.visible)continue;
+          mesh.visible=false;aoHiddenMeshes.push(mesh);
+        }
+        renderAO(activeRenderer,writeBuffer,readBuffer,deltaTime,maskActive);
+      }finally{
+        for(const mesh of aoHiddenMeshes)mesh.visible=true;
+        aoHiddenMeshes.length=0;
+        activeRenderer.shadowMap.autoUpdate=shadowAutoUpdate;
+        activeRenderer.shadowMap.needsUpdate=shadowNeedsUpdate;
       }
-      renderAO(activeRenderer,writeBuffer,readBuffer,deltaTime,maskActive);
-    }finally{
-      for(const mesh of aoHiddenMeshes)mesh.visible=true;
-      aoHiddenMeshes.length=0;
-      activeRenderer.shadowMap.autoUpdate=shadowAutoUpdate;
-      activeRenderer.shadowMap.needsUpdate=shadowNeedsUpdate;
-    }
-  };
-  const resizeAO=ao.setSize.bind(ao);ao.setSize=(w,h)=>resizeAO(Math.ceil(w*.55),Math.ceil(h*.55));composer.addPass(ao);
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.12,.38,1.55);
-  composer.addPass(bloom);
-  const grade=new ShaderPass({uniforms:{tDiffuse:{value:null},lens:{value:.18}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform sampler2D tDiffuse;uniform float lens;varying vec2 vUv;void main(){vec2 p=vUv*2.-1.;float r2=dot(p,p);vec2 uv=.5+.5*p*(1.-lens+ lens*r2*.48);vec3 c=texture2D(tDiffuse,clamp(uv,vec2(.001),vec2(.999))).rgb;float l=dot(c,vec3(.2126,.7152,.0722));c=max(vec3(0.),mix(vec3(l),c,1.22));c=pow(c,vec3(1.025))*1.025;c*=1.-dot(p,p)*.022;gl_FragColor=vec4(c,1.);}'});composer.addPass(grade);
-  const smaa=new SMAAPass();composer.addPass(smaa);composer.addPass(new OutputPass());
+    };
+    const resizeAO=ao.setSize.bind(ao);ao.setSize=(w,h)=>resizeAO(Math.ceil(w*.55),Math.ceil(h*.55));composer.addPass(ao);
+    bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.12,.38,1.55);
+    composer.addPass(bloom);
+    grade=new ShaderPass({uniforms:{tDiffuse:{value:null},lens:{value:.18}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform sampler2D tDiffuse;uniform float lens;varying vec2 vUv;void main(){vec2 p=vUv*2.-1.;float r2=dot(p,p);vec2 uv=.5+.5*p*(1.-lens+ lens*r2*.48);vec3 c=texture2D(tDiffuse,clamp(uv,vec2(.001),vec2(.999))).rgb;float l=dot(c,vec3(.2126,.7152,.0722));c=max(vec3(0.),mix(vec3(l),c,1.22));c=pow(c,vec3(1.025))*1.025;c*=1.-dot(p,p)*.022;gl_FragColor=vec4(c,1.);}'});composer.addPass(grade);
+    smaa=new SMAAPass();composer.addPass(smaa);composer.addPass(new OutputPass());
+  }
+  function renderScene(){if(composer)composer.render();else renderer.render(scene,camera);}
 
   // Subtle road dust makes tire movement readable without obscuring the street.
   const particleCount=120, positions=new Float32Array(particleCount*3), ages=new Float32Array(particleCount).fill(3), velocities=new Float32Array(particleCount*3);
@@ -254,8 +275,8 @@ async function boot() {
   let multiplayerDnf=false, roomUiActive=false, inputBlocked=false;
   let topSpeed=0, best=Number(safeRead('whimsical-sf-shortcuts-race-best-v4'))||0, muted=safeRead('sf-night-run-muted')==='true';
   let autoThrottle=safeRead('sf-night-run-auto-throttle')==='true';
-  let cinematicQuality=safeRead('sf-night-run-quality')==='cinematic';
-  let lowQuality=safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
+  let cinematicQuality=!renderProfile.mobile&&safeRead('sf-night-run-quality')==='cinematic';
+  let lowQuality=renderProfile.mobile||safeRead('sf-night-run-quality')==='low', cameraMode=0, totalTime=0, lastTime=performance.now(), uiClock=0, messageUntil=0, flashUntil=0;
   let cameraReversing=false;
   let landingPulse=0, collectedRings=0, presentedLaunches=0, finishedAt=0, tourBayStarted:number|null=null, knockedProps=0;
   const finishCameraStart=new THREE.Vector3(),finishLookStart=new THREE.Vector3();
@@ -268,9 +289,20 @@ async function boot() {
   const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
   audio.setMuted(muted);
   function updateSoundButton(){el('sound').innerHTML=muted?muteIcon:speakerIcon;el('sound').setAttribute('aria-label',muted?'Unmute sound':'Mute sound');el('sound').setAttribute('aria-pressed',String(muted));}
-  function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio,lowQuality?1:cinematicQuality?1.6:1.25));composer.setPixelRatio(renderer.getPixelRatio());renderer.shadowMap.enabled=!lowQuality;grade.uniforms.lens.value=reduceMotion?.02:.065;smaa.enabled=!lowQuality;bloom.enabled=!lowQuality;ao.enabled=!lowQuality;world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);squareStreetDetails.setQuality(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);resize();el('quality').textContent=`GRAPHICS: ${lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');}
+  function applyQuality(){
+    lowQuality=renderProfile.mobile||lowQuality;
+    renderer.shadowMap.enabled=!lowQuality;
+    if(grade)grade.uniforms.lens.value=reduceMotion?.02:.065;
+    if(smaa)smaa.enabled=!lowQuality;if(bloom)bloom.enabled=!lowQuality;if(ao)ao.enabled=!lowQuality;
+    world.setQuality?.(lowQuality);landmarks.setQuality?.(lowQuality);squareStreetDetails.setQuality(lowQuality);chinatown.setQuality(lowQuality);waterfront.setQuality?.(lowQuality);atmosphere.setQuality(lowQuality,cinematicQuality);
+    resize();el('quality').textContent=`GRAPHICS: ${renderProfile.mobile?'MOBILE':lowQuality?'PERFORMANCE':cinematicQuality?'CINEMATIC':'HIGH'}`;
+    el<HTMLButtonElement>('quality').disabled=renderProfile.mobile;
+    if(!renderProfile.mobile)safeWrite('sf-night-run-quality',lowQuality?'low':cinematicQuality?'cinematic':'high');
+  }
   function resize(){
-    camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
+    const ratio=renderPixelRatio(devicePixelRatio,innerWidth,innerHeight,lowQuality?1:cinematicQuality?1.6:1.25,renderProfile.mobile);
+    if(renderer.getPixelRatio()!==ratio){renderer.setPixelRatio(ratio);composer?.setPixelRatio(ratio);}
+    camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer?.setSize(innerWidth,innerHeight);
     // Scenic stops scroll as one row on small screens. On wider screens,
     // reserve the action buttons' actual width so both groups remain usable.
     const stops=document.querySelector<HTMLElement>('.tour-stops')!;
@@ -541,9 +573,10 @@ async function boot() {
   el('fullscreen').onclick=()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});else void document.documentElement.requestFullscreen?.().catch(()=>{el('fullscreen').textContent='USE YOUR BROWSER’S FULLSCREEN';});};
   document.addEventListener('fullscreenchange',()=>el('fullscreen').textContent=document.fullscreenElement?'EXIT FULLSCREEN ↙':'FULLSCREEN ↗');
   loadingStage('Lighting the city');await yieldForPaint();
-  updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);atmosphere.bakeCityReflections(car.group);composer.render();
+  updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);atmosphere.bakeCityReflections(car.group);renderScene();
+  if(graphicsContextLost)return;
   loadingStage('Ready to race');
-  el('loading').classList.add('faded');setTimeout(()=>el('loading').classList.add('hidden'),650);
+  el('loading').classList.add('faded');setTimeout(()=>{if(!graphicsContextLost)el('loading').classList.add('hidden');},650);
 
   multiplayer=new Multiplayer(cityRoot,{
     profile:profile=>{raceProfile={...profile};car.customize(profile);},
@@ -559,10 +592,13 @@ async function boot() {
     leave:()=>resetToMenu(),
   });
 
+  suspendGraphics=()=>{clearInputs();multiplayer?.setInput({throttle:0,brake:0,steer:0,drift:false,boost:false});audio.suspend();};
+
   // Read-only diagnostics are handy when comparing browsers and performance settings.
-  (window as typeof window&{sfNightRun?:unknown}).sfNightRun={get state(){return {...sim.state,phase};},get rendering(){return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};}};
+  (window as typeof window&{sfNightRun?:unknown}).sfNightRun={get state(){return {...sim.state,phase};},get rendering(){return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,profile:renderProfile.mobile?'mobile':'desktop',pixelRatio:renderer.getPixelRatio(),postprocessing:!!composer};}};
   function frame(now:number){
     requestAnimationFrame(frame);
+    if(graphicsContextLost||document.hidden){lastTime=now;return;}
     const dt=Math.min((now-lastTime)/1000,.25);lastTime=now;totalTime+=dt;uiClock+=dt;
     performanceFrames++;performanceTime+=dt;if(performanceTime>=1){canvas.dataset.fps=String(Math.round(performanceFrames/performanceTime));canvas.dataset.drawCalls=String(renderer.info.render.calls);canvas.dataset.triangles=String(renderer.info.render.triangles);canvas.dataset.textures=String(renderer.info.memory.textures);performanceFrames=0;performanceTime=0;}
     syncRoomEntry();
@@ -639,7 +675,7 @@ async function boot() {
     world.update(totalTime,cityProgress,camera);landmarks.update(totalTime,cityProgress,camera);squareStreetDetails.update(camera);chinatown.update(totalTime,cityProgress);waterfront.update(totalTime,cityProgress,camera);
     if(uiClock>.05){uiClock=0;if(phase!=='menu'&&phase!=='tour')updateHud();}
     heroFill.position.set(car.group.position.x-4,car.group.position.y+6,car.group.position.z-7);
-    if(!multiplayer?.blocking){renderer.info.reset();composer.render();}
+    if(!multiplayer?.blocking){renderer.info.reset();renderScene();}
   }
   requestAnimationFrame(frame);
 }

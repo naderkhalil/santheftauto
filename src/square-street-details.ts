@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { getRenderProfile } from './render-profile';
 
 /** Original Blender kit in CANONICAL coordinates: X east, Y up, Z south.
  * Attach directly to the corrected world, outside any legacy Z-reflection group.
@@ -12,6 +13,12 @@ export function createSquareStreetDetails(parent: THREE.Scene | THREE.Group) {
   group.position.set(0, 22, 0);
   group.userData.coordinateSystem = 'X east / Y up / Z south';
   parent.add(group);
+  if (getRenderProfile().mobile) {
+    // Street-name signs, newspaper boxes and racks are decorative; skip their
+    // asset allocation while leaving the road and collision model untouched.
+    group.userData.mobileFallback = true;
+    return { group, ready: Promise.resolve(), update(_camera?: THREE.Camera) {}, setQuality(_value: boolean) {} };
+  }
   let low = false;
   const meshes: THREE.Mesh[] = [];
   const decoder = new DRACOLoader().setDecoderPath('/assets/draco/');

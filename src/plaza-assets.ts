@@ -1,12 +1,19 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { PLAZA_LEVELS, PLAZA_PALMS, PLAZA_TREES } from './plaza-layout';
+import { getRenderProfile } from './render-profile';
 
 /** Original Blender-authored assets; geometry is in metres and exported Y-up.
  * The fallback remains visible until its replacement has loaded successfully.
  */
 export function createPlazaAssets(parent: THREE.Group, monumentFallback: THREE.Group, palmFallback: THREE.Group) {
   const art = new THREE.Group(); art.name = 'Union Square / Blender plaza assets'; parent.add(art);
+  if (getRenderProfile().mobile) {
+    // These are visual replacements only. The existing monument, palms and
+    // plaza collision surfaces remain available without scans or new decodes.
+    art.userData.mobileFallback = true;
+    return { ready: Promise.resolve(), group: art, setQuality(_value: boolean) {} };
+  }
   let low = false;
   const loader = new GLTFLoader();
   const configure = (mesh: THREE.Mesh) => {

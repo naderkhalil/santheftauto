@@ -134,3 +134,18 @@ h1 span{color:#ffe15a}h1 i{font-size:.36em;line-height:1.8;letter-spacing:1px;co
 
 /* Keep recovery easy to read and tap at every viewport size. */
 .playground-controls #return-road{min-height:44px;font-size:10px;padding:11px 13px}
+
+/* Mobile keeps compositing surfaces as bounded as its WebGL buffers. */
+html[data-graphics="mobile"] .modal-layer,
+html[data-graphics="mobile"] .panel,
+html[data-graphics="mobile"] .route-card,
+html[data-graphics="mobile"] .race-top,
+html[data-graphics="mobile"] .flight-hud,
+html[data-graphics="mobile"] .turn-guide,
+html[data-graphics="mobile"] .explore-status,
+html[data-graphics="mobile"] .touch-button,
+html[data-graphics="mobile"] .tour-stops button,
+html[data-graphics="mobile"] .tour-actions button,
+html[data-graphics="mobile"] .mp-car-option,
+html[data-graphics="mobile"] dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-graphics="mobile"] .mp-stage-glow{filter:none}

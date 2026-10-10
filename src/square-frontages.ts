@@ -2,11 +2,13 @@ import * as THREE from 'three';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { getRenderProfile } from './render-profile';
 
 /** Blender-authored Macy's, I. Magnin, Neiman Marcus and the five Stockton
  * parcels. Coordinates are world X/Z relative to Union Square's street datum.
  * No guessed rotations or landmark-dependent scaling are needed at runtime. */
 export function createSquareFrontages(parent: THREE.Object3D, fallback?: THREE.Group) {
+  const mobile = getRenderProfile().mobile;
   const group = new THREE.Group();
   group.name = 'Union Square / reference department stores and Stockton parcels';
   group.position.set(0, 22, 0);
@@ -16,7 +18,7 @@ export function createSquareFrontages(parent: THREE.Object3D, fallback?: THREE.G
   group.add(lod);
   const shared = new Map<string, THREE.MeshStandardMaterial>();
   const shadowMeshes: THREE.Mesh[] = [];
-  let low = false;
+  let low = mobile;
   let loaded = false;
 
   const prepare = (source: THREE.Group) => {
@@ -53,7 +55,7 @@ export function createSquareFrontages(parent: THREE.Object3D, fallback?: THREE.G
           material.forceSinglePass = true;
         }
         for (const texture of [material.map, material.normalMap, material.roughnessMap]) {
-          if (texture) texture.anisotropy = 8;
+          if (texture) texture.anisotropy = mobile ? 1 : 8;
         }
       }
       const geometry = child.geometry.clone().applyMatrix4(child.matrixWorld);
@@ -81,11 +83,13 @@ export function createSquareFrontages(parent: THREE.Object3D, fallback?: THREE.G
     return result;
   };
   const decoder = new DRACOLoader().setDecoderPath('/assets/draco/');
+  if (mobile) decoder.setWorkerLimit(1);
   const loader = new GLTFLoader().setDRACOLoader(decoder);
-  const ready = loader.loadAsync('/assets/square-frontages/square-frontages.glb').then(async asset => {
+  const ready = loader.loadAsync(`/assets/square-frontages/square-frontages${mobile ? '-lod' : ''}.glb`).then(async asset => {
     lod.addLevel(prepare(asset.scene), 0);
     if (fallback) fallback.visible = false;
     loaded = true; group.userData.loaded = true;
+    if (mobile) return;
     try {
       const distant = await loader.loadAsync('/assets/square-frontages/square-frontages-lod.glb');
       lod.addLevel(prepare(distant.scene), 235, .12);
@@ -108,7 +112,7 @@ export function createSquareFrontages(parent: THREE.Object3D, fallback?: THREE.G
       }
     },
     setQuality(value: boolean) {
-      low = value;
+      low = mobile || value;
       for (const mesh of shadowMeshes) {
         const material = mesh.material as THREE.Material;
         mesh.castShadow = !low && !material.transparent;

@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { getRenderProfile } from './render-profile';
 
 const WESTIN_ASSET_VERSION = '20261009-upright-flags';
 
 /** The modeled Powell frontage uses metres, +Y up and +Z facing the square. */
 export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
+  const mobile = getRenderProfile().mobile;
   const group = new THREE.Group();
   group.name = 'Westin St. Francis / Blender landmark';
   group.position.set(-93, 22, -1.5);
@@ -17,7 +19,7 @@ export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
   // Explicit camera-distance selection also accounts for the aerial menu.
   lod.autoUpdate = false;
   group.add(lod);
-  let low = false;
+  let low = mobile;
   let loaded = false;
   const shadowMeshes: THREE.Mesh[] = [];
   const sharedMaterials = new Map<string,THREE.MeshStandardMaterial>();
@@ -45,19 +47,21 @@ export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
         const glass = /glass|glazing/i.test(material.name);
         material.envMapIntensity = glass ? 1.15 : .55;
         for (const texture of [material.map, material.normalMap, material.roughnessMap, material.aoMap]) {
-          if (texture) texture.anisotropy = 8;
+          if (texture) texture.anisotropy = mobile ? 1 : 8;
         }
       }
     });
     return object;
   };
   const decoder = new DRACOLoader().setDecoderPath('/assets/draco/');
+  if (mobile) decoder.setWorkerLimit(1);
   const loader = new GLTFLoader().setDRACOLoader(decoder);
-  const ready = loader.loadAsync(`/assets/hero/westin.glb?v=${WESTIN_ASSET_VERSION}`).then(async asset => {
+  const ready = loader.loadAsync(`/assets/hero/westin${mobile ? '-lod' : ''}.glb?v=${WESTIN_ASSET_VERSION}`).then(async asset => {
     lod.addLevel(prepare(asset.scene), 0);
     fallback.visible = false;
     loaded = true;
     group.userData.loaded = true;
+    if (mobile) return;
     try {
       const distant = await loader.loadAsync(`/assets/hero/westin-lod.glb?v=${WESTIN_ASSET_VERSION}`);
       lod.addLevel(prepare(distant.scene), 290, .14);
@@ -80,7 +84,7 @@ export function createWestin(parent: THREE.Group, fallback: THREE.Group) {
       }
     },
     setQuality(value: boolean) {
-      low = value;
+      low = mobile || value;
       for (const mesh of shadowMeshes) mesh.castShadow = !low;
     },
   };

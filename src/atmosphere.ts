@@ -10,7 +10,10 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
   shadowExtent?: number;
   sunDirection?: {x:number;y:number;z:number};
   prepareReflection?: (point: {x:number;y:number;z:number}) => void;
+  /** Keep the sky and direct lighting without HDR textures or reflection buffers. */
+  lightweight?: boolean;
 } = {}) {
+  const lightweight=options.lightweight===true;
   const courseSample=options.sampleRoute??sampleRoute;
   scene.fog = new THREE.FogExp2('#8ccbea', .00056);
   const sunlightDirection = options.sunDirection ? new THREE.Vector3(options.sunDirection.x,options.sunDirection.y,options.sunDirection.z).normalize() : new THREE.Vector3(.570,.682,-.461).normalize();
@@ -20,7 +23,20 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { photographRotation: {value:photographRotation}, time: { value: 0 }, sunDirection: { value: sunlightDirection }, photographicSky: { value: null }, usePhotographicSky: { value: 0 } },
     vertexShader: `varying vec3 vDirection;void main(){vDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader: `
+    fragmentShader: lightweight ? `
+      varying vec3 vDirection; uniform vec3 sunDirection;
+      void main(){
+        vec3 d=normalize(vDirection);float h=max(d.y,0.);
+        vec3 horizon=vec3(.29,.68,.92);
+        vec3 color=mix(horizon,vec3(.008,.135,.55),pow(smoothstep(0.,.92,h),.39));
+        float towardSun=max(dot(d,sunDirection),0.);
+        color+=vec3(1.,.68,.29)*pow(towardSun,24.)*.18;
+        color+=vec3(4.,3.2,1.9)*smoothstep(.99960,.99984,towardSun);
+        if(d.y<0.)color=mix(horizon,vec3(.15,.32,.40),smoothstep(0.,.20,-d.y));
+        gl_FragColor=vec4(color,1.);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }` : `
       varying vec3 vDirection; uniform float time; uniform vec3 sunDirection;
       uniform sampler2D photographicSky; uniform float usePhotographicSky; uniform float photographRotation;
       float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
@@ -62,43 +78,50 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
         #include <colorspace_fragment>
       }`,
   });
-  const sky=new THREE.Mesh(new THREE.SphereGeometry(3500,32,20),skyMaterial);
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(3500,lightweight?16:32,lightweight?12:20),skyMaterial);
   // Keep the existing photographic/procedural sky direction in city space,
   // but reflect its sphere just like the city. This also applies to the PMREM
   // clone, so the visible sun, directional light and reflections still agree.
   sky.scale.z=-1;
   sky.name='Pacific blue sky';sky.renderOrder=-1000;sky.frustumCulled=false;scene.add(sky);
-  const hemisphere=new THREE.HemisphereLight('#84bcff','#e9bd92',.82);scene.add(hemisphere);
-  const sun=new THREE.DirectionalLight('#fff0cb',3.6);sun.castShadow=true;
-  sun.shadow.mapSize.set(4096,4096);
+  const hemisphere=new THREE.HemisphereLight('#84bcff','#e9bd92',lightweight?1.1:.82);scene.add(hemisphere);
+  const sun=new THREE.DirectionalLight('#fff0cb',3.6);sun.castShadow=!lightweight;
+  sun.shadow.mapSize.set(lightweight?512:4096,lightweight?512:4096);
   sun.shadow.camera.left=-61;sun.shadow.camera.right=61;sun.shadow.camera.top=78;sun.shadow.camera.bottom=-56;
   sun.shadow.camera.near=1;sun.shadow.camera.far=620;sun.shadow.normalBias=.035;sun.shadow.bias=-.00012;sun.shadow.radius=1.8;
   scene.add(sun,sun.target);
   const coolFill=new THREE.DirectionalLight('#90c9ff',.32);cityToRender({x:-100,y:130,z:-120},coolFill.position);scene.add(coolFill);
 
-  const pmrem=new THREE.PMREMGenerator(renderer);
-  const environmentScene=new THREE.Scene();
-  const environmentSky=sky.clone();environmentSky.material=skyMaterial;environmentSky.position.set(0,0,0);environmentScene.add(environmentSky);
-  let skyEnvironment=pmrem.fromScene(environmentScene,.015,.1,4000);
-  scene.environment=skyEnvironment.texture;scene.environmentIntensity=.65;
+  // Setting an environment texture can itself trigger Three's automatic PMREM
+  // conversion. The mobile fallback uses direct lights and allocates no target.
+  const pmrem=lightweight?null:new THREE.PMREMGenerator(renderer);
+  const environmentScene=pmrem?new THREE.Scene():null;
+  let skyEnvironment:THREE.WebGLRenderTarget|null=null;
+  if(pmrem&&environmentScene){
+    const environmentSky=sky.clone();environmentSky.material=skyMaterial;environmentSky.position.set(0,0,0);environmentScene.add(environmentSky);
+    skyEnvironment=pmrem.fromScene(environmentScene,.015,.1,4000);
+  }
+  scene.environment=skyEnvironment?.texture??null;scene.environmentIntensity=.65;
   const cityEnvironments:THREE.WebGLRenderTarget[]=[];
   let environmentRegion=-1;
   let shadowExtent=0;
-  const captureTarget=new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
-  const captureCamera=new THREE.CubeCamera(.3,6000,captureTarget);scene.add(captureCamera);
+  const captureTarget=lightweight?null:new THREE.WebGLCubeRenderTarget(256,{type:THREE.HalfFloatType,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});
+  const captureCamera=captureTarget?new THREE.CubeCamera(.3,6000,captureTarget):null;if(captureCamera)scene.add(captureCamera);
   let captured=false;let disposed=false;
   async function loadPhotographicSky(){
+    if(lightweight||!pmrem||!environmentScene||disposed)return;
     try{
       const photograph=await new HDRLoader().setDataType(THREE.HalfFloatType).loadAsync('/assets/sky/kloofendal_43d_clear_puresky_2k.hdr');
       if(disposed){photograph.dispose();return;}
       photograph.wrapS=THREE.RepeatWrapping;
       skyMaterial.uniforms.photographicSky.value=photograph;
       skyMaterial.uniforms.usePhotographicSky.value=1;
-      skyEnvironment.dispose();skyEnvironment=pmrem.fromScene(environmentScene,.015,.1,4000);
+      skyEnvironment?.dispose();skyEnvironment=pmrem.fromScene(environmentScene,.015,.1,4000);
       scene.environment=skyEnvironment.texture;
     }catch(error){console.warn('Photographic sky unavailable; using the procedural Pacific sky.',error);}
   }
   function bakeCityReflections(exclude?:THREE.Object3D){
+    if(disposed||!pmrem||!skyEnvironment||!captureCamera||!captureTarget)return;
     const previousPosition=sky.position.clone();sky.position.set(0,0,0);
     const visible=exclude?.visible;if(exclude)exclude.visible=false;
     for(const environment of cityEnvironments)environment.dispose();cityEnvironments.length=0;
@@ -132,7 +155,7 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
     scene.environment=cityEnvironments[0].texture;scene.environmentIntensity=.58;environmentRegion=0;captured=true;
   }
   return {
-    dispose(){disposed=true;sky.geometry.dispose();skyMaterial.uniforms.photographicSky.value?.dispose();skyMaterial.dispose();skyEnvironment.dispose();cityEnvironments.forEach(t=>t.dispose());captureTarget.dispose();pmrem.dispose();sun.shadow.map?.dispose();},
+    dispose(){disposed=true;sky.geometry.dispose();skyMaterial.uniforms.photographicSky.value?.dispose();skyMaterial.dispose();skyEnvironment?.dispose();cityEnvironments.forEach(t=>t.dispose());captureTarget?.dispose();pmrem?.dispose();sun.shadow.map?.dispose();},
     loadPhotographicSky,
     bakeCityReflections,
     update(time:number,progress:number){
@@ -154,8 +177,8 @@ export function createAtmosphere(renderer: THREE.WebGLRenderer, scene: THREE.Sce
       if(captured&&region!==environmentRegion){scene.environment=cityEnvironments[region].texture;environmentRegion=region;}
     },
     setQuality(low:boolean,cinematic=false){
-      sun.castShadow=!low;coolFill.intensity=low?.24:.32;
-      const size=low?1024:cinematic?4096:3072;
+      sun.castShadow=!lightweight&&!low;coolFill.intensity=lightweight?.42:low?.24:.32;
+      const size=lightweight?512:low?1024:cinematic?4096:3072;
       if(sun.shadow.mapSize.x!==size){sun.shadow.mapSize.set(size,size);sun.shadow.map?.dispose();sun.shadow.map=null;}
     },
     get captured(){return captured;},

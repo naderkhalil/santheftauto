@@ -8,10 +8,110 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createAtmosphere } from './atmosphere';
 import { createCar } from './car';
 import { createRacerLoader, cloneRacerPart, loadRacerKit, releaseRacerPart, RACER_ASSET_VERSION } from './racer-assets';
-import { DRIVERS, type RacerProfile } from './racer-profile';
+import { CARS, DEFAULT_PROFILE, DRIVERS, type RacerProfile } from './racer-profile';
+import { getRenderProfile } from './render-profile';
+
+type Showroom = { resize(): void; setMode(mode: string): void; setProfile(profile: RacerProfile): void; render(now: number): void; dispose(): void };
+
+/** Touch devices keep the city's only WebGL context; selection needs no second scene. */
+export class RacerShowroom implements Showroom {
+  private preview: Showroom;
+  constructor(canvas: HTMLCanvasElement) {
+    this.preview = getRenderProfile().mobile ? new MobileRacerShowroom(canvas) : new DesktopRacerShowroom(canvas);
+  }
+  resize() { this.preview.resize(); }
+  setMode(mode: string) { this.preview.setMode(mode); }
+  setProfile(profile: RacerProfile) { this.preview.setProfile(profile); }
+  render(now: number) { this.preview.render(now); }
+  dispose() { this.preview.dispose(); }
+}
+
+/** No model downloads, environment maps, postprocessing targets, or WebGL allocation. */
+export class MobileRacerShowroom implements Showroom {
+  private canvas: HTMLCanvasElement;
+  private context: CanvasRenderingContext2D | null;
+  private observer: ResizeObserver;
+  private profile = { ...DEFAULT_PROFILE };
+  private mode = 'driver';
+  private dirty = true;
+  private disposed = false;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.context = canvas.getContext('2d', { alpha: false });
+    canvas.dataset.preview = 'lightweight';
+    canvas.dataset.loaded = 'true';
+    this.observer = new ResizeObserver(() => this.resize());
+    this.observer.observe(canvas);
+    this.resize();
+  }
+
+  resize() {
+    if (this.disposed || !this.canvas.clientWidth || !this.canvas.clientHeight) return;
+    // One backing pixel per CSS pixel is sufficient for this small, static card.
+    const width = Math.min(800, Math.round(this.canvas.clientWidth));
+    const height = Math.min(600, Math.round(this.canvas.clientHeight));
+    if (this.canvas.width !== width || this.canvas.height !== height) {
+      this.canvas.width = width; this.canvas.height = height;
+    }
+    this.canvas.dataset.renderSize = `${width}×${height}`;
+    this.dirty = true;
+  }
+
+  setMode(mode: string) { if (this.mode !== mode) { this.mode = mode; this.dirty = true; } }
+  setProfile(profile: RacerProfile) { this.profile = { ...profile }; this.dirty = true; }
+
+  render(_now: number) {
+    const context = this.context;
+    if (this.disposed || !context || !this.dirty) return;
+    this.dirty = false;
+    const width = this.canvas.width, height = this.canvas.height;
+    const driver = DRIVERS.find(entry => entry.id === this.profile.driver) ?? DRIVERS[0];
+    const car = CARS.find(entry => entry.id === this.profile.car) ?? CARS[0];
+    const carMode = this.mode === 'car';
+    context.fillStyle = carMode ? '#dce9e5' : '#eee9dc'; context.fillRect(0, 0, width, height);
+    context.save();
+    context.translate(width / 2, height / 2);
+    if (carMode) {
+      const scale = Math.min(width / 380, height / 220, 1.8);
+      context.scale(scale, scale);
+      context.fillStyle = '#b9cec5'; context.beginPath(); context.ellipse(0, 51, 154, 12, 0, 0, Math.PI * 2); context.fill();
+      context.fillStyle = '#244b50';
+      for (const x of [-88, 88]) { context.beginPath(); context.arc(x, 35, 26, 0, Math.PI * 2); context.fill(); }
+      context.fillStyle = car.color; context.beginPath(); context.moveTo(-143, 21); context.lineTo(-128, -15); context.lineTo(-67, -23); context.lineTo(-42, -50); context.lineTo(31, -50); context.lineTo(62, -20); context.lineTo(124, -14); context.lineTo(145, 21); context.lineTo(141, 40); context.lineTo(-140, 40); context.closePath(); context.fill();
+      context.fillStyle = '#f9f3df'; context.beginPath(); context.moveTo(-49, -21); context.lineTo(-32, -43); context.lineTo(26, -43); context.lineTo(48, -21); context.closePath(); context.fill();
+      context.strokeStyle = '#fff4d5'; context.lineWidth = 4; context.beginPath(); context.moveTo(-128, 10); context.lineTo(126, 10); context.stroke();
+      context.fillStyle = '#ead7ad';
+      for (const x of [-88, 88]) { context.beginPath(); context.arc(x, 35, 14, 0, Math.PI * 2); context.fill(); }
+      context.fillStyle = '#ffedb0'; context.fillRect(124, -9, 10, 8);
+      context.fillStyle = '#244b50'; context.textAlign = 'center'; context.font = '600 13px Arial, sans-serif';
+      context.fillText(driver.name + ' · ' + car.name, 0, 92);
+      this.canvas.setAttribute('aria-label', `${car.name} in ${car.id === 'sundrop' ? 'teal' : car.id === 'comet' ? 'terracotta' : 'buttercream'}, driven by ${driver.name}`);
+    } else {
+      const radius = Math.max(35, Math.min(width * .22, height * .25, 90));
+      context.fillStyle = driver.color; context.beginPath(); context.arc(0, -15, radius, 0, Math.PI * 2); context.fill();
+      context.fillStyle = '#244b50'; context.textAlign = 'center'; context.textBaseline = 'middle';
+      context.font = `800 ${radius * .74}px Arial, sans-serif`;
+      context.fillText(driver.name.split(' ').map(part => part[0]).slice(0, 2).join(''), 0, -13);
+      context.font = `700 ${Math.min(24, width * .07)}px Arial, sans-serif`;
+      context.fillText(driver.name, 0, radius + 17);
+      context.font = '600 10px Arial, sans-serif'; context.fillStyle = '#647c6e';
+      context.fillText(driver.title, 0, radius + 39);
+      this.canvas.setAttribute('aria-label', `Selected driver: ${driver.name}, ${driver.title}`);
+    }
+    context.restore();
+  }
+
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true; this.observer.disconnect();
+    this.canvas.width = this.canvas.height = 1;
+    this.context = null;
+  }
+}
 
 /** Approved cartoon portraits in a soft studio, beside the playable car preview. */
-export class RacerShowroom {
+class DesktopRacerShowroom {
   private renderer: THREE.WebGLRenderer;
   private composer: EffectComposer;
   private pass: RenderPass;
@@ -39,8 +139,11 @@ export class RacerShowroom {
   private visualRevision = -1;
   private observer: ResizeObserver;
   private disposed = false;
+  private canvas: HTMLCanvasElement;
+  private events = new AbortController();
 
-  constructor(private canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -181,7 +284,7 @@ export class RacerShowroom {
       if (this.mode !== 'car' && this.mode !== 'driver') return;
       this.dragX = event.clientX;
       canvas.setPointerCapture(event.pointerId);
-    });
+    }, { signal: this.events.signal });
     canvas.addEventListener('pointermove', event => {
       if (this.dragX === null) return;
       const delta = (event.clientX - this.dragX) * .004;
@@ -189,8 +292,8 @@ export class RacerShowroom {
       else this.rotation = THREE.MathUtils.clamp(this.rotation + delta, -.65, .75);
       this.dragX = event.clientX;
       this.resize();
-    });
-    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(type, () => this.dragX = null);
+    }, { signal: this.events.signal });
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(type, () => this.dragX = null, { signal: this.events.signal });
     this.resize();
   }
 
@@ -205,6 +308,7 @@ export class RacerShowroom {
   }
 
   resize() {
+    if (this.disposed) return;
     const width = this.canvas.clientWidth, height = this.canvas.clientHeight;
     if (!width || !height) return;
     this.dirty = true;
@@ -259,6 +363,7 @@ export class RacerShowroom {
     this.renderer.shadowMap.needsUpdate = true;
   }
   render(now: number) {
+    if (this.disposed) return;
     // The models hold their pose. Repaint on selection, asset load or orbit,
     // rather than spending a full game's GPU budget on an unchanged menu.
     const revision = this.car.group.userData.visualRevision ?? 0;
@@ -296,7 +401,9 @@ export class RacerShowroom {
     materials.forEach(material => material.dispose());
   }
   dispose() {
+    if (this.disposed) return;
     this.disposed = true;
+    this.events.abort();
     this.observer.disconnect();
     this.car.dispose();
     this.founders.forEach(actor => releaseRacerPart(actor));
@@ -309,5 +416,7 @@ export class RacerShowroom {
     this.composer.dispose();
     this.atmosphere.dispose();
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
+    this.canvas.width = this.canvas.height = 1;
   }
 }
