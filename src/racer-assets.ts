@@ -1,22 +1,17 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { getRenderProfile } from './render-profile.ts';
 
 export const RACER_ASSET_VERSION='20261009-cartoon-1';
-export const RACER_MOBILE_ASSET_VERSION='20261010-mobile-1';
-export function racerKitUrl(mobile = getRenderProfile().mobile) {
-  return mobile ? `/assets/models/racer-kit-mobile.glb?v=${RACER_MOBILE_ASSET_VERSION}` : `/assets/models/racer-kit.glb?v=${RACER_ASSET_VERSION}`;
-}
 let kit:Promise<THREE.Group>|null=null;
 let draco:DRACOLoader|null=null;
 export function createRacerLoader(){
-  draco??=new DRACOLoader().setDecoderPath('/assets/draco/').setWorkerLimit(getRenderProfile().mobile?1:2);
+  draco??=new DRACOLoader().setDecoderPath('/assets/draco/').setWorkerLimit(2);
   return new GLTFLoader().setDRACOLoader(draco);
 }
 /** One download shared by the showroom, local car and multiplayer opponents. */
 export function loadRacerKit(){
-  return kit??=createRacerLoader().loadAsync(racerKitUrl()).then(asset=>asset.scene).catch(error=>{kit=null;throw error;});
+  return kit??=createRacerLoader().loadAsync(`/assets/models/racer-kit.glb?v=${RACER_ASSET_VERSION}`).then(asset=>asset.scene).catch(error=>{kit=null;throw error;});
 }
 export function cloneRacerPart(source:THREE.Object3D,name:string){
   const original=source.getObjectByName(name);

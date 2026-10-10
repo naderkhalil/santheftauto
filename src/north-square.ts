@@ -2,11 +2,9 @@ import * as THREE from 'three';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { getRenderProfile } from './render-profile';
 
 /** Post Street and the occupied outside corners, authored in Blender metres. */
 export function createNorthSquare(parent: THREE.Group, fallback: THREE.Group) {
-  const mobile = getRenderProfile().mobile;
   const group = new THREE.Group();
   group.name = 'Union Square / Post Street and corner buildings';
   group.position.y = 22;
@@ -17,7 +15,7 @@ export function createNorthSquare(parent: THREE.Group, fallback: THREE.Group) {
   lod.position.z = 70;
   lod.autoUpdate = false;
   group.add(lod);
-  let low = mobile, loaded = false;
+  let low = false, loaded = false;
   const prepare = (source: THREE.Group) => {
     const result = new THREE.Group();
     result.position.z = -70;
@@ -47,7 +45,7 @@ export function createNorthSquare(parent: THREE.Group, fallback: THREE.Group) {
         material.side = THREE.DoubleSide;
         material.forceSinglePass = true;
       }
-      for (const texture of [material.map, material.normalMap, material.roughnessMap]) if (texture) texture.anisotropy = mobile ? 1 : 8;
+      for (const texture of [material.map, material.normalMap, material.roughnessMap]) if (texture) texture.anisotropy = 8;
       const geometry = child.geometry.clone().applyMatrix4(child.matrixWorld);
       geometry.computeBoundingBox();
       const center = geometry.boundingBox!.getCenter(new THREE.Vector3());
@@ -74,13 +72,11 @@ export function createNorthSquare(parent: THREE.Group, fallback: THREE.Group) {
     return result;
   };
   const decoder = new DRACOLoader().setDecoderPath('/assets/draco/');
-  if (mobile) decoder.setWorkerLimit(1);
   const loader = new GLTFLoader().setDRACOLoader(decoder);
-  const ready = loader.loadAsync(`/assets/north-square/north-square${mobile ? '-lod' : ''}.glb`).then(async asset => {
+  const ready = loader.loadAsync('/assets/north-square/north-square.glb').then(async asset => {
     lod.addLevel(prepare(asset.scene), 0);
     loaded = true; group.userData.loaded = true;
     fallback.visible = false;
-    if (mobile) return;
     try {
       const distant = await loader.loadAsync('/assets/north-square/north-square-lod.glb');
       lod.addLevel(prepare(distant.scene), 270, .12);
@@ -100,7 +96,7 @@ export function createNorthSquare(parent: THREE.Group, fallback: THREE.Group) {
       }
     },
     setQuality(value: boolean) {
-      low = mobile || value;
+      low = value;
       for (const mesh of shadowMeshes) mesh.castShadow = !low && !(mesh.material as THREE.Material).transparent;
     },
   };

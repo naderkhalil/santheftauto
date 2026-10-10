@@ -308,28 +308,3 @@ play before reopening broadly.
 Current evidence does not establish a public launch, successful Docker image,
 remote-network responsiveness, eight-device rendering performance, or capacity
 on the paid hosting plan. Those remain release gates.
-
-## Mobile rendering
-
-iPhones and iPads select the safe rendering profile before any renderer,
-reflection buffer, or asset loader is created. iPadOS desktop-mode user agents
-are included. Android phones/tablets, macOS Safari, and Windows/Linux touch
-devices retain the original graphics profile. This profile caps the main canvas at one million
-pixels, uses direct rendering without postprocessing/shadows/HDR, loads only
-existing building LODs, and stages asset groups to reduce decode peaks. Driver
-and car selection use a static 2D preview instead of a second WebGL renderer.
-Race physics, checkpoints, and leaderboard verification use the same code.
-
-`public/assets/models/racer-kit-mobile.glb` preserves the desktop model graph
-and geometry with embedded textures limited to 512 pixels. Regenerate it with
-`python3 tools/prepare-mobile-assets.py` (Pillow required). Its decoded RGBA
-texture payload is 21 MiB instead of 147 MiB; GPU mipmap estimates are 28 MiB
-instead of 196 MiB. The mobile file is requested directly, so the original
-textures are never decoded on that path.
-
-Use `?graphics=mobile` for desktop QA of the same conservative path. It cannot
-force an iPhone or iPad back to desktop allocations. Browser viewport emulation and
-macOS Safari checks do not replace testing on a physical iPhone/iPad. For a
-release check, load a fresh page, select a driver/car, race through the course,
-open results/leaderboards, and return from a backgrounded tab. A lost graphics
-context presents a reload action instead of leaving an unresponsive canvas.

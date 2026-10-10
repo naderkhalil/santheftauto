@@ -3,21 +3,18 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { WATERFRONT } from './waterfront-layout';
-import { getRenderProfile } from './render-profile';
 
 type Section = { near?: THREE.Group; far?: THREE.Group; bounds: THREE.Box3 };
 
 /** Actual Blender exports, in physical axes. Keep each pier/tower/wing in
  * its own spatial section, so offscreen masonry can leave the render pass. */
 export function createWaterfrontAssets(parent: THREE.Object3D) {
-  const mobile = getRenderProfile().mobile;
   const group = new THREE.Group(); group.name = 'Waterfront / Blender architecture and historic piers'; parent.add(group);
   const loader = new GLTFLoader(), decoder = new DRACOLoader().setDecoderPath('/assets/draco/'); loader.setDRACOLoader(decoder);
-  if (mobile) decoder.setWorkerLimit(1);
   const shared = new Map<string, THREE.MeshStandardMaterial>(), sections = new Map<string, Section>();
   const shadows: THREE.Mesh[] = [];
   const palmGroups: { group: THREE.Group; bounds: THREE.Box3 }[] = [];
-  let low = mobile;
+  let low = false;
   const eye = new THREE.Vector3();
 
   function prepare(source: THREE.Group, asset: string, distant: boolean, position: THREE.Vector3) {
@@ -38,7 +35,7 @@ export function createWaterfrontAssets(parent: THREE.Object3D) {
           const glass = /glass|glazing/i.test(material.name);
           material.envMapIntensity = glass ? .82 : .48;
           if (material.transparent) { material.depthWrite = false; material.forceSinglePass = true; }
-          for (const map of [material.map, material.normalMap, material.roughnessMap]) if (map) map.anisotropy = mobile ? 1 : 8;
+          for (const map of [material.map, material.normalMap, material.roughnessMap]) if (map) map.anisotropy = 8;
         }
         const sourceGeometry = object.geometry as THREE.BufferGeometry;
         let geometry: THREE.BufferGeometry = sourceGeometry.clone();
@@ -89,9 +86,9 @@ export function createWaterfrontAssets(parent: THREE.Object3D) {
   }
 
   async function loadAsset(name: string, hasDistant = true, position = new THREE.Vector3()) {
-    const close = await loader.loadAsync(`/assets/waterfront/${name}${mobile && hasDistant ? '-lod' : ''}.glb`);
+    const close = await loader.loadAsync(`/assets/waterfront/${name}.glb`);
     prepare(close.scene, name, false, position);
-    if (hasDistant && !mobile) {
+    if (hasDistant) {
       try { const distant = await loader.loadAsync(`/assets/waterfront/${name}-lod.glb`); prepare(distant.scene, name, true, position); }
       catch (error) { console.warn(`Waterfront distant model unavailable for ${name}; retaining the complete asset.`, error); }
     }
@@ -135,16 +132,10 @@ export function createWaterfrontAssets(parent: THREE.Object3D) {
     }
     group.userData.palms = palmAnchors.length;
   }
-  // Mobile never decodes the close meshes and releases each loader's transient
-  // source/batching data before beginning the next architectural export.
-  const ready = (mobile ? (async () => {
-    await loadAsset('ferry-building', true, new THREE.Vector3(WATERFRONT.ferry.x, WATERFRONT.ferry.y, -WATERFRONT.ferry.z));
-    await loadAsset('embarcadero');
-    await loadAsset('bay-bridge', false);
-  })() : Promise.all([
+  const ready = Promise.all([
     loadAsset('ferry-building', true, new THREE.Vector3(WATERFRONT.ferry.x, WATERFRONT.ferry.y, -WATERFRONT.ferry.z)),
     loadAsset('embarcadero'), loadAsset('bay-bridge', false), loadPalms(),
-  ])).then(() => { group.userData.loaded = true; }).finally(() => decoder.dispose());
+  ]).then(() => { group.userData.loaded = true; }).finally(() => decoder.dispose());
 
   return {
     group, ready,
@@ -161,6 +152,6 @@ export function createWaterfrontAssets(parent: THREE.Object3D) {
         for (const mesh of planting.group.children) if (mesh instanceof THREE.Mesh) mesh.castShadow = !low && distance < 320;
       }
     },
-    setQuality(value: boolean) { low = mobile || value; for (const mesh of shadows) mesh.castShadow = !low; },
+    setQuality(value: boolean) { low = value; for (const mesh of shadows) mesh.castShadow = !low; },
   };
 }
