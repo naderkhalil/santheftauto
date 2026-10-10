@@ -1,6 +1,6 @@
 # San Theft Auto
 
-**[Play at santheftauto.com](https://santheftauto.com)**
+**[Play at santheftauto.com](https://santheftauto.com)** ↗️
 
 A browser racing game built around San Francisco: its neighborhoods, steep
 streets, recognizable landmarks, and a few exaggerated hill flights. Race solo,
