@@ -15,9 +15,10 @@ export function getRenderProfile(environment?: RenderEnvironment) {
     coarsePointer: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches,
     search: typeof location === 'undefined' ? '' : location.search,
   };
-  const mobile = /iPhone|iPad|iPod|Android/i.test(device.userAgent)
+  // The reported startup failure is on iOS. Touch input or Android alone must
+  // not lower quality on devices that were already running the full game.
+  const mobile = /iPhone|iPad|iPod/i.test(device.userAgent)
     || device.platform === 'MacIntel' && device.maxTouchPoints > 1
-    || device.coarsePointer
     // A conservative override lets desktop QA exercise the identical mobile path.
     || new URLSearchParams(device.search).get('graphics') === 'mobile';
   return { mobile, maxPixelRatio: mobile ? 1 : 1.6, postprocessing: !mobile, highDetailAssets: !mobile };

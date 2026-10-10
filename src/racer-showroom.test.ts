@@ -15,9 +15,10 @@ try { ({ RacerShowroom } = await import('./racer-showroom.ts')); }
 finally { resolver.deregister(); }
 
 test('mobile showroom keeps selection functional without another WebGL context or any asset downloads', t => {
-  const previous = new Map(['matchMedia', 'ResizeObserver', 'document'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
+  const previous = new Map(['navigator', 'matchMedia', 'ResizeObserver', 'document'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
   let disconnects = 0, observations = 0;
   Object.defineProperty(globalThis, 'matchMedia', { configurable: true, value: () => ({ matches: true }) });
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X)', platform: 'iPhone', maxTouchPoints: 5 } });
   Object.defineProperty(globalThis, 'ResizeObserver', { configurable: true, value: class {
     observe() { observations++; }
     disconnect() { disconnects++; }
