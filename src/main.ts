@@ -37,6 +37,7 @@ import { DEFAULT_PROFILE } from './racer-profile';
 import { SoloLeaderboardRecorder } from './leaderboard-client';
 import { FinishLeaderboard, getGlobalLeaderboard } from './leaderboard';
 import { RaceCollectibles } from './race-replay';
+import { startupDiagnostics } from './startup-monitor';
 
 void initAnalytics();
 
@@ -122,6 +123,7 @@ async function waitForStartupAssets(tasks:readonly (readonly [string,Promise<unk
   const pending=new Set(tasks.map(([name])=>name));let active=true;
   const progress=()=>{
     if(!active)return;
+    startupDiagnostics.stage('assets', [...pending]);
     el('loading').dataset.pendingAssets=[...pending].join(', ');
     loadingStage(pending.size?`Loading ${[...pending][0]} · ${pending.size} remaining`:'Preparing the race');
   };
@@ -140,8 +142,11 @@ async function boot() {
   const canvas = el<HTMLCanvasElement>('world');
   document.querySelectorAll<HTMLElement>('.progress-tick').forEach((tick,i)=>tick.style.left=`${CHECKPOINTS[i]/TRACK_LENGTH*100}%`);
   let renderer: THREE.WebGLRenderer;
+  startupDiagnostics.stage('renderer:start');
+  canvas.addEventListener('webglcontextlost',()=>startupDiagnostics.failure('webgl-context-lost'));
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
-  catch { el('loading').innerHTML = `<div class="no-webgl"><h2>This run needs WebGL.</h2><p>Try a recent Chrome, Edge, Firefox, or Safari browser with hardware acceleration enabled, then reload this page.</p><button class="primary" onclick="location.reload()">TRY AGAIN ↗</button></div>`; return; }
+  catch (error) { startupDiagnostics.failure('webgl-create',error);el('loading').innerHTML = `<div class="no-webgl"><h2>This run needs WebGL.</h2><p>Try a recent Chrome, Edge, Firefox, or Safari browser with hardware acceleration enabled, then reload this page.</p><button class="primary" onclick="location.reload()">TRY AGAIN ↗</button></div>`; return; }
+  startupDiagnostics.stage('renderer:complete');
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
   renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -156,12 +161,21 @@ async function boot() {
   // Reflect geometry once, while every camera remains outside this root.
   const cityRoot = createCityRoot(); scene.add(cityRoot);
   const camera = new THREE.PerspectiveCamera(57, innerWidth / innerHeight, .15, 4200);
+  startupDiagnostics.stage('atmosphere:start');
   const atmosphere=createAtmosphere(renderer,scene,camera);
+  startupDiagnostics.stage('atmosphere:complete');
+  startupDiagnostics.stage('city:start');
   const world = createCityLoop(cityRoot);
+  startupDiagnostics.stage('city:complete');
+  startupDiagnostics.stage('landmarks:start');
   const landmarks=createUnionSquare(cityRoot),chinatown=createChinatown(cityRoot);
+  startupDiagnostics.stage('landmarks:complete');
   // This new kit already uses the physical world axes and readable lettering.
+  startupDiagnostics.stage('street-details:start');
   const squareStreetDetails=createSquareStreetDetails(scene);
+  startupDiagnostics.stage('waterfront:start');
   const waterfront=createWaterfront(scene);
+  startupDiagnostics.stage('racer:start');
   const car=createCar();cityRoot.add(car.group);
   // Wait for the existing loaders and their approved fallbacks together. A
   // timeout keeps setup blocked instead of admitting a racer to a partial map.
@@ -170,6 +184,7 @@ async function boot() {
     ['Union Square',landmarks.ready],['city traffic',world.ready],['street details',squareStreetDetails.ready],
     ['the waterfront',waterfront.ready],['drivers and cars',car.ready],
   ]);
+  startupDiagnostics.stage('assets:complete');
   canvas.dataset.waterfrontAssets='blender';
   loadingStage('Preparing the race');
   const heroFill=new THREE.PointLight('#ffe8c8',100,26,2);cityRoot.add(heroFill);
@@ -190,6 +205,7 @@ async function boot() {
       if(distance<32){audio.cableBell(distance,(cable.lateral-lateral)/9);soundedCableCars.add(cable.progress);}
     }
   }
+  startupDiagnostics.stage('postprocessing:start');
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene,camera));
   const ao=new GTAOPass(scene,camera,innerWidth,innerHeight);ao.blendIntensity=.45;ao.updateGtaoMaterial({radius:1.05,thickness:.75,distanceExponent:1.6,samples:8});ao.updatePdMaterial({radius:4,rings:2,samples:8});
@@ -230,6 +246,7 @@ async function boot() {
   composer.addPass(bloom);
   const grade=new ShaderPass({uniforms:{tDiffuse:{value:null},lens:{value:.18}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform sampler2D tDiffuse;uniform float lens;varying vec2 vUv;void main(){vec2 p=vUv*2.-1.;float r2=dot(p,p);vec2 uv=.5+.5*p*(1.-lens+ lens*r2*.48);vec3 c=texture2D(tDiffuse,clamp(uv,vec2(.001),vec2(.999))).rgb;float l=dot(c,vec3(.2126,.7152,.0722));c=max(vec3(0.),mix(vec3(l),c,1.22));c=pow(c,vec3(1.025))*1.025;c*=1.-dot(p,p)*.022;gl_FragColor=vec4(c,1.);}'});composer.addPass(grade);
   const smaa=new SMAAPass();composer.addPass(smaa);composer.addPass(new OutputPass());
+  startupDiagnostics.stage('postprocessing:complete');
 
   // Subtle road dust makes tire movement readable without obscuring the street.
   const particleCount=120, positions=new Float32Array(particleCount*3), ages=new Float32Array(particleCount).fill(3), velocities=new Float32Array(particleCount*3);
@@ -541,10 +558,19 @@ async function boot() {
   el('fullscreen').onclick=()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>{});else void document.documentElement.requestFullscreen?.().catch(()=>{el('fullscreen').textContent='USE YOUR BROWSER’S FULLSCREEN';});};
   document.addEventListener('fullscreenchange',()=>el('fullscreen').textContent=document.fullscreenElement?'EXIT FULLSCREEN ↙':'FULLSCREEN ↗');
   loadingStage('Lighting the city');await yieldForPaint();
-  updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);atmosphere.bakeCityReflections(car.group);composer.render();
+  startupDiagnostics.stage('lighting:start');
+  updateSoundButton();applyQuality();syncPhase();updateCamera(1);landmarks.update(0,35,camera);
+  startupDiagnostics.stage('lighting:complete');
+  startupDiagnostics.stage('reflections:start');
+  atmosphere.bakeCityReflections(car.group);
+  startupDiagnostics.stage('reflections:complete');
+  startupDiagnostics.stage('first-frame:start');
+  composer.render();
+  startupDiagnostics.stage('first-frame:complete');
   loadingStage('Ready to race');
   el('loading').classList.add('faded');setTimeout(()=>el('loading').classList.add('hidden'),650);
 
+  startupDiagnostics.stage('multiplayer:start');
   multiplayer=new Multiplayer(cityRoot,{
     profile:profile=>{raceProfile={...profile};car.customize(profile);},
     solo:()=>startRun(false),
@@ -558,6 +584,9 @@ async function boot() {
     finish:()=>finish(),
     leave:()=>resetToMenu(),
   });
+  // Let the browser process the first submitted GPU work before recording a
+  // successful start. This observes frame delivery; it does not delay the game.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>startupDiagnostics.complete()));
 
   // Read-only diagnostics are handy when comparing browsers and performance settings.
   (window as typeof window&{sfNightRun?:unknown}).sfNightRun={get state(){return {...sim.state,phase};},get rendering(){return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures};}};
@@ -657,6 +686,7 @@ const openRaceCollection = mountRacePicker(app);
 const launch = boot();
 if (showComingSoon) openRaceCollection();
 launch.catch(error=>{
+  startupDiagnostics.failure(error instanceof StartupTimeoutError?'timeout':'startup',error);
   console.error(error);const loading=document.getElementById('loading');if(!loading)return;
   loading.classList.remove('hidden','faded');loading.dataset.stage='Loading failed';
   loading.innerHTML='<div class="no-webgl"><h2>The city couldn’t load.</h2><p></p><button class="primary" onclick="location.reload()">RETRY LOADING ↗</button></div>';

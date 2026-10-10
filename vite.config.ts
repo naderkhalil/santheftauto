@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
+import { execFileSync } from 'node:child_process';
 import { createRoomApi } from './server/http';
 import { attachInputChannel } from './server/input-channel';
 import { createLeaderboardApi } from './server/leaderboard-http';
 export default defineConfig({
+  define: { __APP_BUILD__: JSON.stringify((() => { try { return execFileSync('git', ['rev-parse', '--short', 'HEAD'], {encoding:'utf8'}).trim(); } catch { return 'development'; } })()) },
   plugins:[{
     name:'city-loop-rooms',
     configureServer(server){

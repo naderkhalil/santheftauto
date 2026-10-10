@@ -61,6 +61,36 @@ other input values, or automatic button clicks. URL query strings and fragments
 before sending. Room credentials are never included in gameplay events.
 Page-leave events provide visit-duration data when the browser can deliver them.
 
+### Loading diagnostics
+
+The restored full-graphics game records bounded `startup_started`,
+`startup_stage`, `startup_complete`, `startup_failed`, and
+`startup_interrupted` events through the same optional analytics integration.
+Checkpoints distinguish asset loading, reflection baking, and the first render.
+Reports include the build revision, browser/OS versions when available,
+viewport, pixel ratio, graphics preference, elapsed time, pending asset-group
+names, and allowlisted failure/error types. They contain no error messages,
+stacks, room codes, nicknames, or raw URLs. Existing URL sanitization still applies.
+
+A small report is also kept in session storage, independently of analytics.
+An unfinished report recovered within 30 minutes is an **interrupted startup**,
+not proof of a crash: a lost lifecycle event can leave the same marker. Normal
+page navigation is marked separately. `startup_complete` follows game setup
+and two animation-frame callbacks; it is not evidence of sustained GPU stability.
+If Safari kills the page, live telemetry may be lost; reopening the same tab can
+recover its last persisted stage when Safari preserves session storage.
+
+Open `?diagnostics=1` to expose the sanitized current report and recovered prior
+interruption under **Loading diagnostic report → Copy report**. The panel is
+absent during ordinary play. It does not change graphics settings. Inspect
+`startup_failed` or `startup_interrupted` in PostHog Activity, filtering `os = ios`
+and the deployed `buildVersion`; the public ingestion key cannot read these events.
+
+If the game cannot stay open, visit `?diagnostics=report` **in the same tab**.
+This reads the last stored report without loading the game, starting another
+attempt, or overwriting the failure marker. It still depends on Safari retaining
+session storage and the report being less than 30 minutes old.
+
 ### Finishes and playing together
 
 | Event | When it is recorded |

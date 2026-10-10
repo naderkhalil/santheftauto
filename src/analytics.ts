@@ -1,6 +1,7 @@
 import type { CaptureResult, PostHog } from 'posthog-js';
 import { GameAnalytics } from './game-analytics.ts';
 import type { GameEvent } from './game-analytics.ts';
+import type { StartupEvent } from './startup-diagnostics.ts';
 
 const API_HOST = 'https://us.i.posthog.com';
 type AnalyticsEnvironment = {
@@ -91,6 +92,16 @@ export function captureGameEvent(event: GameEvent, properties: Record<string, un
   void initAnalytics().then(() => {
     try { client?.capture(event, properties, { timestamp }); } catch { /* Analytics is optional. */ }
   }).catch(() => { /* Analytics is optional. */ });
+}
+
+/** Small, allowlisted checkpoints should leave before a later startup failure. */
+export function captureStartupEvent(event: StartupEvent, properties: Record<string, unknown>): void {
+  const timestamp = new Date();
+  try {
+    void initAnalytics().then(() => {
+      try { client?.capture(event, properties, { timestamp, send_instantly: true }); } catch { /* Diagnostics never block play. */ }
+    }).catch(() => { /* Analytics is optional. */ });
+  } catch { /* Missing configuration or storage cannot prevent startup. */ }
 }
 
 export const gameAnalytics = new GameAnalytics(captureGameEvent);
